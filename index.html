@@ -675,10 +675,27 @@ a { text-decoration: none; color: inherit; }
   font-family: var(--font-head); font-size: 17px; font-weight: 800;
   margin-bottom: 18px; color: var(--text);
 }
+/* Light theme: ensure full contrast inside modal */
+#edit-modal .form-label {
+  color: #374151 !important;
+  font-size: 11px; font-weight: 800; letter-spacing: 0.6px;
+  text-transform: uppercase; margin-bottom: 7px; display: block;
+}
+#edit-modal .form-input {
+  background: var(--white) !important;
+  color: #111827 !important;
+  border: 1.5px solid #D1D5DB !important;
+}
+#edit-modal .form-input:focus {
+  border-color: var(--green) !important;
+  box-shadow: 0 0 0 3px rgba(46,160,86,0.12) !important;
+}
+#edit-modal .form-input::placeholder { color: #9CA3AF !important; }
 .edit-save-btn {
-  width: 100%; padding: 13px; background: var(--red); color: white;
+  width: 100%; padding: 14px; background: var(--red); color: white;
   border: none; border-radius: var(--radius-sm); font-family: var(--font-head);
-  font-size: 15px; font-weight: 700; margin-top: 6px; transition: background 0.15s;
+  font-size: 15px; font-weight: 700; margin-top: 6px; transition: background 0.15s; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
 }
 .edit-save-btn:hover { background: var(--red-dark); }
 
@@ -1064,6 +1081,9 @@ a { text-decoration: none; color: inherit; }
 [data-theme="dark"] .qty-btn         { background: #2a2a2a; }
 [data-theme="dark"] .form-select,
 [data-theme="dark"] .form-input      { background: #2a2a2a; color: var(--text); }
+[data-theme="dark"] #edit-modal .form-label  { color: #9CA3AF !important; }
+[data-theme="dark"] #edit-modal .form-input  { background: #2a2a2a !important; color: #f9fafb !important; border-color: #374151 !important; }
+[data-theme="dark"] #edit-modal .form-input::placeholder { color: #6B7280 !important; }
 [data-theme="dark"] .grade-aplus     { background: #0d2a1a; color: #4ade80; }
 [data-theme="dark"] .grade-a         { background: #1e2a4a; color: #60a5fa; }
 [data-theme="dark"] .grade-asis      { background: #2a1f00; color: #fbbf24; }
@@ -1077,7 +1097,121 @@ a { text-decoration: none; color: inherit; }
 [data-theme="dark"] .cat-pill        { background: #1c1c1e; color: var(--muted); border-color: #2a2a2a; }
 [data-theme="dark"] mark             { background: #0d2a1a !important; color: #4ade80 !important; }
 
-/* ─── THEME TOGGLE BTN ─── */
+/* ══ SHOP PAGE FOOTER ══ */
+.shop-footer { overflow: hidden; }
+
+/* Comment section */
+.comment-section {
+  padding: 22px 16px 20px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+.comment-section h4 {
+  font-family: var(--font-head); font-size: 15px; font-weight: 700;
+  color: var(--text); margin-bottom: 12px;
+}
+.comment-textarea {
+  width: 100%; min-height: 90px; padding: 13px 14px;
+  border: 1.5px solid var(--border); border-radius: var(--radius);
+  font-size: 14px; font-family: var(--font-body); outline: none;
+  background: var(--bg); color: var(--text); resize: none;
+  transition: border 0.2s, box-shadow 0.2s; line-height: 1.5;
+}
+.comment-textarea:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(46,160,86,0.12);
+  background: var(--white);
+}
+.comment-textarea::placeholder { color: var(--muted); }
+.comment-send-btn {
+  width: 100%; margin-top: 10px; padding: 13px;
+  background: var(--green); color: #fff;
+  border: none; border-radius: var(--radius);
+  font-family: var(--font-head); font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: background 0.15s; letter-spacing: 0.2px;
+}
+.comment-send-btn:hover { background: var(--green-dark); }
+.comment-send-btn:disabled { background: #D1D5DB; cursor: not-allowed; }
+
+/* Wave divider */
+.footer-wave {
+  display: block; width: 100%; height: 48px;
+  background: var(--green-dark);
+}
+
+/* Subscribe + links footer */
+.footer-main {
+  background: var(--green-dark);
+  padding: 28px 20px 16px;
+  text-align: center;
+}
+.footer-title {
+  font-family: var(--font-head); font-size: 20px; font-weight: 800;
+  color: #fff; margin-bottom: 8px;
+}
+.footer-sub {
+  font-size: 13px; color: rgba(255,255,255,0.72);
+  margin-bottom: 18px; line-height: 1.5;
+}
+.footer-email-row {
+  display: flex; flex-direction: column; gap: 10px;
+  max-width: 380px; margin: 0 auto 24px;
+}
+.footer-email-input {
+  width: 100%; padding: 13px 15px;
+  border: 1.5px solid rgba(255,255,255,0.3);
+  border-radius: var(--radius); background: rgba(255,255,255,0.12);
+  color: #fff; font-size: 14px; font-family: var(--font-body); outline: none;
+  transition: border 0.2s, background 0.2s;
+}
+.footer-email-input:focus {
+  border-color: #fff;
+  background: rgba(255,255,255,0.2);
+}
+.footer-email-input::placeholder { color: rgba(255,255,255,0.55); }
+.footer-signup-btn {
+  width: 100%; padding: 13px;
+  background: rgba(255,255,255,0.15); color: #fff;
+  border: 1.5px solid rgba(255,255,255,0.5); border-radius: var(--radius);
+  font-family: var(--font-head); font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: all 0.15s; letter-spacing: 0.2px;
+}
+.footer-signup-btn:hover { background: rgba(255,255,255,0.28); }
+
+/* Payment icons */
+.footer-pay-row {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 7px; margin-bottom: 20px;
+}
+.fpay-card {
+  background: #fff; border-radius: 5px;
+  padding: 4px 8px; display: flex; align-items: center;
+  justify-content: center; height: 26px; min-width: 44px;
+  font-size: 10px; font-weight: 800; letter-spacing: 0.3px;
+  color: #1a1a2e; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+
+/* Footer links */
+.footer-divider {
+  border: none; border-top: 1px solid rgba(255,255,255,0.18);
+  margin: 4px 0 14px;
+}
+.footer-copy {
+  font-size: 12px; color: rgba(255,255,255,0.55); margin-bottom: 10px;
+}
+.footer-links {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 6px 10px; margin-bottom: 8px;
+}
+.footer-links a {
+  font-size: 11px; color: rgba(255,255,255,0.65);
+  text-decoration: none; transition: color 0.15s;
+}
+.footer-links a:hover { color: #fff; }
+.footer-links .fdot { color: rgba(255,255,255,0.3); }
+
+</style>
+<style>
 #theme-toggle {
   background: none; border: none; cursor: pointer;
   padding: 8px; color: var(--muted);
@@ -1194,6 +1328,72 @@ a { text-decoration: none; color: inherit; }
 <div class="page active" id="page-shop">
   <div id="cat-bar"></div>
   <div id="product-grid"></div>
+
+  <!-- ── Shop Footer ── -->
+  <div class="shop-footer">
+
+    <!-- Comment / Feedback -->
+    <div class="comment-section">
+      <h4>💬 Leave a Comment</h4>
+      <textarea class="comment-textarea" id="footer-comment"
+        placeholder="Share your thoughts, feedback, or questions…"></textarea>
+      <button class="comment-send-btn" id="comment-send-btn" onclick="submitComment()">
+        Send
+      </button>
+    </div>
+
+    <!-- Wave SVG divider -->
+    <svg viewBox="0 0 375 48" preserveAspectRatio="none"
+      style="display:block;width:100%;height:48px;background:var(--surface)">
+      <path d="M0,24 C60,48 120,0 187,24 C254,48 314,0 375,24 L375,48 L0,48 Z"
+        fill="#1d7a40"/>
+    </svg>
+
+    <!-- Subscribe + links -->
+    <div class="footer-main">
+      <div class="footer-title">Subscribe to our emails</div>
+      <div class="footer-sub">Get the latest deals, new arrivals and exclusive offers delivered to your inbox.</div>
+      <div class="footer-email-row">
+        <input type="email" class="footer-email-input" id="footer-email" placeholder="Email">
+        <button class="footer-signup-btn" onclick="subscribeEmail()">Sign up</button>
+      </div>
+
+      <!-- Payment method icons -->
+      <div class="footer-pay-row">
+        <div class="fpay-card" style="color:#1a56db;font-style:italic;font-size:11px;gap:1px">
+          <span style="color:#1a56db;font-weight:900">AM</span><span style="color:#e53935;font-weight:900">EX</span>
+        </div>
+        <div class="fpay-card" style="gap:3px;padding:0 6px">
+          <span style="font-size:13px">🍎</span>
+          <span style="font-size:9px;font-weight:900;letter-spacing:-0.3px">Pay</span>
+        </div>
+        <div class="fpay-card" style="background:#F7931A;color:#fff;font-size:11px">₿</div>
+        <div class="fpay-card" style="color:#4285F4;font-size:9px;font-weight:800">G Pay</div>
+        <div class="fpay-card" style="color:#e53935;font-size:8px;font-weight:800">UNION<br>PAY</div>
+        <div class="fpay-card" style="color:#1a56db;font-size:11px;font-weight:900;font-style:italic">VISA</div>
+        <div class="fpay-card" style="background:#fff;padding:0 5px">
+          <span style="color:#eb001b;font-size:14px">●</span>
+          <span style="color:#f79e1b;font-size:14px;margin-left:-5px">●</span>
+        </div>
+        <div class="fpay-card" style="color:#003087;font-size:9px;font-weight:800;font-style:italic">Pay<span style="color:#009cde">Pal</span></div>
+      </div>
+
+      <hr class="footer-divider">
+      <div class="footer-copy">© 2026, Alfonex. All rights reserved.</div>
+      <div class="footer-links">
+        <a href="#" onclick="showInfo('policy');return false">Privacy Policy</a>
+        <span class="fdot">·</span>
+        <a href="#" onclick="showInfo('warranty');return false">Terms of Service</a>
+        <span class="fdot">·</span>
+        <a href="#" onclick="showInfo('shipping');return false">Shipping Policy</a>
+        <span class="fdot">·</span>
+        <a href="#" onclick="showInfo('policy');return false">Refund Policy</a>
+        <span class="fdot">·</span>
+        <a href="#" onclick="showInfo('contact');return false">Contact</a>
+      </div>
+    </div>
+
+  </div>
 </div>
 
 <!-- ════════════ CART PAGE ════════════ -->
@@ -2316,6 +2516,59 @@ function renderCart() {
         Proceed to Checkout
       </button>
     </div>`;
+}
+
+/* ═══════════════════════════════════
+   COMMENT & SUBSCRIBE
+═══════════════════════════════════ */
+function submitComment() {
+  const text = document.getElementById('footer-comment')?.value.trim();
+  if (!text) { toast('Write something first', '✏️'); return; }
+
+  const btn = document.getElementById('comment-send-btn');
+  btn.textContent = '⏳ Sending…'; btn.disabled = true;
+
+  const payload = {
+    text,
+    userId:    APP.user?.uid    || 'guest',
+    userEmail: APP.user?.email  || 'guest',
+    userName:  APP.user?.displayName || 'Guest',
+    page:      'shop',
+    timestamp: Date.now(),
+    createdAt: new Date().toISOString()
+  };
+
+  db.ref('comments').push(payload)
+    .then(() => {
+      toast('Comment sent! Thank you 🙏', '✅');
+      document.getElementById('footer-comment').value = '';
+    })
+    .catch(() => toast('Failed to send comment', '❌'))
+    .finally(() => { btn.textContent = 'Send'; btn.disabled = false; });
+}
+
+function subscribeEmail() {
+  const email = document.getElementById('footer-email')?.value.trim();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    toast('Enter a valid email address', '⚠️'); return;
+  }
+  // Check if already subscribed
+  db.ref('subscribers').orderByChild('email').equalTo(email).once('value', snap => {
+    if (snap.exists()) {
+      toast('Already subscribed! 🎉', '✅'); return;
+    }
+    db.ref('subscribers').push({
+      email,
+      userId:    APP.user?.uid   || null,
+      timestamp: Date.now(),
+      createdAt: new Date().toISOString()
+    })
+    .then(() => {
+      toast('Subscribed! You\'re on the list 🎉', '✅');
+      document.getElementById('footer-email').value = '';
+    })
+    .catch(() => toast('Subscription failed. Try again.', '❌'));
+  });
 }
 
 /* ═══════════════════════════════════
