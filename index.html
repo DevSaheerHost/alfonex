@@ -2319,19 +2319,153 @@ function renderCart() {
 }
 
 /* ═══════════════════════════════════
+   ADDRESS BOOK  (per-user localStorage)
+═══════════════════════════════════ */
+function addrKey() { return 'ia_addr_' + (APP.user?.uid || 'guest'); }
+function getSavedAddresses() { return JSON.parse(localStorage.getItem(addrKey()) || '[]'); }
+function persistAddresses(list) { localStorage.setItem(addrKey(), JSON.stringify(list)); }
+
+function saveCurrentAddress() {
+  const region   = document.getElementById('co-region')?.value        || '';
+  const state    = document.getElementById('co-state')?.value         || '';
+  const district = document.getElementById('co-district')?.value.trim()|| '';
+  const place    = document.getElementById('co-place')?.value.trim()  || '';
+  const wa       = document.getElementById('co-wa')?.value.trim()     || '';
+  if (!region || !district || !place) return;
+  const list = getSavedAddresses();
+  // Skip near-duplicate
+  if (list.some(a => a.place === place && a.district === district)) return;
+  const label = [district, region].filter(Boolean).join(', ');
+  list.push({ id: Date.now(), label, region, state, district, place, wa });
+  persistAddresses(list);
+}
+
+function deleteSavedAddress(id) {
+  persistAddresses(getSavedAddresses().filter(a => a.id !== id));
+  renderAddrPicker();
+}
+
+function applyAddressById(id) {
+  const addr = getSavedAddresses().find(a => a.id === id);
+  if (addr) applyAddressObj(addr);
+}
+
+function applyAddressObj(addr) {
+  const regionEl = document.getElementById('co-region');
+  if (!regionEl) return;
+  regionEl.value = addr.region || '';
+  onRegionChange();
+  setTimeout(() => {
+    if (addr.state) {
+      const stEl = document.getElementById('co-state');
+      if (stEl) {
+        const match = Array.from(stEl.options).find(o =>
+          o.value.toLowerCase() === addr.state.toLowerCase() ||
+          o.text.toLowerCase()  === addr.state.toLowerCase()
+        );
+        if (match) stEl.value = match.value;
+      }
+    }
+    const dEl = document.getElementById('co-district');
+    const pEl = document.getElementById('co-place');
+    const wEl = document.getElementById('co-wa');
+    if (dEl) dEl.value = addr.district || '';
+    if (pEl) pEl.value = addr.place    || '';
+    if (wEl && addr.wa) wEl.value = addr.wa;
+    toast('Address loaded', '📍');
+  }, 130);
+}
+
+function renderAddrPicker() {
+  const el = document.getElementById('saved-addr-list');
+  if (!el) return;
+  const list = getSavedAddresses();
+  if (!list.length) {
+    el.innerHTML = `<div style="font-size:12px;color:var(--muted);text-align:center;padding:8px 0">No saved addresses yet</div>`;
+    return;
+  }
+  el.innerHTML = list.map(a => `
+    <div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--border)">
+      <button onclick="applyAddressById(${a.id})" style="flex:1;text-align:left;background:none;border:none;cursor:pointer;padding:0">
+        <div style="font-size:13px;font-weight:700;color:var(--text)">📍 ${a.label}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">${a.place}</div>
+      </button>
+      <button onclick="deleteSavedAddress(${a.id})"
+        style="background:none;border:none;color:var(--border);font-size:20px;line-height:1;padding:4px;transition:color 0.13s;cursor:pointer"
+        onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--border)'">✕</button>
+    </div>`).join('');
+}
+
+/* ── Geolocation auto-fill (Nominatim, no API key) ── */
+function detectLocation() {
+  if (!navigator.geolocation) { toast('Geolocation not supported', '⚠️'); return; }
+  const btn = document.getElementById('detect-loc-btn');
+  if (btn) { btn.textContent = '⏳ Detecting…'; btn.disabled = true; }
+  navigator.geolocation.getCurrentPosition(async pos => {
+    try {
+      const { latitude: lat, longitude: lon } = pos.coords;
+      const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+      const data = await res.json();
+      const addr  = data.address || {};
+      const cc     = (addr.country_code || '').toUpperCase();
+      const region = cc === 'AE' ? 'UAE' : cc === 'IN' ? 'India' : 'Other';
+      const rawState  = addr.state || addr.county || '';
+      const district  = addr.city || addr.town || addr.village || addr.suburb || addr.county || '';
+      const place     = [addr.road, addr.neighbourhood, addr.quarter, addr.suburb].filter(Boolean).join(', ');
+
+      const regionEl = document.getElementById('co-region');
+      if (regionEl) { regionEl.value = region; onRegionChange(); }
+      setTimeout(() => {
+        if (rawState) {
+          const stEl = document.getElementById('co-state');
+          if (stEl) {
+            const match = Array.from(stEl.options).find(o =>
+              rawState.toLowerCase().includes(o.value.toLowerCase()) ||
+              o.value.toLowerCase().includes(rawState.toLowerCase())
+            );
+            if (match) stEl.value = match.value;
+          }
+        }
+        const dEl = document.getElementById('co-district');
+        const pEl = document.getElementById('co-place');
+        if (dEl && district) dEl.value = district;
+        if (pEl && place)    pEl.value = place;
+        toast('Location detected!', '📍');
+      }, 160);
+    } catch { toast('Could not get location data', '⚠️'); }
+    finally { if (btn) { btn.textContent = '📍 Detect Location'; btn.disabled = false; } }
+  }, () => {
+    toast('Location access denied', '⚠️');
+    if (btn) { btn.textContent = '📍 Detect Location'; btn.disabled = false; }
+  }, { timeout: 10000 });
+}
+
+/* ═══════════════════════════════════
    RENDER CHECKOUT
 ═══════════════════════════════════ */
 function renderCheckout() {
   const el = document.getElementById('checkout-body');
   if (!APP.cart.length) { navTo('cart'); return; }
-  const sub   = cartSubtotal();
+  const sub      = cartSubtotal();
   const totalQty = APP.cart.reduce((a,i) => a + i.qty, 0);
-  const ship  = SHIP[APP.cur] * totalQty;
-  const total = sub + ship;
+  const ship     = SHIP[APP.cur] * totalQty;
+  const total    = sub + ship;
   APP.otpCode = null; APP.otpSent = false;
 
+  const savedList   = getSavedAddresses();
+  const hasSaved    = savedList.length > 0;
+  const displayName = APP.user?.displayName || '';
+
   el.innerHTML = `
-    <!-- Order Summary -->
+    <!-- ── Saved Addresses ── -->
+    ${hasSaved ? `
+    <div class="co-section">
+      <h3>📂 Saved Addresses</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:8px">Tap an address to auto-fill the form below</p>
+      <div id="saved-addr-list"></div>
+    </div>` : ''}
+
+    <!-- ── Order Summary ── -->
     <div class="co-section">
       <h3>📋 Order Summary</h3>
       ${APP.cart.map(it => `
@@ -2346,9 +2480,29 @@ function renderCheckout() {
       <div class="co-total"><span>Total</span><span>${fmt(total)}</span></div>
     </div>
 
-    <!-- Delivery Details -->
+    <!-- ── Your Name ── -->
     <div class="co-section">
-      <h3>📍 Delivery Details</h3>
+      <h3>👤 Your Name</h3>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Full Name</label>
+        <input type="text" class="form-input" id="co-name"
+          placeholder="Enter your full name"
+          value="${displayName.replace(/"/g,'&quot;')}"
+          autocomplete="name">
+      </div>
+    </div>
+
+    <!-- ── Delivery Details ── -->
+    <div class="co-section">
+      <h3 style="justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <span>📍 Delivery Details</span>
+        <button id="detect-loc-btn" onclick="detectLocation()" style="
+          font-size:11px;font-weight:700;padding:5px 12px;
+          border:1.5px solid var(--green);color:var(--green);
+          background:var(--green-light);border-radius:20px;
+          cursor:pointer;font-family:var(--font-body);
+          transition:all 0.15s;white-space:nowrap;">📍 Detect Location</button>
+      </h3>
       <div class="form-group">
         <label class="form-label">Region</label>
         <div class="select-wrap">
@@ -2372,13 +2526,20 @@ function renderCheckout() {
         <label class="form-label">District / Area</label>
         <input type="text" class="form-input" id="co-district" placeholder="e.g. Downtown, Bur Dubai, Kozhikode">
       </div>
-      <div class="form-group">
+      <div class="form-group" style="margin-bottom:10px">
         <label class="form-label">Full Address</label>
         <input type="text" class="form-input" id="co-place" placeholder="Building, street, landmark…">
       </div>
+      <!-- Save address toggle -->
+      <label style="display:flex;align-items:center;gap:9px;padding:10px 12px;
+        background:var(--green-light);border-radius:var(--radius-sm);cursor:pointer">
+        <input type="checkbox" id="co-save-addr" checked
+          style="accent-color:var(--green);width:16px;height:16px;flex-shrink:0">
+        <span style="font-size:13px;font-weight:600;color:var(--green-dark)">💾 Save address for next time</span>
+      </label>
     </div>
 
-    <!-- Contact -->
+    <!-- ── Contact ── -->
     <div class="co-section">
       <h3>📱 WhatsApp Contact</h3>
       <div class="form-group">
@@ -2473,6 +2634,18 @@ function renderCheckout() {
         👤 Sign In to Order
       </button>
     </div>`}`;
+
+  // ── Post-render: load addresses or detect location ──
+  if (hasSaved) {
+    renderAddrPicker();
+    if (savedList.length === 1) {
+      // Single saved address → auto-apply
+      setTimeout(() => applyAddressObj(savedList[0]), 250);
+    }
+  } else {
+    // No saved addresses → auto-detect location (first-time experience)
+    setTimeout(() => detectLocation(), 400);
+  }
 }
 
 /* ─── Region change ─── */
@@ -2526,20 +2699,23 @@ function placeOrder() {
     setTimeout(() => navTo('login'), 700);
     return;
   }
+  const name     = document.getElementById('co-name')?.value.trim();
   const region   = document.getElementById('co-region')?.value;
   const state    = document.getElementById('co-state')?.value;
   const district = document.getElementById('co-district')?.value.trim();
   const place    = document.getElementById('co-place')?.value.trim();
   const wa       = document.getElementById('co-wa')?.value.trim();
   const otp      = document.getElementById('co-otp')?.value.trim();
+  const saveAddr = document.getElementById('co-save-addr')?.checked;
 
-  if (!region)            { toast('Please select your region', '⚠️'); return; }
-  if (!state && region !== 'Other') { toast('Select Emirate/State', '⚠️'); return; }
-  if (!district)          { toast('Enter district/area', '⚠️'); return; }
-  if (!place)             { toast('Enter your full address', '⚠️'); return; }
-  if (!wa)                { toast('Enter WhatsApp number', '⚠️'); return; }
-  if (!APP.otpSent)       { toast('Click Send OTP first', '⚠️'); return; }
-  if (otp !== APP.otpCode){ toast('Incorrect OTP – please check and retry', '❌'); return; }
+  if (!name)                          { toast('Enter your full name', '⚠️'); return; }
+  if (!region)                        { toast('Please select your region', '⚠️'); return; }
+  if (!state && region !== 'Other')   { toast('Select Emirate/State', '⚠️'); return; }
+  if (!district)                      { toast('Enter district/area', '⚠️'); return; }
+  if (!place)                         { toast('Enter your full address', '⚠️'); return; }
+  if (!wa)                            { toast('Enter WhatsApp number', '⚠️'); return; }
+  if (!APP.otpSent)                   { toast('Click Send OTP first', '⚠️'); return; }
+  if (otp !== APP.otpCode)            { toast('Incorrect OTP – please check and retry', '❌'); return; }
 
   const btn = document.getElementById('place-order-btn');
   btn.textContent = '⏳ Placing order…'; btn.disabled = true;
@@ -2548,75 +2724,64 @@ function placeOrder() {
   const totalQty = APP.cart.reduce((a,i) => a + i.qty, 0);
   const ship     = SHIP[APP.cur] * totalQty;
 
-  // Resolve user name: logged-in displayName → Firebase users record → 'Guest'
-  function resolveNameAndSave(name) {
-    const order = {
-      userId:    APP.user ? APP.user.uid   : 'guest',
-      userEmail: APP.user ? APP.user.email : 'guest',
-      userName:  name,
-      userPhone: wa,                          // WhatsApp = phone contact
-      items: APP.cart.map(i => ({
-        id:       i.id,
-        name:     i.name,
-        color:    i.color,
-        grade:    i.grade,
-        qty:      i.qty,
-        price:    getPrice(i),
-        currency: LABEL[APP.cur]
-      })),
-      currency:  LABEL[APP.cur],
-      subtotal:  sub,
-      shipping:  ship,
-      total:     sub + ship,
-      region, state, district, place,
-      whatsapp:  wa,
-      status:    'pending',
-      payMethod: APP.payMethod || 'cod',
-      timestamp: Date.now(),
-      createdAt: new Date().toISOString()
-    };
+  const order = {
+    userId:    APP.user.uid,
+    userEmail: APP.user.email,
+    userName:  name,
+    userPhone: wa,
+    items: APP.cart.map(i => ({
+      id:       i.id,
+      name:     i.name,
+      color:    i.color,
+      grade:    i.grade,
+      qty:      i.qty,
+      price:    getPrice(i),
+      currency: LABEL[APP.cur]
+    })),
+    currency:  LABEL[APP.cur],
+    subtotal:  sub,
+    shipping:  ship,
+    total:     sub + ship,
+    region, state, district, place,
+    whatsapp:  wa,
+    status:    'pending',
+    payMethod: APP.payMethod || 'cod',
+    timestamp: Date.now(),
+    createdAt: new Date().toISOString()
+  };
 
-    db.ref('orders').push(order)
-      .then(ref => {
-        // ── Decrement product quantities ──
-        const updates = {};
-        APP.cart.forEach(item => {
-          const prod = APP.prods[item.id];
-          if (prod && prod.quantity != null) {
-            const newQty = Math.max(0, Number(prod.quantity) - item.qty);
-            updates[`products/${item.id}/quantity`] = newQty;
-            // Update local cache too
-            APP.prods[item.id].quantity = newQty;
-          }
-        });
-        if (Object.keys(updates).length) db.ref().update(updates);
-
-        APP.cart = [];
-        saveCart();
-        document.getElementById('success-msg').textContent = `Thank you! We'll contact you on WhatsApp shortly.`;
-        navTo('success');
-        setTimeout(() => runOrderTracker(ref.key, 'pending'), 400);
-      })
-      .catch(() => {
-        toast('Error placing order. Please try again.', '❌');
-        btn.textContent = '🛒 Place Order'; btn.disabled = false;
-      });
+  // Update Firebase displayName if user edited it
+  if (APP.user && name !== APP.user.displayName) {
+    APP.user.updateProfile({ displayName: name }).catch(() => {});
   }
 
-  // Try to get name from Firebase users record first, then fallback
-  if (APP.user) {
-    const displayName = APP.user.displayName;
-    if (displayName) {
-      resolveNameAndSave(displayName);
-    } else {
-      db.ref('users/' + APP.user.uid).once('value', snap => {
-        const userData = snap.val();
-        resolveNameAndSave(userData?.name || APP.user.email || 'guest');
+  db.ref('orders').push(order)
+    .then(ref => {
+      // Decrement product quantities
+      const updates = {};
+      APP.cart.forEach(item => {
+        const prod = APP.prods[item.id];
+        if (prod && prod.quantity != null) {
+          const newQty = Math.max(0, Number(prod.quantity) - item.qty);
+          updates[`products/${item.id}/quantity`] = newQty;
+          APP.prods[item.id].quantity = newQty;
+        }
       });
-    }
-  } else {
-    resolveNameAndSave('Guest');
-  }
+      if (Object.keys(updates).length) db.ref().update(updates);
+
+      // Save address if checkbox checked
+      if (saveAddr) saveCurrentAddress();
+
+      APP.cart = [];
+      saveCart();
+      document.getElementById('success-msg').textContent = `Thank you, ${name}! We'll contact you on WhatsApp shortly.`;
+      navTo('success');
+      setTimeout(() => runOrderTracker(ref.key, 'pending'), 400);
+    })
+    .catch(() => {
+      toast('Error placing order. Please try again.', '❌');
+      btn.textContent = '🛒 Place Order'; btn.disabled = false;
+    });
 }
 
 /* ═══════════════════════════════════
