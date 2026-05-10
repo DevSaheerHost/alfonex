@@ -1181,14 +1181,14 @@ a { text-decoration: none; color: inherit; }
 /* Payment icons */
 .footer-pay-row {
   display: flex; flex-wrap: wrap; justify-content: center;
-  gap: 7px; margin-bottom: 20px;
+  gap: 8px; margin-bottom: 20px;
 }
 .fpay-card {
-  background: #fff; border-radius: 5px;
-  padding: 4px 8px; display: flex; align-items: center;
-  justify-content: center; height: 26px; min-width: 44px;
-  font-size: 10px; font-weight: 800; letter-spacing: 0.3px;
-  color: #1a1a2e; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  background: #fff; border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  height: 32px; min-width: 52px; padding: 0 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+  overflow: hidden;
 }
 
 /* Footer links */
@@ -1358,24 +1358,90 @@ a { text-decoration: none; color: inherit; }
         <button class="footer-signup-btn" onclick="subscribeEmail()">Sign up</button>
       </div>
 
-      <!-- Payment method icons -->
+      <!-- Payment method icons — real brand SVGs -->
       <div class="footer-pay-row">
-        <div class="fpay-card" style="color:#1a56db;font-style:italic;font-size:11px;gap:1px">
-          <span style="color:#1a56db;font-weight:900">AM</span><span style="color:#e53935;font-weight:900">EX</span>
+
+        <!-- Visa -->
+        <div class="fpay-card" style="min-width:58px">
+          <svg viewBox="0 0 60 20" height="14" xmlns="http://www.w3.org/2000/svg">
+            <text x="0" y="16" font-family="Arial,sans-serif" font-size="18" font-weight="900" font-style="italic" fill="#1A1F71" letter-spacing="-0.5">VISA</text>
+          </svg>
         </div>
-        <div class="fpay-card" style="gap:3px;padding:0 6px">
-          <span style="font-size:13px">🍎</span>
-          <span style="font-size:9px;font-weight:900;letter-spacing:-0.3px">Pay</span>
+
+        <!-- Mastercard -->
+        <div class="fpay-card" style="min-width:52px">
+          <svg viewBox="0 0 38 24" height="22" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="14" cy="12" r="10" fill="#EB001B"/>
+            <circle cx="24" cy="12" r="10" fill="#F79E1B"/>
+            <path d="M19 4.8a10 10 0 0 1 0 14.4A10 10 0 0 1 19 4.8z" fill="#FF5F00"/>
+          </svg>
         </div>
-        <div class="fpay-card" style="background:#F7931A;color:#fff;font-size:11px">₿</div>
-        <div class="fpay-card" style="color:#4285F4;font-size:9px;font-weight:800">G Pay</div>
-        <div class="fpay-card" style="color:#e53935;font-size:8px;font-weight:800">UNION<br>PAY</div>
-        <div class="fpay-card" style="color:#1a56db;font-size:11px;font-weight:900;font-style:italic">VISA</div>
-        <div class="fpay-card" style="background:#fff;padding:0 5px">
-          <span style="color:#eb001b;font-size:14px">●</span>
-          <span style="color:#f79e1b;font-size:14px;margin-left:-5px">●</span>
+
+        <!-- Apple Pay -->
+        <div class="fpay-card" style="background:#000;min-width:62px;padding:0 10px">
+          <svg viewBox="0 0 80 30" height="18" xmlns="http://www.w3.org/2000/svg">
+            <!-- Apple logo -->
+            <path d="M13.5 6.3c.7-.9 1.2-2.1 1-3.3-1 .1-2.2.7-2.9 1.6-.6.8-1.2 2-.9 3.2 1 .1 2.1-.5 2.8-1.5z" fill="#fff"/>
+            <path d="M13.4 8c-1.6-.1-2.9.9-3.7.9-.8 0-2-.8-3.3-.8C4.6 8.2 2.8 9.2 1.8 11c-2 3.5-.5 8.6 1.4 11.4 1 1.4 2.1 2.9 3.5 2.9 1.4-.1 2-.9 3.7-.9s2.2.9 3.7.8c1.5 0 2.5-1.4 3.4-2.8.7-1 1-1.5 1.5-2.6-4-.2-4.6-5.8-.6-7.6-.8-1.5-2.3-2.4-4-2.2z" fill="#fff"/>
+            <!-- Pay text -->
+            <text x="22" y="20" font-family="Arial,sans-serif" font-size="14" font-weight="600" fill="#fff" letter-spacing="-0.3">Pay</text>
+          </svg>
         </div>
-        <div class="fpay-card" style="color:#003087;font-size:9px;font-weight:800;font-style:italic">Pay<span style="color:#009cde">Pal</span></div>
+
+        <!-- Google Pay -->
+        <div class="fpay-card" style="min-width:62px;padding:0 8px">
+          <svg viewBox="0 0 72 26" height="18" xmlns="http://www.w3.org/2000/svg">
+            <!-- G -->
+            <text x="0" y="19" font-family="Arial,sans-serif" font-size="19" font-weight="700" fill="#4285F4">G</text>
+            <!-- oogle in multicolor -->
+            <text x="13" y="19" font-family="Arial,sans-serif" font-size="14" font-weight="600" fill="#4285F4">o</text>
+            <text x="22" y="19" font-family="Arial,sans-serif" font-size="14" font-weight="600" fill="#EA4335">o</text>
+            <text x="31" y="19" font-family="Arial,sans-serif" font-size="14" font-weight="600" fill="#FBBC05">g</text>
+            <text x="38" y="19" font-family="Arial,sans-serif" font-size="14" font-weight="600" fill="#34A853">l</text>
+            <text x="43" y="19" font-family="Arial,sans-serif" font-size="14" font-weight="600" fill="#EA4335">e</text>
+            <text x="51" y="19" font-family="Arial,sans-serif" font-size="14" font-weight="600" fill="#4285F4"> </text>
+            <text x="52" y="19" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#5F6368">Pay</text>
+          </svg>
+        </div>
+
+        <!-- AMEX -->
+        <div class="fpay-card" style="background:#016FD0;min-width:58px;padding:0 9px">
+          <svg viewBox="0 0 62 20" height="14" xmlns="http://www.w3.org/2000/svg">
+            <text x="0" y="15" font-family="Arial,sans-serif" font-size="14" font-weight="900" fill="#fff" letter-spacing="0.5">AMEX</text>
+          </svg>
+        </div>
+
+        <!-- PayPal -->
+        <div class="fpay-card" style="min-width:66px;padding:0 10px">
+          <svg viewBox="0 0 80 24" height="18" xmlns="http://www.w3.org/2000/svg">
+            <!-- PP icon -->
+            <text x="0" y="17" font-family="Arial,sans-serif" font-size="14" font-weight="900" fill="#003087">P</text>
+            <text x="7" y="17" font-family="Arial,sans-serif" font-size="14" font-weight="900" fill="#009cde">P</text>
+            <!-- PayPal wordmark -->
+            <text x="17" y="17" font-family="Arial,sans-serif" font-size="13" font-weight="700" fill="#003087">Pay</text>
+            <text x="38" y="17" font-family="Arial,sans-serif" font-size="13" font-weight="700" fill="#009cde">Pal</text>
+          </svg>
+        </div>
+
+        <!-- UnionPay -->
+        <div class="fpay-card" style="min-width:58px;padding:0 7px">
+          <svg viewBox="0 0 62 26" height="22" xmlns="http://www.w3.org/2000/svg">
+            <rect x="0" y="0" width="22" height="26" rx="3" fill="#E21836"/>
+            <rect x="20" y="0" width="22" height="26" rx="3" fill="#007B5E"/>
+            <rect x="40" y="0" width="22" height="26" rx="3" fill="#E21836"/>
+            <text x="4" y="18" font-family="Arial,sans-serif" font-size="9" font-weight="900" fill="#fff">UP</text>
+            <text x="23" y="18" font-family="Arial,sans-serif" font-size="9" font-weight="900" fill="#fff">UP</text>
+            <text x="43" y="18" font-family="Arial,sans-serif" font-size="9" font-weight="900" fill="#fff">UP</text>
+          </svg>
+        </div>
+
+        <!-- Bitcoin -->
+        <div class="fpay-card" style="background:#F7931A;min-width:40px;padding:0 8px">
+          <svg viewBox="0 0 24 24" height="18" xmlns="http://www.w3.org/2000/svg">
+            <path fill="#fff" d="M17.06 11.57c.41-2.75-1.68-4.23-4.55-5.21l.93-3.73-2.27-.56-.91 3.63c-.59-.15-1.2-.29-1.8-.43l.92-3.66-2.27-.57-.93 3.74c-.49-.11-.97-.22-1.43-.34l-3.13-.78-.61 2.43s1.68.39 1.65.41c.92.23 1.08.83 1.06 1.31l-2.55 10.22c-.1.25-.35.63-.9.48.02.03-1.65-.41-1.65-.41l-1.13 2.6 2.95.74c.55.14 1.09.28 1.62.42l-.94 3.76 2.26.57.93-3.74c.62.17 1.22.32 1.81.47l-.93 3.72 2.27.57.94-3.75c3.87.73 6.78.44 8.01-3.07.99-2.82-.05-4.44-2.09-5.5 1.49-.34 2.61-1.32 2.91-3.33zM14.62 18c-.7 2.8-5.45.89-6.99.45l1.25-5.01c1.54.38 6.48 1.14 5.74 4.56zm.7-6.46c-.64 2.56-4.59 1.26-5.88.94l1.13-4.54c1.29.32 5.45.92 4.75 3.6z"/>
+          </svg>
+        </div>
+
       </div>
 
       <hr class="footer-divider">
@@ -1783,9 +1849,9 @@ a { text-decoration: none; color: inherit; }
     </div>
     <div class="info-block">
       <h2>📞 Contact for Claims</h2>
-      <button class="info-contact-btn" onclick="window.open('https://wa.me/971558347102','_blank')">
+      <button class="info-contact-btn" onclick="navTo('contact')">
         <span class="info-contact-icon">💬</span>
-        <div><div class="info-contact-label">WhatsApp Support</div><div class="info-contact-val">+971 558347102</div></div>
+        <div><div class="info-contact-label">WhatsApp Support</div><div class="info-contact-val">Fastest response via WhatsApp</div></div>
       </button>
     </div>
   </div>
@@ -1879,19 +1945,19 @@ a { text-decoration: none; color: inherit; }
       <h2>💬 Get in Touch</h2>
       <p>We're available Monday–Saturday, 9 AM – 9 PM GST. Fastest response via WhatsApp.</p>
     </div>
-    <button class="info-contact-btn" onclick="window.open('https://wa.me/971558347102','_blank')">
+    <button class="info-contact-btn" onclick="window.open('https://wa.me/971XXXXXXXXX','_blank')">
       <span class="info-contact-icon">📱</span>
-      <div><div class="info-contact-label">WhatsApp</div><div class="info-contact-val">+971 558347102</div></div>
+      <div><div class="info-contact-label">WhatsApp</div><div class="info-contact-val">+971 XX XXX XXXX</div></div>
       <span style="color:var(--muted);font-size:13px">›</span>
     </button>
-    <button class="info-contact-btn" onclick="window.open('mailto:alfonexuae@gmail.com','_blank')">
+    <button class="info-contact-btn" onclick="window.open('mailto:info@alfonex.com','_blank')">
       <span class="info-contact-icon">✉️</span>
-      <div><div class="info-contact-label">Email</div><div class="info-contact-val">alfonexuae@gmail.com</div></div>
+      <div><div class="info-contact-label">Email</div><div class="info-contact-val">info@alfonex.com</div></div>
       <span style="color:var(--muted);font-size:13px">›</span>
     </button>
-    <button class="info-contact-btn" onclick="window.open('https://maps.google.com/?q=Dubai,United+Arab+Emirates','_blank')">
-      <span class="info-contact-icon">📍</span>
-      <div><div class="info-contact-label">Location</div><div class="info-contact-val">Dubai, United Arab Emirates</div></div>
+    <button class="info-contact-btn" onclick="window.open('https://www.alfonex.com','_blank')">
+      <span class="info-contact-icon">🌐</span>
+      <div><div class="info-contact-label">Website</div><div class="info-contact-val">www.alfonex.com</div></div>
       <span style="color:var(--muted);font-size:13px">›</span>
     </button>
     <div class="info-block" style="margin-top:4px">
