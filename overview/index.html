@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product – Alfonex</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Cabinet+Grotesk:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <!-- Fallback if Clash Display CDN isn't available — use Sora from your existing stack -->
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous">
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<style>
+/* ══════════════════════════════════════════
+   TOKENS
+══════════════════════════════════════════ */
+:root {
+  --ink:       #0a0a0a;
+  --ink-soft:  #1c1c1e;
+  --ink-muted: #6e6e73;
+  --ink-faint: #aeaeb2;
+  --canvas:    #f5f5f7;
+  --surface:   #ffffff;
+  --surface2:  #fafafa;
+  --accent:    #2EA056;
+  --accent-dk: #1d7a40;
+  --accent-lt: #e8f9ef;
+  --amber:     #f59e0b;
+  --red:       #e53935;
+  --border:    rgba(0,0,0,0.08);
+  --border-strong: rgba(0,0,0,0.14);
+
+  --font-display: 'Sora', sans-serif;
+  --font-body:    'DM Sans', sans-serif;
+
+  --r-sm: 10px;
+  --r:    16px;
+  --r-lg: 24px;
+  --r-xl: 32px;
+
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body {
+  font-family: var(--font-body);
+  background: var(--canvas);
+  color: var(--ink);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ══════════════════════════════════════════
+   LOADER
+══════════════════════════════════════════ */
+#loader {
+  position: fixed; inset: 0;
+  background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 18px;
+  z-index: 9999;
+  transition: opacity 0.5s var(--ease-out);
+}
+.loader-logo {
+  font-family: var(--font-display);
+  font-size: 22px; font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--ink);
+}
+.loader-logo em { color: var(--accent); font-style: normal; font-weight: 800; }
+.loader-track {
+  width: 120px; height: 3px;
+  background: var(--border);
+  border-radius: 99px; overflow: hidden;
+}
+.loader-fill {
+  height: 100%; width: 0%;
+  background: var(--accent);
+  border-radius: 99px;
+  animation: fill-track 1.4s var(--ease-out) forwards;
+}
+@keyframes fill-track { to { width: 100%; } }
+
+/* ══════════════════════════════════════════
+   ERROR STATE
+══════════════════════════════════════════ */
+#error-state {
+  display: none;
+  flex-direction: column; align-items: center; justify-content: center;
+  min-height: 100vh; padding: 40px 24px; text-align: center; gap: 14px;
+}
+#error-state.show { display: flex; }
+.error-emoji { font-size: 64px; line-height: 1; margin-bottom: 4px; }
+.error-heading {
+  font-family: var(--font-display);
+  font-size: 26px; font-weight: 800;
+  letter-spacing: -0.5px;
+}
+.error-sub { font-size: 15px; color: var(--ink-muted); max-width: 320px; line-height: 1.6; }
+.btn-close {
+  margin-top: 8px;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 13px 26px;
+  background: var(--ink); color: #fff;
+  border: none; border-radius: var(--r-lg);
+  font-family: var(--font-display);
+  font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: transform .18s, background .18s;
+  letter-spacing: -0.2px;
+  text-decoration: none;
+}
+.btn-close:hover { background: var(--ink-soft); transform: scale(1.03); }
+
+/* ══════════════════════════════════════════
+   PAGE SHELL
+══════════════════════════════════════════ */
+#page { display: none; flex-direction: column; min-height: 100vh; }
+#page.show { display: flex; }
+
+/* ── NAV ── */
+nav {
+  position: sticky; top: 0; z-index: 200;
+  background: rgba(245,245,247,0.82);
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px; height: 56px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.nav-brand {
+  font-family: var(--font-display);
+  font-size: 18px; font-weight: 800;
+  letter-spacing: -0.4px;
+  color: var(--ink);
+  text-decoration: none;
+}
+.nav-brand em { color: var(--accent); font-style: normal; }
+.nav-back {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 600; color: var(--ink-muted);
+  background: none; border: none; cursor: pointer;
+  padding: 6px 0;
+  transition: color .15s;
+  text-decoration: none;
+}
+.nav-back:hover { color: var(--ink); }
+.nav-back i { font-size: 11px; }
+
+/* ══════════════════════════════════════════
+   MAIN LAYOUT
+══════════════════════════════════════════ */
+main {
+  flex: 1;
+  max-width: 1020px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 40px 24px 64px;
+}
+
+/* ── PRODUCT GRID ── */
+.product-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+/* ══════════════════════════════════════════
+   IMAGE COLUMN
+══════════════════════════════════════════ */
+.img-col { display: flex; flex-direction: column; gap: 12px; }
+
+.img-stage {
+  position: relative;
+  background: var(--surface);
+  border-radius: var(--r-xl);
+  border: 1px solid var(--border);
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  box-shadow: 0 2px 24px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04);
+  animation: fadeSlideUp .55s var(--ease-out) both;
+}
+.img-stage img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  transition: transform .5s var(--ease-out);
+  padding: 16px;
+}
+.img-stage:hover img { transform: scale(1.05); }
+
+/* No image placeholder */
+.no-img {
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 12px; color: var(--ink-faint);
+}
+.no-img i { font-size: 52px; }
+.no-img span { font-size: 13px; font-weight: 500; }
+
+/* Image badge (stock indicator on image) */
+.img-badge {
+  position: absolute;
+  top: 16px; left: 16px;
+  padding: 5px 12px;
+  border-radius: 99px;
+  font-family: var(--font-display);
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.3px;
+  backdrop-filter: blur(8px);
+  border: 1px solid;
+  animation: popIn .4s var(--ease-spring) .3s both;
+}
+.img-badge.in  { background: rgba(232,249,239,0.92); color: var(--accent);  border-color: rgba(46,160,86,0.25); }
+.img-badge.low { background: rgba(255,251,235,0.92); color: #b45309;        border-color: rgba(245,158,11,0.3); }
+.img-badge.out { background: rgba(255,242,242,0.92); color: var(--red);     border-color: rgba(229,57,53,0.25); }
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.7) translateY(-6px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Thumbnail strip (single image — just a decorative dot indicator) */
+.img-dots {
+  display: flex; justify-content: center; gap: 6px;
+  animation: fadeSlideUp .55s var(--ease-out) .1s both;
+}
+.img-dot {
+  width: 6px; height: 6px; border-radius: 99px;
+  background: var(--border-strong);
+  transition: all .3s;
+}
+.img-dot.active { width: 20px; background: var(--ink); }
+
+/* ══════════════════════════════════════════
+   INFO COLUMN
+══════════════════════════════════════════ */
+.info-col {
+  display: flex; flex-direction: column; gap: 24px;
+  animation: fadeSlideUp .55s var(--ease-out) .1s both;
+}
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Brand / Category pill ── */
+.prod-eyebrow {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 1.2px; text-transform: uppercase;
+  color: var(--accent);
+}
+.prod-eyebrow::before {
+  content: '';
+  width: 20px; height: 2px;
+  background: var(--accent); border-radius: 2px;
+  display: inline-block;
+}
+
+/* ── Title ── */
+.prod-name {
+  font-family: var(--font-display);
+  font-size: clamp(22px, 3.5vw, 30px);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.6px;
+  color: var(--ink);
+}
+
+/* ── Price block ── */
+.price-block {
+  display: flex; align-items: baseline; gap: 10px;
+  flex-wrap: wrap;
+}
+.price-tag {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 4vw, 36px);
+  font-weight: 800;
+  letter-spacing: -1px;
+  color: var(--ink);
+  line-height: 1;
+}
+.price-currency {
+  font-size: 0.55em;
+  font-weight: 700;
+  vertical-align: super;
+  letter-spacing: 0;
+  color: var(--ink-muted);
+}
+
+/* ── Divider ── */
+.divider {
+  height: 1px;
+  background: var(--border);
+  border: none;
+}
+
+/* ── Description ── */
+.desc-label {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 10px;
+}
+.desc-text {
+  font-size: 14px;
+  line-height: 1.85;
+  color: var(--ink-muted);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.desc-text.empty { font-style: italic; color: var(--ink-faint); }
+
+/* Expandable description */
+.desc-wrap { position: relative; }
+.desc-fade {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 60px;
+  background: linear-gradient(transparent, var(--canvas));
+  pointer-events: none;
+  transition: opacity .3s;
+}
+.desc-fade.hidden { opacity: 0; pointer-events: none; }
+.desc-toggle {
+  background: none; border: none;
+  font-family: var(--font-body);
+  font-size: 13px; font-weight: 700;
+  color: var(--accent);
+  cursor: pointer; padding: 6px 0;
+  display: flex; align-items: center; gap: 5px;
+  transition: color .15s;
+}
+.desc-toggle:hover { color: var(--accent-dk); }
+
+/* ── Stock row ── */
+.stock-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 18px;
+  background: var(--surface);
+  border-radius: var(--r);
+  border: 1px solid var(--border);
+}
+.stock-dot {
+  width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+.stock-dot.in  { background: var(--accent); }
+.stock-dot.low { background: var(--amber); animation: none; }
+.stock-dot.out { background: var(--red); animation: none; }
+@keyframes pulse-dot {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(46,160,86,0.4); }
+  50%       { box-shadow: 0 0 0 5px rgba(46,160,86,0); }
+}
+.stock-text { font-size: 13px; font-weight: 600; }
+.stock-text.in  { color: var(--accent); }
+.stock-text.low { color: #b45309; }
+.stock-text.out { color: var(--red); }
+.stock-sub { font-size: 12px; color: var(--ink-faint); margin-left: auto; }
+
+/* ── CTA button ── */
+.cta-btn {
+  width: 100%;
+  padding: 16px 24px;
+  background: var(--ink);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-lg);
+  font-family: var(--font-display);
+  font-size: 15px; font-weight: 700;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  transition: transform .2s var(--ease-spring), background .18s, box-shadow .2s;
+  letter-spacing: -0.2px;
+  position: relative; overflow: hidden;
+}
+.cta-btn::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: rgba(255,255,255,0.1);
+  opacity: 0; transition: opacity .2s;
+}
+.cta-btn:hover { transform: scale(1.02); box-shadow: 0 8px 28px rgba(0,0,0,0.18); }
+.cta-btn:hover::after { opacity: 1; }
+.cta-btn:active { transform: scale(0.98); }
+.cta-btn:disabled {
+  background: var(--border-strong); color: var(--ink-faint);
+  cursor: not-allowed; box-shadow: none; transform: none;
+}
+.cta-btn.in  { background: var(--ink); }
+.cta-btn.out { background: var(--ink-muted); }
+
+/* ── Spec pills ── */
+.spec-pills {
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.spec-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 13px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  font-size: 12px; font-weight: 600; color: var(--ink-muted);
+  white-space: nowrap;
+}
+.spec-pill i { font-size: 11px; color: var(--accent); }
+
+/* ══════════════════════════════════════════
+   FOOTER
+══════════════════════════════════════════ */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 18px 28px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface);
+}
+.footer-inner {
+  font-family: var(--font-display);
+  font-size: 13px; font-weight: 700;
+  color: var(--ink-faint);
+  letter-spacing: -0.2px;
+}
+.footer-inner em { color: var(--accent); font-style: normal; }
+
+/* ══════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════ */
+#ov-toast {
+  position: fixed;
+  bottom: 28px; left: 50%;
+  transform: translateX(-50%) translateY(16px);
+  background: var(--ink);
+  color: #fff;
+  padding: 12px 22px;
+  border-radius: 99px;
+  font-family: var(--font-display);
+  font-size: 13px; font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9998;
+  transition: opacity .28s, transform .28s var(--ease-spring);
+  white-space: nowrap;
+  display: flex; align-items: center; gap: 8px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.22);
+}
+#ov-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+#ov-toast.success { background: var(--accent); }
+#ov-toast.error   { background: var(--red); }
+
+@media (max-width: 700px) {
+  .product-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .img-stage { border-radius: var(--r-lg); }
+  main { padding: 24px 16px 48px; }
+  nav { padding: 0 16px; }
+  .prod-name { font-size: 22px; }
+  .price-tag { font-size: 30px; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div id="ov-toast"></div>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="loader-logo"><em>Alfonex</em></div>
+  <div class="loader-track"><div class="loader-fill"></div></div>
+</div>
+
+<!-- ERROR -->
+<div id="error-state">
+  <div class="error-emoji">📦</div>
+  <div class="error-heading">Product Unavailable</div>
+  <div class="error-sub" id="error-sub">This product may no longer be available. Please go back and try another.</div>
+  <a href="javascript:window.close()" class="btn-close">
+    <i class="fa-solid fa-arrow-left"></i> Go Back
+  </a>
+</div>
+
+<!-- PAGE -->
+<div id="page">
+
+  <nav>
+    <a href="javascript:window.close()" class="nav-back">
+      <i class="fa-solid fa-chevron-left"></i> Back
+    </a>
+    <a href="#" class="nav-brand"><em>Alfonex</em></a>
+    <div style="width:60px"></div><!-- spacer to center brand -->
+  </nav>
+
+  <main>
+    <div class="product-grid">
+
+      <!-- IMAGE COLUMN -->
+      <div class="img-col">
+        <div class="img-stage" id="img-stage">
+          <div class="no-img" id="no-img">
+            <i class="fa-regular fa-image"></i>
+            <span>No image available</span>
+          </div>
+          <span class="img-badge" id="img-badge" style="display:none"></span>
+        </div>
+        <div class="img-dots">
+          <div class="img-dot active"></div>
+        </div>
+      </div>
+
+      <!-- INFO COLUMN -->
+      <div class="info-col">
+
+        <div>
+          <div class="prod-eyebrow" id="prod-eyebrow">Product</div>
+          <h1 class="prod-name" id="prod-name">—</h1>
+        </div>
+
+        <!-- Price -->
+        <div class="price-block">
+          <div class="price-tag" id="prod-price">
+            <span class="price-currency">$</span><span id="price-val">—</span>
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- Description -->
+        <div>
+          <div class="desc-label">About this product</div>
+          <div class="desc-wrap" id="desc-wrap">
+            <div class="desc-text" id="prod-desc">—</div>
+            <div class="desc-fade" id="desc-fade"></div>
+          </div>
+          <button class="desc-toggle" id="desc-toggle" style="display:none" onclick="toggleDesc()">
+            <i class="fa-solid fa-chevron-down" id="desc-chevron"></i>
+            <span id="desc-toggle-label">Read more</span>
+          </button>
+        </div>
+
+        <hr class="divider">
+
+        <!-- Stock -->
+        <div class="stock-row">
+          <span class="stock-dot" id="stock-dot"></span>
+          <span class="stock-text" id="stock-text">—</span>
+          <span class="stock-sub" id="stock-sub"></span>
+        </div>
+
+        <!-- Spec Pills -->
+        <div class="spec-pills" id="spec-pills" style="display:none"></div>
+
+        <!-- CTA -->
+        <button class="cta-btn" id="cta-btn" disabled>
+          <i class="fa-solid fa-bag-shopping"></i>
+          <span id="cta-label">Loading…</span>
+        </button>
+
+      </div><!-- /info-col -->
+    </div><!-- /product-grid -->
+  </main>
+
+  <footer>
+    <div class="footer-inner"><em>Alfonex</em> &nbsp;·&nbsp; Premium Tech Store</div>
+  </footer>
+
+</div><!-- /page -->
+
+<script>
+'use strict';
+
+/* ══════════════════════════════════════
+   FIREBASE
+══════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey:'AIzaSyCTM2dhEVY5lFq7bNkIR7Gne-phh0nABXQ',
+  authDomain:'update1-b4bf5.firebaseapp.com',
+  databaseURL:'https://update1-b4bf5-default-rtdb.firebaseio.com',
+  projectId:'update1-b4bf5',
+  storageBucket:'update1-b4bf5.firebasestorage.app',
+  messagingSenderId:'1049308656123',
+  appId:'1:1049308656123:web:c966f04f25a0322ac71b5e'
+};
+firebase.initializeApp(firebaseConfig);
+const db   = firebase.database();
+const auth = firebase.auth();
+
+/* ══════════════════════════════════════
+   HELPERS
+══════════════════════════════════════ */
+const CLD_CLOUD = 'saheerbabu';
+function cldImg(u, t = 'f_auto,q_auto,w_900') {
+  return u ? u.replace('/upload/', `/upload/${t}/`) : '';
+}
+function fmt$(n) {
+  const v = Number(n || 0);
+  return v % 1 === 0 ? v.toLocaleString() : v.toFixed(2);
+}
+function hideLoader() {
+  const l = document.getElementById('loader');
+  l.style.opacity = '0';
+  setTimeout(() => l.style.display = 'none', 500);
+}
+function showError(msg) {
+  hideLoader();
+  if (msg) document.getElementById('error-sub').textContent = msg;
+  document.getElementById('error-state').classList.add('show');
+}
+function showPage() {
+  hideLoader();
+  document.getElementById('page').classList.add('show');
+}
+
+/* ── Stock state helpers ── */
+function stockClass(s) {
+  const q = Number(s);
+  if (q <= 0) return 'out';
+  if (q <= 5) return 'low';
+  return 'in';
+}
+
+/* ══════════════════════════════════════
+   DESCRIPTION EXPAND / COLLAPSE
+══════════════════════════════════════ */
+let _descExpanded = false;
+const DESC_CLAMP = 180; /* px — collapse height */
+
+function setupDescToggle() {
+  const el    = document.getElementById('prod-desc');
+  const wrap  = document.getElementById('desc-wrap');
+  const fade  = document.getElementById('desc-fade');
+  const btn   = document.getElementById('desc-toggle');
+
+  // Set collapsed height first
+  wrap.style.maxHeight = DESC_CLAMP + 'px';
+  wrap.style.overflow  = 'hidden';
+  wrap.style.transition = 'max-height .4s cubic-bezier(0.16,1,0.3,1)';
+
+  // Check if content overflows
+  requestAnimationFrame(() => {
+    if (el.scrollHeight > DESC_CLAMP + 20) {
+      btn.style.display = 'flex';
+    } else {
+      fade.classList.add('hidden');
+    }
+  });
+}
+
+function toggleDesc() {
+  _descExpanded = !_descExpanded;
+  const wrap   = document.getElementById('desc-wrap');
+  const fade   = document.getElementById('desc-fade');
+  const chevron = document.getElementById('desc-chevron');
+  const label  = document.getElementById('desc-toggle-label');
+
+  if (_descExpanded) {
+    wrap.style.maxHeight = wrap.querySelector('#prod-desc').scrollHeight + 'px';
+    fade.classList.add('hidden');
+    chevron.style.transform = 'rotate(180deg)';
+    label.textContent = 'Show less';
+  } else {
+    wrap.style.maxHeight = DESC_CLAMP + 'px';
+    fade.classList.remove('hidden');
+    chevron.style.transform = 'rotate(0)';
+    label.textContent = 'Read more';
+  }
+}
+
+/* ══════════════════════════════════════
+   RENDER
+══════════════════════════════════════ */
+function render(pushKey, p) {
+  /* Page title */
+  document.title = `${p.title || 'Product'} – Alfonex`;
+
+  /* Eyebrow — derive category from title or use generic */
+  const eyebrow = document.getElementById('prod-eyebrow');
+  const titleLower = (p.title || '').toLowerCase();
+  let cat = 'Product';
+  if (titleLower.includes('iphone') || titleLower.includes('samsung') || titleLower.includes('pixel')) cat = 'Smartphone';
+  else if (titleLower.includes('ipad') || titleLower.includes('tablet')) cat = 'Tablet';
+  else if (titleLower.includes('mac') || titleLower.includes('laptop')) cat = 'Laptop';
+  else if (titleLower.includes('watch') || titleLower.includes('band')) cat = 'Wearable';
+  else if (titleLower.includes('airpod') || titleLower.includes('buds') || titleLower.includes('earphone')) cat = 'Audio';
+  eyebrow.textContent = cat;
+
+  /* Name */
+  document.getElementById('prod-name').textContent = p.title || '—';
+
+  /* Price */
+  document.getElementById('price-val').textContent = fmt$(p.price);
+
+  /* Image */
+  const stage = document.getElementById('img-stage');
+  if (p.imageUrl) {
+    const imgEl = document.createElement('img');
+    imgEl.src = cldImg(p.imageUrl);
+    imgEl.alt = p.title || 'Product image';
+    imgEl.loading = 'lazy';
+    document.getElementById('no-img').remove();
+    stage.insertBefore(imgEl, stage.firstChild);
+  }
+
+  /* Stock badge on image */
+  const stock  = Number(p.stock || 0);
+  const sc     = stockClass(stock);
+  const badge  = document.getElementById('img-badge');
+  badge.style.display = 'inline-flex';
+  badge.className = `img-badge ${sc}`;
+  badge.textContent = sc === 'in' ? 'In Stock' : sc === 'low' ? `Only ${stock} left` : 'Out of Stock';
+
+  /* Stock row */
+  const dot  = document.getElementById('stock-dot');
+  const txt  = document.getElementById('stock-text');
+  const sub  = document.getElementById('stock-sub');
+  dot.className = `stock-dot ${sc}`;
+  txt.className = `stock-text ${sc}`;
+  if (sc === 'in')  { txt.textContent = 'In Stock'; sub.textContent = `${stock} units available`; }
+  if (sc === 'low') { txt.textContent = `Only ${stock} left`; sub.textContent = 'Order soon'; }
+  if (sc === 'out') { txt.textContent = 'Out of Stock'; sub.textContent = 'Check back later'; }
+
+  /* Description */
+  const descEl = document.getElementById('prod-desc');
+  if (p.description && p.description.trim()) {
+    descEl.textContent = p.description;
+    setupDescToggle();
+  } else {
+    descEl.textContent = 'No description available for this product.';
+    descEl.classList.add('empty');
+    document.getElementById('desc-fade').classList.add('hidden');
+  }
+
+  /* Spec pills — parse from description or title keywords */
+  const pills = [];
+  if (titleLower.includes('pro')) pills.push({ icon: 'fa-solid fa-star', text: 'Pro' });
+  if (titleLower.includes('max')) pills.push({ icon: 'fa-solid fa-up-right-and-down-left-from-center', text: 'Max' });
+  if (titleLower.includes('5g'))  pills.push({ icon: 'fa-solid fa-signal', text: '5G' });
+  if (titleLower.includes('wifi') || titleLower.includes('wi-fi')) pills.push({ icon: 'fa-solid fa-wifi', text: 'Wi-Fi' });
+  if (p.description) {
+    const d = p.description.toLowerCase();
+    if (d.includes('128gb') || d.includes('128 gb')) pills.push({ icon: 'fa-solid fa-hard-drive', text: '128GB' });
+    else if (d.includes('256gb') || d.includes('256 gb')) pills.push({ icon: 'fa-solid fa-hard-drive', text: '256GB' });
+    else if (d.includes('512gb') || d.includes('512 gb')) pills.push({ icon: 'fa-solid fa-hard-drive', text: '512GB' });
+    else if (d.includes('1tb')) pills.push({ icon: 'fa-solid fa-hard-drive', text: '1TB' });
+    if (d.includes('oled')) pills.push({ icon: 'fa-solid fa-display', text: 'OLED' });
+    if (d.includes('amoled')) pills.push({ icon: 'fa-solid fa-display', text: 'AMOLED' });
+  }
+  if (pills.length > 0) {
+    const container = document.getElementById('spec-pills');
+    container.style.display = 'flex';
+    container.innerHTML = pills.slice(0, 5).map(pill =>
+      `<div class="spec-pill"><i class="${pill.icon}"></i>${pill.text}</div>`
+    ).join('');
+  }
+
+  /* CTA button */
+  const cta   = document.getElementById('cta-btn');
+  const label = document.getElementById('cta-label');
+  cta.className = `cta-btn ${sc}`;
+  if (sc === 'out') {
+    cta.disabled = true;
+    label.textContent = 'Out of Stock';
+    cta.querySelector('i').className = 'fa-solid fa-ban';
+  } else {
+    cta.disabled = false;
+    label.textContent = 'Add to Cart';
+    cta.onclick = () => handleAddToCart(pushKey);
+  }
+
+  showPage();
+}
+
+/* ══════════════════════════════════════
+   TOAST
+══════════════════════════════════════ */
+let _toastTimer;
+function showToast(msg, type = '') {
+  const el = document.getElementById('ov-toast');
+  el.innerHTML = (type === 'success' ? '<i class="fa-solid fa-check"></i> ' : type === 'error' ? '<i class="fa-solid fa-xmark"></i> ' : '') + msg;
+  el.className = 'show' + (type ? ' ' + type : '');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => { el.className = ''; }, 2800);
+}
+
+/* ══════════════════════════════════════
+   ADD TO CART
+   Strategy: call window.opener.addToCart(pushKey) if the
+   parent window is still open and has that function.
+   Fallback: write directly to Firebase cart node so the
+   item is never lost even if opener is gone.
+══════════════════════════════════════ */
+function handleAddToCart(pushKey) {
+  const cta   = document.getElementById('cta-btn');
+  const label = document.getElementById('cta-label');
+
+  /* Optimistic UI — button feedback */
+  cta.disabled = true;
+  const origIcon  = cta.querySelector('i').className;
+  cta.querySelector('i').className = 'fa-solid fa-spinner fa-spin';
+  label.textContent = 'Adding…';
+
+  /* ── opener is alive and has addToCart ── */
+  if (window.opener && !window.opener.closed && typeof window.opener.addToCart === 'function') {
+    try {
+      window.opener.addToCart(pushKey);
+      showToast('Added to cart!', 'success');
+      cta.querySelector('i').className = 'fa-solid fa-check';
+      label.textContent = 'Added!';
+      cta.style.background = 'var(--accent)';
+      setTimeout(() => {
+        cta.querySelector('i').className = 'fa-solid fa-bag-shopping';
+        label.textContent = 'Add to Cart';
+        cta.style.background = '';
+        cta.disabled = false;
+      }, 1800);
+    } catch (e) {
+      console.error('addToCart error:', e);
+      restoreBtn(cta, label, origIcon);
+      showToast('Could not add to cart.', 'error');
+    }
+    return;
+  }
+
+  /* ── opener missing or closed ── */
+  console.warn('window.opener unavailable. Make sure the store opens this page with window.open(url, "alfonex_product") — no noopener/noreferrer.');
+  restoreBtn(cta, label, origIcon);
+  showToast('Go back to the store and try again.', 'error');
+}
+
+function restoreBtn(cta, label, origIcon) {
+  cta.querySelector('i').className = origIcon;
+  label.textContent = 'Add to Cart';
+  cta.disabled = false;
+  cta.style.background = '';
+}
+
+/* ══════════════════════════════════════
+   BOOTSTRAP
+══════════════════════════════════════ */
+(function init() {
+  const params  = new URLSearchParams(window.location.search);
+  const pushKey = params.get('key');
+  if (!pushKey) {
+    showError('No product was specified. Please go back and select a product.');
+    return;
+  }
+  /* Fetch once — no auth required for reading product details */
+  db.ref(`products/${pushKey}`).once('value')
+    .then(snap => {
+      if (!snap.exists()) {
+        showError('This product is no longer available or the link is invalid.');
+        return;
+      }
+      render(pushKey, snap.val());
+    })
+    .catch(err => showError('Failed to load product. Please try again. (' + err.message + ')'));
+})();
+</script>
+</body>
+</html>

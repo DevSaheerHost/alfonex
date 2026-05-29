@@ -21,7 +21,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
@@ -156,7 +155,8 @@ a { text-decoration: none; color: inherit; }
   z-index: 100;
   background: var(--white);
   border-bottom: 1px solid var(--border);
-  padding: 8px 10px;
+  
+  
   display: flex; 
   align-items: center; 
   gap: 8px;
@@ -294,10 +294,6 @@ a { text-decoration: none; color: inherit; }
   font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
   padding: 4px 10px; text-transform: uppercase;
   background: var(--green-light); color: var(--green);
-}
-.p-card-img {
-  width: 100%; aspect-ratio: 1/1; object-fit: contain;
-  background: #f5f5f7; padding: 10px; display: block;
 }
 .p-card-body { padding: 10px; flex: 1; }
 .p-card-model { font-family: var(--font-head); font-size: 13px; font-weight: 700; line-height: 1.3; }
@@ -782,7 +778,7 @@ a { text-decoration: none; color: inherit; }
 }
 .ts-node.done   { border-color: var(--red); background: var(--red-dim); }
 .ts-node.active { border-color: var(--red); background: var(--red); box-shadow: 0 0 0 4px var(--red-dim); }
-.ts-node.active .ts-emoji, .ts-node.active .ts-emoji i { animation: bounce 0.6s ease infinite alternate; }
+.ts-node.active .ts-emoji { animation: bounce 0.6s ease infinite alternate; }
 @keyframes bounce { from { transform: translateY(0) scale(1); } to { transform: translateY(-5px) scale(1.15); } }
 .ts-label { font-size: 10px; font-weight: 700; color: var(--muted); margin-top: 2px; text-align: center; white-space: nowrap; }
 .ts-label.active-lbl { color: var(--red); }
@@ -791,10 +787,8 @@ a { text-decoration: none; color: inherit; }
 .moving-icon {
   position: absolute; top: 10px; font-size: 26px;
   transition: left 1.5s cubic-bezier(0.4,0,0.2,1);
-  z-index: 2; text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  z-index: 2; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
   animation: float 1.2s ease-in-out infinite alternate;
-  display: flex; align-items: center; justify-content: center;
-  color: var(--green);
 }
 @keyframes float { from { transform: translateY(0); } to { transform: translateY(-4px); } }
 
@@ -1239,33 +1233,6 @@ a { text-decoration: none; color: inherit; }
   object-fit: contain; display: block;
 }
 
-
-/* ── FONT AWESOME ICON POLISH ── */
-.sb-icon i        { font-size: 16px; width: 18px; text-align: center; }
-.pi-icon i        { font-size: 15px; color: var(--green); }
-.pt-icon i        { font-size: 22px; color: var(--green); }
-.info-contact-icon i { font-size: 20px; color: var(--green); }
-.ts-emoji i       { font-size: 20px; }
-.ts-node.done   .ts-emoji i { color: var(--red); }
-.ts-node.active .ts-emoji i { color: #fff; }
-.moving-icon i    { color: var(--green); }
-.e-icon i         { font-size: 52px; color: var(--green); }
-.no-icon i        { font-size: 40px; color: var(--muted); }
-.pf-socials a i   { font-size: 20px; }
-.pf-socials a:hover i { color: var(--green); }
-#theme-toggle i   { font-size: 17px; }
-.edit-modal-title i { margin-right: 4px; color: var(--green); }
-.addr-form-card h3 i { color: var(--green); }
-.addr-save-btn i, .edit-save-btn i { margin-right: 4px; }
-.info-block h2 i  { color: var(--green); font-size: 16px; }
-.co-section h3 i  { color: var(--green); }
-.comment-section h4 i { color: var(--green); margin-right: 6px; }
-.ord-tl-label i   { color: var(--green); }
-.tl-active .ord-tl-label i { color: var(--red); }
-.tl-pending .ord-tl-label i { color: var(--muted); }
-.pg-header > span i { display: inline-block; }
-.profile-signout svg { color: var(--red); }
-.fa-brands.fa-whatsapp { color: #25D366; }
 </style>
 </head>
 <body>
@@ -1298,34 +1265,34 @@ a { text-decoration: none; color: inherit; }
 
   <div class="sb-section">
     <div class="sb-label">Shop</div>
-    <button class="sb-link" onclick="navTo('shop');filterCat('all');closeSB()"><span class="sb-icon"><i class="fa-solid fa-house"></i></span> Home</button>
-    <button class="sb-link" onclick="navTo('shop');filterByName('iphone');clearSearch();closeSB()"><span class="sb-icon"><i class="fa-solid fa-mobile-screen-button"></i></span> iPhone</button>
-    <button class="sb-link" onclick="navTo('shop');filterByName('iwatch');clearSearch();closeSB()"><span class="sb-icon"><i class="fa-solid fa-clock-rotate-left"></i></span> iWatch</button>
-    <button class="sb-link" onclick="navTo('shop');filterByName('macbook');clearSearch();closeSB()"><span class="sb-icon"><i class="fa-solid fa-laptop"></i></span> MacBook</button>
-    <button class="sb-link" onclick="navTo('shop');filterByName('airpod');clearSearch();closeSB()"><span class="sb-icon"><i class="fa-solid fa-headphones"></i></span> AirPods</button>
-    <button class="sb-link" onclick="navTo('shop');filterByName('accessories');clearSearch();closeSB()"><span class="sb-icon"><i class="fa-solid fa-plug"></i></span> Accessories</button>
-    <button class="sb-link" onclick="navTo('shop');filterByName('case');clearSearch();closeSB()"><span class="sb-icon"><i class="fa-solid fa-shield"></i></span> Cases</button>
+    <button class="sb-link" onclick="navTo('shop');filterCat('all');closeSB()"><span class="sb-icon">🏠</span> Home</button>
+    <button class="sb-link" onclick="navTo('shop');filterByName('iphone');clearSearch();closeSB()"><span class="sb-icon">📱</span> iPhone</button>
+    <button class="sb-link" onclick="navTo('shop');filterByName('iwatch');clearSearch();closeSB()"><span class="sb-icon">⌚</span> iWatch</button>
+    <button class="sb-link" onclick="navTo('shop');filterByName('macbook');clearSearch();closeSB()"><span class="sb-icon">💻</span> MacBook</button>
+    <button class="sb-link" onclick="navTo('shop');filterByName('airpod');clearSearch();closeSB()"><span class="sb-icon">🎧</span> AirPods</button>
+    <button class="sb-link" onclick="navTo('shop');filterByName('accessories');clearSearch();closeSB()"><span class="sb-icon">🔌</span> Accessories</button>
+    <button class="sb-link" onclick="navTo('shop');filterByName('case');clearSearch();closeSB()"><span class="sb-icon">🛡️</span> Cases</button>
   </div>
 
   <div class="sb-section">
     <div class="sb-label">Account</div>
-    <button class="sb-link" id="sb-login-link" onclick="navTo('login');closeSB()"><span class="sb-icon"><i class="fa-solid fa-user"></i></span> Login / Register</button>
-    <button class="sb-link" id="sb-orders-link" style="display:none" onclick="navTo('orders');closeSB()"><span class="sb-icon"><i class="fa-solid fa-box"></i></span> My Orders</button>
-    <button class="sb-link" id="sb-logout-link" style="display:none" onclick="doLogout();closeSB()"><span class="sb-icon"><i class="fa-solid fa-right-from-bracket"></i></span> Logout</button>
+    <button class="sb-link" id="sb-login-link" onclick="navTo('login');closeSB()"><span class="sb-icon">👤</span> Login / Register</button>
+    <button class="sb-link" id="sb-orders-link" style="display:none" onclick="navTo('orders');closeSB()"><span class="sb-icon">📦</span> My Orders</button>
+    <button class="sb-link" id="sb-logout-link" style="display:none" onclick="doLogout();closeSB()"><span class="sb-icon">🚪</span> Logout</button>
   </div>
 
   <div class="sb-section">
     <div class="sb-label">Preferences</div>
-    <button class="sb-link" id="sb-theme-btn" onclick="toggleTheme()"><span class="sb-icon" id="sb-theme-icon"><i class="fa-solid fa-moon"></i></span> <span id="sb-theme-label">Dark Mode</span></button>
+    <button class="sb-link" id="sb-theme-btn" onclick="toggleTheme()"><span class="sb-icon" id="sb-theme-icon">🌙</span> <span id="sb-theme-label">Dark Mode</span></button>
   </div>
   <div class="sb-section">
     <div class="sb-label">Info</div>
-    <button class="sb-link" onclick="showInfo('quality')"><span class="sb-icon"><i class="fa-solid fa-star"></i></span> Quality Grades</button>
-    <button class="sb-link" onclick="showInfo('shipping')"><span class="sb-icon"><i class="fa-solid fa-truck"></i></span> Shipping</button>
-    <button class="sb-link" onclick="showInfo('warranty')"><span class="sb-icon"><i class="fa-solid fa-shield-halved"></i></span> Warranty</button>
-    <button class="sb-link" onclick="showInfo('policy')"><span class="sb-icon"><i class="fa-solid fa-clipboard-list"></i></span> Return Policy</button>
-    <button class="sb-link" onclick="showInfo('contact')"><span class="sb-icon"><i class="fa-solid fa-phone"></i></span> Contact Us</button>
-    <button class="sb-link" onclick="showInfo('about')"><span class="sb-icon"><i class="fa-solid fa-circle-info"></i></span> About iAlfonex</button>
+    <button class="sb-link" onclick="showInfo('quality')"><span class="sb-icon">⭐</span> Quality Grades</button>
+    <button class="sb-link" onclick="showInfo('shipping')"><span class="sb-icon">🚚</span> Shipping</button>
+    <button class="sb-link" onclick="showInfo('warranty')"><span class="sb-icon">🛡️</span> Warranty</button>
+    <button class="sb-link" onclick="showInfo('policy')"><span class="sb-icon">📋</span> Return Policy</button>
+    <button class="sb-link" onclick="showInfo('contact')"><span class="sb-icon">📞</span> Contact Us</button>
+    <button class="sb-link" onclick="showInfo('about')"><span class="sb-icon">ℹ️</span> About iAlfonex</button>
   </div>
 </div>
 
@@ -1337,7 +1304,7 @@ a { text-decoration: none; color: inherit; }
   <div id="nav-logo" onclick="navTo('shop')" style="flex:1;display:flex;align-items:center;">
   <img id="logo-img" class="alfonex-logo" src="./assets/logo/light_nobg.png" alt="Alfonex">
 </div>
-  <button id="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme" title="Toggle light/dark"><i class="fa-solid fa-moon"></i></button>
+  <button id="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme" title="Toggle light/dark">🌙</button>
   <button class="nav-ic" onclick="focusSearch()" aria-label="Search">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
   </button>
@@ -1367,7 +1334,7 @@ a { text-decoration: none; color: inherit; }
 
     <!-- Comment / Feedback -->
     <div class="comment-section">
-      <h4><i class="fa-solid fa-comment-dots"></i> Leave a Comment</h4>
+      <h4>💬 Leave a Comment</h4>
       <textarea class="comment-textarea" id="footer-comment"
         placeholder="Share your thoughts, feedback, or questions…"></textarea>
       <button class="comment-send-btn" id="comment-send-btn" onclick="submitComment()">
@@ -1523,7 +1490,7 @@ a { text-decoration: none; color: inherit; }
 <div class="page" id="page-success">
   <div style="display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 122px)">
     <div class="tracker-wrap">
-      <div class="tracker-title">Order Placed! <i class="fa-solid fa-circle-check" style="color:var(--green)"></i></div>
+      <div class="tracker-title">Order Placed! 🎉</div>
       <div class="tracker-subtitle" id="success-msg">
         Thank you! We'll reach out via WhatsApp soon.
       </div>
@@ -1533,20 +1500,20 @@ a { text-decoration: none; color: inherit; }
       <div class="tracker-road">
         <div class="tracker-line"><div class="tracker-line-fill" id="tracker-fill"></div></div>
         <!-- Moving icon -->
-        <div class="moving-icon" id="moving-icon" style="left:4px"><i class="fa-solid fa-box"></i></div>
+        <div class="moving-icon" id="moving-icon" style="left:4px">📦</div>
         <!-- Steps -->
         <div class="tracker-steps">
           <div class="tracker-step">
-            <div class="ts-node done" id="ts-0"><span class="ts-emoji"><i class="fa-solid fa-box"></i></span></div>
+            <div class="ts-node done" id="ts-0"><span class="ts-emoji">📦</span></div>
           </div>
           <div class="tracker-step">
-            <div class="ts-node" id="ts-1"><span class="ts-emoji"><i class="fa-solid fa-truck"></i></span></div>
+            <div class="ts-node" id="ts-1"><span class="ts-emoji">🚚</span></div>
           </div>
           <div class="tracker-step">
-            <div class="ts-node" id="ts-2"><span class="ts-emoji"><i class="fa-solid fa-plane"></i></span></div>
+            <div class="ts-node" id="ts-2"><span class="ts-emoji">✈️</span></div>
           </div>
           <div class="tracker-step">
-            <div class="ts-node" id="ts-3"><span class="ts-emoji"><i class="fa-solid fa-location-dot"></i></span></div>
+            <div class="ts-node" id="ts-3"><span class="ts-emoji">📍</span></div>
           </div>
         </div>
       </div>
@@ -1566,7 +1533,7 @@ a { text-decoration: none; color: inherit; }
       </div>
 
       <div class="tracker-acts">
-        <button class="btn-prim" onclick="navTo('orders')"><i class="fa-solid fa-box"></i> View My Orders</button>
+        <button class="btn-prim" onclick="navTo('orders')">📦 View My Orders</button>
         <button class="btn-ghost" onclick="navTo('shop')">Continue Shopping</button>
       </div>
     </div>
@@ -1594,7 +1561,7 @@ a { text-decoration: none; color: inherit; }
           <label class="form-label">Password</label>
           <div class="pw-wrap">
             <input type="password" class="form-input" id="l-pass" placeholder="••••••••" autocomplete="current-password">
-            <button class="pw-toggle" type="button" onclick="togglePw('l-pass',this)"><i class="fa-regular fa-eye"></i></button>
+            <button class="pw-toggle" type="button" onclick="togglePw('l-pass',this)">👁</button>
           </div>
         </div>
         <button class="auth-btn" onclick="doLogin()">Login →</button>
@@ -1616,7 +1583,7 @@ a { text-decoration: none; color: inherit; }
           <label class="form-label">Password</label>
           <div class="pw-wrap">
             <input type="password" class="form-input" id="r-pass" placeholder="Min. 6 characters" autocomplete="new-password">
-            <button class="pw-toggle" type="button" onclick="togglePw('r-pass',this)"><i class="fa-regular fa-eye"></i></button>
+            <button class="pw-toggle" type="button" onclick="togglePw('r-pass',this)">👁</button>
           </div>
         </div>
         <div class="form-group">
@@ -1666,22 +1633,22 @@ a { text-decoration: none; color: inherit; }
   <!-- Quick tiles -->
   <div class="profile-grid">
     <div class="profile-tile" onclick="navTo('orders')">
-      <div class="pt-icon"><i class="fa-solid fa-box"></i></div>
+      <div class="pt-icon">📦</div>
       <div class="pt-name">My Orders</div>
       <div class="pt-sub">Track & manage</div>
     </div>
     <div class="profile-tile" onclick="navTo('returns')">
-      <div class="pt-icon"><i class="fa-solid fa-rotate-left"></i></div>
+      <div class="pt-icon">↩️</div>
       <div class="pt-name">Returns</div>
       <div class="pt-sub">Manage requests</div>
     </div>
     <div class="profile-tile" onclick="navTo('wishlist')">
-      <div class="pt-icon"><i class="fa-regular fa-heart"></i></div>
+      <div class="pt-icon">🤍</div>
       <div class="pt-name">Wishlist</div>
       <div class="pt-sub" id="wishlist-count-tile">0 saved items</div>
     </div>
     <div class="profile-tile" onclick="navTo('contact')">
-      <div class="pt-icon"><i class="fa-solid fa-comment-dots"></i></div>
+      <div class="pt-icon">💬</div>
       <div class="pt-name">Support</div>
       <div class="pt-sub">We're here to help</div>
     </div>
@@ -1692,22 +1659,22 @@ a { text-decoration: none; color: inherit; }
     <div class="profile-section-title">My Account</div>
     <div class="profile-row">
       <div class="profile-item" onclick="navTo('addresses')">
-        <div class="pi-icon"><i class="fa-solid fa-location-dot"></i></div>
+        <div class="pi-icon">📍</div>
         <span class="pi-label">Addresses</span>
         <span class="pi-arrow">›</span>
       </div>
       <div class="profile-item" onclick="navTo('warranty')">
-        <div class="pi-icon"><i class="fa-solid fa-shield-halved"></i></div>
+        <div class="pi-icon">🛡️</div>
         <span class="pi-label">Warranty Claims</span>
         <span class="pi-arrow">›</span>
       </div>
       <div class="profile-item" onclick="navTo('policy')">
-        <div class="pi-icon"><i class="fa-solid fa-clipboard-list"></i></div>
+        <div class="pi-icon">📋</div>
         <span class="pi-label">Return Policy</span>
         <span class="pi-arrow">›</span>
       </div>
       <div class="profile-item" onclick="navTo('about')">
-        <div class="pi-icon"><i class="fa-solid fa-circle-info"></i></div>
+        <div class="pi-icon">ℹ️</div>
         <span class="pi-label">About Alfonex</span>
         <span class="pi-arrow">›</span>
       </div>
@@ -1719,28 +1686,28 @@ a { text-decoration: none; color: inherit; }
     <div class="profile-section-title">Settings</div>
     <div class="profile-row">
       <div class="profile-item" onclick="toggleTheme();renderProfile()">
-        <div class="pi-icon" id="theme-pi-icon"><i class="fa-solid fa-moon"></i></div>
+        <div class="pi-icon" id="theme-pi-icon">🌙</div>
         <span class="pi-label" id="theme-pi-label">Dark Mode</span>
         <span class="pi-arrow">›</span>
       </div>
       <div class="profile-item" onclick="navTo('quality')">
-        <div class="pi-icon"><i class="fa-solid fa-star"></i></div>
+        <div class="pi-icon">⭐</div>
         <span class="pi-label">Quality Grades</span>
         <span class="pi-arrow">›</span>
       </div>
       <div class="profile-item" onclick="navTo('shipping-info')">
-        <div class="pi-icon"><i class="fa-solid fa-truck"></i></div>
+        <div class="pi-icon">🚚</div>
         <span class="pi-label">Shipping Info</span>
         <span class="pi-arrow">›</span>
       </div>
       <div class="profile-item disabled">
-        <div class="pi-icon"><i class="fa-solid fa-bell"></i></div>
+        <div class="pi-icon">🔔</div>
         <span class="pi-label">Notifications</span>
         <span class="pi-soon">Soon</span>
         <span class="pi-arrow">›</span>
       </div>
       <div class="profile-item disabled">
-        <div class="pi-icon"><i class="fa-solid fa-lock"></i></div>
+        <div class="pi-icon">🔒</div>
         <span class="pi-label">Security</span>
         <span class="pi-soon">Soon</span>
         <span class="pi-arrow">›</span>
@@ -1759,10 +1726,10 @@ a { text-decoration: none; color: inherit; }
   <!-- Footer -->
   <div class="profile-footer">
     <div class="pf-socials">
-      <a href="https://wa.me/971558347102" target="_blank" title="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
-      <a href="https://www.instagram.com/ialfonex" target="_blank" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
-      <a href="https://x.com/ialfonex" target="_blank" title="X / Twitter"><i class="fa-brands fa-x-twitter"></i></a>
-      <a href="https://www.facebook.com/ialfonex" target="_blank" title="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+      <a href="#" onclick="return false">📘</a>
+      <a href="#" onclick="return false">✖️</a>
+      <a href="#" onclick="return false">📸</a>
+      <a href="#" onclick="return false">💼</a>
     </div>
     <div class="pf-links">
       <a href="#">Terms of Use</a><span>·</span>
@@ -1781,14 +1748,14 @@ a { text-decoration: none; color: inherit; }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="15 18 9 12 15 6"/></svg> Back
     </button>
     <h1>Returns</h1>
-    <span style="font-size:18px;color:var(--green)"><i class="fa-solid fa-rotate-left"></i></span>
+    <span style="font-size:20px">↩️</span>
   </div>
   <div class="sub-empty">
-    <div class="e-icon"><i class="fa-regular fa-envelope-open"></i></div>
+    <div class="e-icon">📭</div>
     <h2>No Return Requests</h2>
     <p>You have no active or past return requests.</p>
     <div class="info-block" style="text-align:left;margin:0">
-      <h2><i class="fa-solid fa-clipboard-list"></i> Return Policy</h2>
+      <h2>📋 Return Policy</h2>
       <ul>
         <li><strong>ASIS items</strong> — Non-returnable</li>
         <li><strong>A / A+ grade</strong> — 7-day exchange (sealed, original condition)</li>
@@ -1797,7 +1764,7 @@ a { text-decoration: none; color: inherit; }
       <div class="info-highlight">To initiate a return, contact us via WhatsApp with your Order ID</div>
     </div>
     <br>
-    <button class="shop-now" onclick="navTo('contact')"><i class="fa-solid fa-phone"></i> Contact Support</button>
+    <button class="shop-now" onclick="navTo('contact')">📞 Contact Support</button>
   </div>
 </div>
 
@@ -1808,7 +1775,7 @@ a { text-decoration: none; color: inherit; }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="15 18 9 12 15 6"/></svg> Back
     </button>
     <h1>Wishlist</h1>
-    <span style="font-size:18px;color:var(--red)"><i class="fa-regular fa-heart"></i></span>
+    <span style="font-size:20px">🤍</span>
   </div>
   <div id="wishlist-body"></div>
 </div>
@@ -1820,12 +1787,12 @@ a { text-decoration: none; color: inherit; }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="15 18 9 12 15 6"/></svg> Back
     </button>
     <h1>Addresses</h1>
-    <span style="font-size:18px;color:var(--green)"><i class="fa-solid fa-location-dot"></i></span>
+    <span style="font-size:20px">📍</span>
   </div>
   <div id="addresses-body"></div>
   <div class="addr-form-wrap">
     <div class="addr-form-card">
-      <h3><i class="fa-solid fa-plus"></i> Add New Address</h3>
+      <h3>➕ Add New Address</h3>
       <div class="form-group">
         <label class="form-label">Label (Home / Work)</label>
         <input type="text" class="form-input" id="addr-label" placeholder="e.g. Home">
@@ -1847,7 +1814,7 @@ a { text-decoration: none; color: inherit; }
         <label class="form-label">Full Address</label>
         <input type="text" class="form-input" id="addr-full" placeholder="Building, street, landmark…">
       </div>
-      <button class="addr-save-btn" onclick="saveAddress()"><i class="fa-solid fa-floppy-disk"></i> Save Address</button>
+      <button class="addr-save-btn" onclick="saveAddress()">💾 Save Address</button>
     </div>
   </div>
 </div>
@@ -1859,11 +1826,11 @@ a { text-decoration: none; color: inherit; }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="15 18 9 12 15 6"/></svg> Back
     </button>
     <h1>Warranty</h1>
-    <span style="font-size:18px;color:var(--green)"><i class="fa-solid fa-shield-halved"></i></span>
+    <span style="font-size:20px">🛡️</span>
   </div>
   <div class="info-page-body">
     <div class="info-block">
-      <h2><i class="fa-solid fa-shield-halved"></i> Warranty Coverage</h2>
+      <h2>🛡️ Warranty Coverage</h2>
       <ul>
         <li><strong>A+ Grade</strong> — 30-day limited warranty</li>
         <li><strong>A Grade</strong> — 14-day limited warranty</li>
@@ -1872,7 +1839,7 @@ a { text-decoration: none; color: inherit; }
       <div class="info-highlight">Warranty covers hardware defects only. Physical damage or water damage is not covered.</div>
     </div>
     <div class="info-block">
-      <h2><i class="fa-solid fa-clipboard-list"></i> How to Claim</h2>
+      <h2>📋 How to Claim</h2>
       <ul>
         <li>Contact us within the warranty period</li>
         <li>Provide your Order ID and photos of the issue</li>
@@ -1881,9 +1848,9 @@ a { text-decoration: none; color: inherit; }
       </ul>
     </div>
     <div class="info-block">
-      <h2><i class="fa-solid fa-phone"></i> Contact for Claims</h2>
+      <h2>📞 Contact for Claims</h2>
       <button class="info-contact-btn" onclick="navTo('contact')">
-        <span class="info-contact-icon"><i class="fa-brands fa-whatsapp"></i></span>
+        <span class="info-contact-icon">💬</span>
         <div><div class="info-contact-label">WhatsApp Support</div><div class="info-contact-val">Fastest response via WhatsApp</div></div>
       </button>
     </div>
@@ -1897,11 +1864,11 @@ a { text-decoration: none; color: inherit; }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="15 18 9 12 15 6"/></svg> Back
     </button>
     <h1>Return Policy</h1>
-    <span style="font-size:18px;color:var(--green)"><i class="fa-solid fa-clipboard-list"></i></span>
+    <span style="font-size:20px">📋</span>
   </div>
   <div class="info-page-body">
     <div class="info-block">
-      <h2><i class="fa-solid fa-box-open"></i> What Can Be Returned</h2>
+      <h2>📦 What Can Be Returned</h2>
       <ul>
         <li><strong>A / A+ grade</strong> — 7-day exchange policy</li>
         <li>Item must be in original condition, sealed box</li>
@@ -1909,7 +1876,7 @@ a { text-decoration: none; color: inherit; }
       </ul>
     </div>
     <div class="info-block">
-      <h2><i class="fa-solid fa-ban"></i> Non-Returnable Items</h2>
+      <h2>🚫 Non-Returnable Items</h2>
       <ul>
         <li>ASIS grade items (sold as-is)</li>
         <li>Opened or used accessories</li>
@@ -1918,7 +1885,7 @@ a { text-decoration: none; color: inherit; }
       <div class="info-highlight">Always inspect your item upon delivery and contact us immediately if there's an issue.</div>
     </div>
     <div class="info-block">
-      <h2><i class="fa-solid fa-gears"></i> Return Process</h2>
+      <h2>⚙️ Return Process</h2>
       <ul>
         <li>Message us on WhatsApp with your Order ID</li>
         <li>Send photos of the product and packaging</li>
@@ -1935,16 +1902,16 @@ a { text-decoration: none; color: inherit; }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="15 18 9 12 15 6"/></svg> Back
     </button>
     <h1>About Alfonex</h1>
-    <span style="font-size:18px;color:var(--green)"><i class="fa-solid fa-circle-info"></i></span>
+    <span style="font-size:20px">ℹ️</span>
   </div>
   <div class="info-page-body">
     <div class="info-block">
-      <h2><i class="fa-solid fa-building"></i> Who We Are</h2>
+      <h2>🏢 Who We Are</h2>
       <p>Alfonex is your trusted electronics partner, specializing in premium Apple devices — iPhones, MacBooks, AirPods, Apple Watches and accessories.</p>
       <p>We source genuine, tested devices and offer them at competitive prices across UAE, India and worldwide.</p>
     </div>
     <div class="info-block">
-      <h2><i class="fa-solid fa-circle-check"></i> Why Choose Us</h2>
+      <h2>✅ Why Choose Us</h2>
       <ul>
         <li>All devices tested & graded before shipping</li>
         <li>Transparent quality grading (A+, A, ASIS)</li>
@@ -1954,7 +1921,7 @@ a { text-decoration: none; color: inherit; }
       </ul>
     </div>
     <div class="info-block">
-      <h2><i class="fa-solid fa-globe"></i> Serving</h2>
+      <h2>🌍 Serving</h2>
       <ul>
         <li>🇦🇪 UAE — 2–5 business days</li>
         <li>🇮🇳 India — 5–10 business days</li>
@@ -1971,35 +1938,30 @@ a { text-decoration: none; color: inherit; }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="15 18 9 12 15 6"/></svg> Back
     </button>
     <h1>Contact Us</h1>
-    <span style="font-size:18px;color:var(--green)"><i class="fa-solid fa-phone"></i></span>
+    <span style="font-size:20px">📞</span>
   </div>
   <div class="info-page-body">
     <div class="info-block">
-      <h2><i class="fa-solid fa-comment-dots"></i> Get in Touch</h2>
+      <h2>💬 Get in Touch</h2>
       <p>We're available Monday–Saturday, 9 AM – 9 PM GST. Fastest response via WhatsApp.</p>
     </div>
-    <button class="info-contact-btn" onclick="window.open('https://wa.me/971558347102','_blank')">
-      <span class="info-contact-icon"><i class="fa-brands fa-whatsapp"></i></span>
-      <div><div class="info-contact-label">WhatsApp</div><div class="info-contact-val">+971 558347102</div></div>
+    <button class="info-contact-btn" onclick="window.open('https://wa.me/971XXXXXXXXX','_blank')">
+      <span class="info-contact-icon">📱</span>
+      <div><div class="info-contact-label">WhatsApp</div><div class="info-contact-val">+971 XX XXX XXXX</div></div>
       <span style="color:var(--muted);font-size:13px">›</span>
     </button>
-    <button class="info-contact-btn" onclick="window.open('mailto:alfonexuae@gmail.com','_blank')">
-      <span class="info-contact-icon"><i class="fa-solid fa-envelope"></i></span>
-      <div><div class="info-contact-label">Email</div><div class="info-contact-val">alfonexuae@gmail.com</div></div>
+    <button class="info-contact-btn" onclick="window.open('mailto:info@alfonex.com','_blank')">
+      <span class="info-contact-icon">✉️</span>
+      <div><div class="info-contact-label">Email</div><div class="info-contact-val">info@alfonex.com</div></div>
       <span style="color:var(--muted);font-size:13px">›</span>
     </button>
     <button class="info-contact-btn" onclick="window.open('https://www.alfonex.com','_blank')">
-      <span class="info-contact-icon"><i class="fa-solid fa-globe"></i></span>
+      <span class="info-contact-icon">🌐</span>
       <div><div class="info-contact-label">Website</div><div class="info-contact-val">www.alfonex.com</div></div>
       <span style="color:var(--muted);font-size:13px">›</span>
     </button>
-    <button class="info-contact-btn" onclick="window.open('https://maps.google.com/?q=Dubai,UAE','_blank')">
-      <span class="info-contact-icon"><i class="fa-solid fa-location-dot"></i></span>
-      <div><div class="info-contact-label">Location</div><div class="info-contact-val">Dubai, United Arab Emirates</div></div>
-      <span style="color:var(--muted);font-size:13px">›</span>
-    </button>
     <div class="info-block" style="margin-top:4px">
-      <h2><i class="fa-solid fa-clock"></i> Working Hours</h2>
+      <h2>🕐 Working Hours</h2>
       <p>Monday – Saturday: 9:00 AM – 9:00 PM GST<br>Sunday: Closed</p>
     </div>
   </div>
@@ -2012,7 +1974,7 @@ a { text-decoration: none; color: inherit; }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="15 18 9 12 15 6"/></svg> Back
     </button>
     <h1>Quality Grades</h1>
-    <span style="font-size:18px;color:var(--green)"><i class="fa-solid fa-star"></i></span>
+    <span style="font-size:20px">⭐</span>
   </div>
   <div class="info-page-body">
     <div class="info-block">
@@ -2053,11 +2015,11 @@ a { text-decoration: none; color: inherit; }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="15 18 9 12 15 6"/></svg> Back
     </button>
     <h1>Shipping Info</h1>
-    <span style="font-size:18px;color:var(--green)"><i class="fa-solid fa-truck"></i></span>
+    <span style="font-size:20px">🚚</span>
   </div>
   <div class="info-page-body">
     <div class="info-block">
-      <h2><i class="fa-solid fa-globe"></i> Delivery Regions</h2>
+      <h2>🌍 Delivery Regions</h2>
       <ul>
         <li>🇦🇪 <strong>UAE</strong> — 2–5 business days</li>
         <li>🇮🇳 <strong>India</strong> — 5–10 business days</li>
@@ -2065,7 +2027,7 @@ a { text-decoration: none; color: inherit; }
       </ul>
     </div>
     <div class="info-block">
-      <h2><i class="fa-solid fa-tag"></i> Shipping Rates (per item)</h2>
+      <h2>💰 Shipping Rates (per item)</h2>
       <ul>
         <li><strong>USD</strong> — $50 per item</li>
         <li><strong>AED</strong> — AED 120 per item</li>
@@ -2074,7 +2036,7 @@ a { text-decoration: none; color: inherit; }
       <div class="info-highlight">Shipping is calculated per item. 2 items = 2× rate.</div>
     </div>
     <div class="info-block">
-      <h2><i class="fa-solid fa-box"></i> Packaging</h2>
+      <h2>📦 Packaging</h2>
       <p>All items are securely packed with bubble wrap and tamper-proof packaging. Tracking number provided after dispatch.</p>
     </div>
   </div>
@@ -2098,7 +2060,7 @@ a { text-decoration: none; color: inherit; }
 <div id="edit-modal-overlay" onclick="closeEditModal(event)">
   <div id="edit-modal">
     <div class="edit-modal-handle"></div>
-    <div class="edit-modal-title"><i class="fa-solid fa-pen"></i> Edit Profile</div>
+    <div class="edit-modal-title">✏️ Edit Profile</div>
     <div class="form-group">
       <label class="form-label">Full Name</label>
       <input type="text" class="form-input" id="edit-name" placeholder="Your full name" autocomplete="name">
@@ -2111,10 +2073,10 @@ a { text-decoration: none; color: inherit; }
       <label class="form-label">New Password <span style="font-weight:400;color:var(--muted)">(leave blank to keep current)</span></label>
       <div class="pw-wrap">
         <input type="password" class="form-input" id="edit-pass" placeholder="Min. 6 characters" autocomplete="new-password">
-        <button class="pw-toggle" type="button" onclick="togglePw('edit-pass',this)"><i class="fa-regular fa-eye"></i></button>
+        <button class="pw-toggle" type="button" onclick="togglePw('edit-pass',this)">👁</button>
       </div>
     </div>
-    <button class="edit-save-btn" onclick="saveProfile()"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
+    <button class="edit-save-btn" onclick="saveProfile()">💾 Save Changes</button>
   </div>
 </div>
 
@@ -2272,7 +2234,7 @@ function renderSearchHome() {
       <div class="search-chip-row">
         ${history.map(h => `
           <button class="search-chip" onclick="runSearch('${h.replace(/'/g,"\\'")}')">
-            <i class="fa-regular fa-clock"></i> ${h}
+            🕐 ${h}
             <span class="chip-rm" onclick="removeHistory(event,'${h.replace(/'/g,"\\'")}')">✕</span>
           </button>`).join('')}
       </div>
@@ -2281,7 +2243,7 @@ function renderSearchHome() {
   html += `<div class="search-section">
     <div class="search-section-title">Popular Searches</div>
     <div class="search-chip-row">
-      ${SUGGESTIONS.map(s => `<button class="search-chip" onclick="runSearch('${s}')"><i class="fa-solid fa-fire"></i> ${s}</button>`).join('')}
+      ${SUGGESTIONS.map(s => `<button class="search-chip" onclick="runSearch('${s}')">🔥 ${s}</button>`).join('')}
     </div>
   </div>`;
   el.innerHTML = html;
@@ -2317,12 +2279,13 @@ function clearSearchPage() {
 function renderSearchResults(q) {
   const ql = q.toLowerCase();
   const results = Object.entries(APP.prods).filter(([,p]) =>
-    (p.title||'').toLowerCase().includes(ql)
+    [(p.model||''),(p.storage||''),(p.color||''),(p.grade||''),(p.version||''),(APP.cats[p.categoryId]?.name||'')]
+    .join(' ').toLowerCase().includes(ql)
   ).slice(0,30);
   const el = document.getElementById('search-page-content');
   if (!results.length) {
     el.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--muted)">
-      <div style="font-size:44px;margin-bottom:12px;color:var(--green)"><i class="fa-solid fa-magnifying-glass"></i></div>
+      <div style="font-size:44px;margin-bottom:12px">🔍</div>
       <strong style="color:var(--text);font-size:16px">No results for "${q}"</strong>
       <p style="margin-top:6px;font-size:13px">Try a different keyword</p>
     </div>`;
@@ -2330,14 +2293,14 @@ function renderSearchResults(q) {
   }
   el.innerHTML = `<div style="padding:8px 0 4px 12px;font-size:11px;color:var(--muted);font-weight:700;letter-spacing:0.5px;text-transform:uppercase">${results.length} result${results.length===1?'':'s'}</div>` +
     results.map(([id,p]) => {
-      const price = Number(p.price)||0;
+      const price = Number(p['price_'+APP.cur])||0;
       const priceTxt = price ? SYM[APP.cur]+price.toLocaleString() : '—';
+      const cat = APP.cats[p.categoryId]?.name||'';
       return `<div class="search-result-row" onclick="addSearchHistory('${q}');addToCart('${id}')">
-        ${p.imageUrl
-          ? `<img src="${p.imageUrl}" style="width:36px;height:36px;object-fit:contain;border-radius:6px;background:#f5f5f7;flex-shrink:0" alt="">`
-          : `<span class="sr-icon"><i class="fa-solid fa-box"></i></span>`}
+        <span class="sr-icon">${cat.includes('iPhone')?'📱':cat.includes('Mac')?'💻':cat.includes('Air')?'🎧':'📦'}</span>
         <div style="flex:1;min-width:0">
-          <div class="sr-name">${p.title||'—'}</div>
+          <div class="sr-name">${p.model||''}${p.storage?' ['+p.storage+']':''}</div>
+          <div style="font-size:11px;color:var(--muted)">${[p.color,p.grade].filter(Boolean).join(' · ')}</div>
         </div>
         <div class="sr-price">${priceTxt}</div>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="color:var(--muted);margin-left:6px;flex-shrink:0"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
@@ -2393,7 +2356,7 @@ function updateBadges() {
   bb.textContent = n;
   bb.style.display = n > 0 ? 'flex' : 'none';
 }
-function getPrice(item) { return Number(item.price) || 0; }
+function getPrice(item) { return Number(item['price_' + APP.cur]) || 0; }
 function fmt(val) { return SYM[APP.cur] + Number(val).toLocaleString(); }
 function cartSubtotal() { return APP.cart.reduce((s, i) => s + getPrice(i) * i.qty, 0); }
 
@@ -2403,11 +2366,11 @@ function addToCart(id) {
   if (ex) { ex.qty++; }
   else {
     APP.cart.push({
-      id,
-      productId: id,
-      name: p.title || '—',
-      price: Number(p.price) || 0,
-      costPrice: Number(p.costPrice) || 0,
+      id, name: (p.model||'') + (p.storage ? ' '+p.storage : ''),
+      color: p.color||'', grade: p.grade||'', version: p.version||'',
+      price_usd: Number(p.price_usd)||0,
+      price_aed: Number(p.price_aed)||0,
+      price_inr: Number(p.price_inr)||0,
       qty: 1
     });
   }
@@ -2497,10 +2460,15 @@ function renderProds() {
 
   if (q)
     entries = entries.filter(([, p]) =>
-      (p.title||'').toLowerCase().includes(q)
+      [(p.model||''),(p.storage||''),(p.color||''),(p.grade||''),(p.version||''),(p.notes||''),(APP.cats[p.categoryId]?.name||'')]
+      .join(' ').toLowerCase().includes(q)
     );
 
-  entries.sort((a,b) => (a[1].title||'').localeCompare(b[1].title||''));
+  entries.sort((a,b) => {
+    const ka = (a[1].model||'')+(a[1].storage||'');
+    const kb = (b[1].model||'')+(b[1].storage||'');
+    return ka.localeCompare(kb);
+  });
 
   // Result count
   const countEl = document.getElementById('search-result-count');
@@ -2521,7 +2489,7 @@ function renderProds() {
 
   if (!entries.length) {
     grid.innerHTML = `<div class="no-prods">
-      <div class="no-icon">${q ? '<i class="fa-solid fa-magnifying-glass"></i>' : '<i class="fa-solid fa-box-open"></i>'}</div>
+      <div class="no-icon">${q ? '🔍' : '📦'}</div>
       <strong>${q ? 'No results found' : 'No products found'}</strong>
       <p style="margin-top:6px;font-size:13px">
         ${q ? `Try a different keyword or <button onclick="clearSearch()" style="background:none;border:none;color:var(--green);font-weight:700;cursor:pointer;font-size:13px;padding:0">clear search</button>` : 'Check back soon!'}
@@ -2531,34 +2499,41 @@ function renderProds() {
   }
 
   grid.innerHTML = entries.map(([id, p], idx) => {
-    const price    = Number(p.price) || 0;
+    const price    = Number(p['price_' + APP.cur]) || 0;
     const priceTxt = price ? SYM[APP.cur] + price.toLocaleString() : '—';
-    const qty      = p.stock != null ? Number(p.stock) : null;
+    const catName  = APP.cats[p.categoryId]?.name || '';
+    const qty      = p.quantity != null ? Number(p.quantity) : null;
     const oos      = qty !== null && qty === 0;
+    const storage  = p.storage ? `<div class="p-card-storage">[${p.storage}]</div>` : '';
+    const sub      = [p.color, p.version].filter(Boolean).join(' · ');
+    const gc       = gradeClass(p.grade);
     const delay    = `animation-delay:${Math.min(idx * 0.04, 0.4)}s`;
 
-    let titleDisp = p.title || '—';
-    if (q && titleDisp.toLowerCase().includes(q)) {
+    // Highlight search query in model name
+    let modelDisp = p.model || '—';
+    if (q && modelDisp.toLowerCase().includes(q)) {
       const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
-      titleDisp = titleDisp.replace(re, '<mark style="background:var(--green-light);color:var(--green-dark);border-radius:2px;padding:0 1px">$1</mark>');
+      modelDisp = modelDisp.replace(re, '<mark style="background:var(--green-light);color:var(--green-dark);border-radius:2px;padding:0 1px">$1</mark>');
     }
 
-        return `<div class="p-card" style="${delay}; cursor:pointer;" onclick="openProductOverview('${id}')" title="View full product overview">
-      ${p.imageUrl ? `<img class="p-card-img" src="${p.imageUrl}" alt="${p.title||''}" loading="lazy">` : ''}
+    return `<div class="p-card" style="${delay}">
+      ${catName ? `<div class="p-card-badge">${catName}</div>` : ''}
       <div class="p-card-body">
-        <div class="p-card-model">${titleDisp}</div>
+        <div class="p-card-model">${modelDisp}</div>
+        ${storage}
+        ${sub ? `<div class="p-card-sub">${sub}</div>` : ''}
+        ${p.grade ? `<span class="p-card-grade ${gc}">${p.grade}</span>` : ''}
         <div class="p-card-price">${priceTxt}</div>
-        ${qty !== null ? `<div class="p-card-qty">${oos ? '<span style="color:var(--red);font-weight:700">Out of stock</span>' : '<span style="color:#22c55e">●</span> In stock: '+qty}</div>` : ''}
+        ${qty !== null ? `<div class="p-card-qty">${oos ? '<span style="color:var(--red);font-weight:700">Out of stock</span>' : '🟢 Qty: '+qty}</div>` : ''}
       </div>
       <div class="p-card-footer">
-        <button class="add-btn" onclick="event.stopPropagation(); addToCart('${id}')" ${oos ? 'disabled' : ''}>
-          ${oos ? '<i class="fa-solid fa-ban"></i> Out of Stock' : '<i class="fa-solid fa-plus"></i> Add to Cart'}
+        <button class="add-btn" onclick="addToCart('${id}')" ${oos ? 'disabled' : ''}>
+          ${oos ? '🚫 Out of Stock' : '＋ Add to Cart'}
         </button>
       </div>
     </div>`;
   }).join('');
 }
-
 
 /* ═══════════════════════════════════
    RENDER CART
@@ -2567,7 +2542,7 @@ function renderCart() {
   const el = document.getElementById('cart-body');
   if (!APP.cart.length) {
     el.innerHTML = `<div class="cart-empty">
-      <div class="e-icon"><i class="fa-solid fa-cart-shopping"></i></div>
+      <div class="e-icon">🛒</div>
       <h2>Your cart is empty</h2>
       <p>Browse our products and add items to your cart</p>
       <button class="shop-now" onclick="navTo('shop')">Shop Now →</button>
@@ -2586,6 +2561,7 @@ function renderCart() {
         return `<div class="cart-item">
           <div class="ci-info">
             <div class="ci-name">${item.name}</div>
+            <div class="ci-sub">${[item.color, item.version, item.grade].filter(Boolean).join(' · ')}</div>
             <div class="ci-price">${fmt(ip)}</div>
             <div class="ci-controls">
               <button class="qty-btn" onclick="changeQty('${item.id}',-1)">−</button>
@@ -2599,7 +2575,7 @@ function renderCart() {
     </div>
     <div class="cart-summary">
       <div class="sum-row"><span>Subtotal (${APP.cart.reduce((a,i)=>a+i.qty,0)} items)</span><span>${fmt(sub)}</span></div>
-      <div class="sum-row"><span><i class="fa-solid fa-truck"></i> Shipping <span style="font-size:11px;font-weight:400;color:var(--muted)">(international, per item)</span></span><span>${fmt(ship)}</span></div>
+      <div class="sum-row"><span>🚚 Shipping <span style="font-size:11px;font-weight:400;color:var(--muted)">(international, per item)</span></span><span>${fmt(ship)}</span></div>
       <div class="sum-row total"><span>Total</span><span>${fmt(total)}</span></div>
       <button class="chk-btn" onclick="navTo('checkout')">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/></svg>
@@ -2616,7 +2592,7 @@ function submitComment() {
   if (!text) { toast('Write something first', '✏️'); return; }
 
   const btn = document.getElementById('comment-send-btn');
-  btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Sending…'; btn.disabled = true;
+  btn.textContent = '⏳ Sending…'; btn.disabled = true;
 
   const payload = {
     text,
@@ -2634,7 +2610,7 @@ function submitComment() {
       document.getElementById('footer-comment').value = '';
     })
     .catch(() => toast('Failed to send comment', '❌'))
-    .finally(() => { btn.innerHTML = 'Send'; btn.disabled = false; });
+    .finally(() => { btn.textContent = 'Send'; btn.disabled = false; });
 }
 
 function subscribeEmail() {
@@ -2730,7 +2706,7 @@ function renderAddrPicker() {
   el.innerHTML = list.map(a => `
     <div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--border)">
       <button onclick="applyAddressById(${a.id})" style="flex:1;text-align:left;background:none;border:none;cursor:pointer;padding:0">
-        <div style="font-size:13px;font-weight:700;color:var(--text)"><i class="fa-solid fa-location-dot" style="color:var(--green)"></i> ${a.label}</div>
+        <div style="font-size:13px;font-weight:700;color:var(--text)">📍 ${a.label}</div>
         <div style="font-size:11px;color:var(--muted);margin-top:2px">${a.place}</div>
       </button>
       <button onclick="deleteSavedAddress(${a.id})"
@@ -2743,7 +2719,7 @@ function renderAddrPicker() {
 function detectLocation() {
   if (!navigator.geolocation) { toast('Geolocation not supported', '⚠️'); return; }
   const btn = document.getElementById('detect-loc-btn');
-  if (btn) { btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Detecting…'; btn.disabled = true; }
+  if (btn) { btn.textContent = '⏳ Detecting…'; btn.disabled = true; }
   navigator.geolocation.getCurrentPosition(async pos => {
     try {
       const { latitude: lat, longitude: lon } = pos.coords;
@@ -2776,10 +2752,10 @@ function detectLocation() {
         toast('Location detected!', '📍');
       }, 160);
     } catch { toast('Could not get location data', '⚠️'); }
-    finally { if (btn) { btn.innerHTML = '<i class="fa-solid fa-location-dot"></i> Detect Location'; btn.disabled = false; } }
+    finally { if (btn) { btn.textContent = '📍 Detect Location'; btn.disabled = false; } }
   }, () => {
     toast('Location access denied', '⚠️');
-    if (btn) { btn.innerHTML = '<i class="fa-solid fa-location-dot"></i> Detect Location'; btn.disabled = false; }
+    if (btn) { btn.textContent = '📍 Detect Location'; btn.disabled = false; }
   }, { timeout: 10000 });
 }
 
@@ -2803,21 +2779,21 @@ function renderCheckout() {
     <!-- ── Saved Addresses ── -->
     ${hasSaved ? `
     <div class="co-section">
-      <h3><i class="fa-solid fa-folder-open"></i> Saved Addresses</h3>
+      <h3>📂 Saved Addresses</h3>
       <p style="font-size:12px;color:var(--muted);margin-bottom:8px">Tap an address to auto-fill the form below</p>
       <div id="saved-addr-list"></div>
     </div>` : ''}
 
     <!-- ── Order Summary ── -->
     <div class="co-section">
-      <h3><i class="fa-solid fa-receipt"></i> Order Summary</h3>
+      <h3>📋 Order Summary</h3>
       ${APP.cart.map(it => `
         <div class="co-item">
           <span class="co-item-name">${it.name}${it.color ? ' ('+it.color+')' : ''} ×${it.qty}</span>
           <span class="co-item-price">${fmt(getPrice(it)*it.qty)}</span>
         </div>`).join('')}
       <div class="co-item" style="color:var(--muted)">
-        <span class="co-item-name"><i class="fa-solid fa-truck"></i> Shipping <span style="font-size:11px;font-weight:400">(international, per item)</span></span>
+        <span class="co-item-name">🚚 Shipping <span style="font-size:11px;font-weight:400">(international, per item)</span></span>
         <span>${fmt(ship)}</span>
       </div>
       <div class="co-total"><span>Total</span><span>${fmt(total)}</span></div>
@@ -2825,7 +2801,7 @@ function renderCheckout() {
 
     <!-- ── Your Name ── -->
     <div class="co-section">
-      <h3><i class="fa-solid fa-user"></i> Your Name</h3>
+      <h3>👤 Your Name</h3>
       <div class="form-group" style="margin-bottom:0">
         <label class="form-label">Full Name</label>
         <input type="text" class="form-input" id="co-name"
@@ -2838,13 +2814,13 @@ function renderCheckout() {
     <!-- ── Delivery Details ── -->
     <div class="co-section">
       <h3 style="justify-content:space-between;flex-wrap:wrap;gap:8px">
-        <span><i class="fa-solid fa-location-dot"></i> Delivery Details</span>
+        <span>📍 Delivery Details</span>
         <button id="detect-loc-btn" onclick="detectLocation()" style="
           font-size:11px;font-weight:700;padding:5px 12px;
           border:1.5px solid var(--green);color:var(--green);
           background:var(--green-light);border-radius:20px;
           cursor:pointer;font-family:var(--font-body);
-          transition:all 0.15s;white-space:nowrap;"><i class="fa-solid fa-location-dot"></i> Detect Location</button>
+          transition:all 0.15s;white-space:nowrap;">📍 Detect Location</button>
       </h3>
       <div class="form-group">
         <label class="form-label">Region</label>
@@ -2878,13 +2854,13 @@ function renderCheckout() {
         background:var(--green-light);border-radius:var(--radius-sm);cursor:pointer">
         <input type="checkbox" id="co-save-addr" checked
           style="accent-color:var(--green);width:16px;height:16px;flex-shrink:0">
-        <span style="font-size:13px;font-weight:600;color:var(--green-dark)"><i class="fa-solid fa-floppy-disk"></i> Save address for next time</span>
+        <span style="font-size:13px;font-weight:600;color:var(--green-dark)">💾 Save address for next time</span>
       </label>
     </div>
 
     <!-- ── Contact ── -->
     <div class="co-section">
-      <h3><i class="fa-brands fa-whatsapp"></i> WhatsApp Contact</h3>
+      <h3>📱 WhatsApp Contact</h3>
       <div class="form-group">
         <label class="form-label">WhatsApp Number</label>
         <input type="tel" class="form-input" id="co-wa" placeholder="+971 50 000 0000" autocomplete="tel">
@@ -2900,11 +2876,11 @@ function renderCheckout() {
     </div>
 
     <div class="co-section">
-      <h3><i class="fa-solid fa-credit-card"></i> Payment Method</h3>
+      <h3>💳 Payment Method</h3>
 
       <!-- Pay on Delivery — ACTIVE -->
       <div class="pay-option selected" id="pay-cod" onclick="selectPay('cod')">
-        <div class="pay-icon" style="background:#f0fdf4;border-color:#86efac;font-size:18px;"><i class="fa-solid fa-dollar-sign" style="color:#16a34a"></i></div>
+        <div class="pay-icon" style="background:#f0fdf4;border-color:#86efac;font-size:18px;">💵</div>
         <div class="pay-info">
           <div class="pay-name">Pay on Delivery</div>
           <div class="pay-sub">Cash payment when you receive your order</div>
@@ -2962,19 +2938,19 @@ function renderCheckout() {
     ${APP.user ? `
     <div class="place-btn-wrap">
       <button id="place-order-btn" onclick="placeOrder()">
-        <i class="fa-solid fa-cart-shopping"></i> Place Order
+        🛒 Place Order
       </button>
     </div>` : `
     <div class="place-btn-wrap">
       <div style="background:var(--green-light);border:1.5px solid var(--green-mid);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;gap:12px">
-        <span style="font-size:22px"><i class="fa-solid fa-lock"></i></span>
+        <span style="font-size:22px">🔒</span>
         <div>
           <div style="font-family:var(--font-head);font-size:13px;font-weight:700;color:var(--green)">Sign in to place your order</div>
           <div style="font-size:12px;color:var(--muted);margin-top:2px">You need an account to complete your purchase</div>
         </div>
       </div>
       <button id="place-order-btn" onclick="navTo('login')" style="background:var(--green)">
-        <i class="fa-solid fa-user"></i> Sign In to Order
+        👤 Sign In to Order
       </button>
     </div>`}`;
 
@@ -3022,8 +2998,8 @@ function sendOTP() {
   btn.textContent = 'Resend'; btn.disabled = true;
   let s = 30;
   const iv = setInterval(() => {
-    btn.innerHTML = `Resend (${--s}s)`;
-    if (s <= 0) { clearInterval(iv); btn.disabled = false; btn.innerHTML = 'Resend'; }
+    btn.textContent = `Resend (${--s}s)`;
+    if (s <= 0) { clearInterval(iv); btn.disabled = false; btn.textContent = 'Resend'; }
   }, 1000);
   document.getElementById('co-otp').focus();
 }
@@ -3061,48 +3037,36 @@ function placeOrder() {
   if (otp !== APP.otpCode)            { toast('Incorrect OTP – please check and retry', '❌'); return; }
 
   const btn = document.getElementById('place-order-btn');
-  btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Placing order…'; btn.disabled = true;
+  btn.textContent = '⏳ Placing order…'; btn.disabled = true;
 
   const sub      = cartSubtotal();
   const totalQty = APP.cart.reduce((a,i) => a + i.qty, 0);
   const ship     = SHIP[APP.cur] * totalQty;
 
-  const orderItems = APP.cart.map(i => ({
-    productId: i.productId || i.id,
-    title:     i.name,
-    qty:       i.qty,
-    unitPrice: getPrice(i),
-    costPrice: Number(i.costPrice) || 0,
-    lineTotal: getPrice(i) * i.qty
-  }));
-  const totalCost   = orderItems.reduce((s, i) => s + i.costPrice * i.qty, 0);
-  const totalAmount = sub + ship;
-  const profit      = totalAmount - totalCost;
-
   const order = {
-    customerName:    name,
-    customerPhone:   wa,
-    customerCountry: region,
-    customerState:   state,
-    customerDistrict: district,
-    customerPlace:   place,
-    userId:          APP.user.uid,
-    userEmail:       APP.user.email,
-    items:           orderItems,
-    cost:            totalCost,
-    shipping:        ship,
-    total:           totalAmount,
-    profit:          profit,
-    amountPaid:      0,
-    paymentStatus:   'Unpaid',
-    status:          'pending',
-    payMethod:       APP.payMethod || 'cod',
-    notes:           '',
-    courier:         '',
-    trackingNo:      '',
-    createdAt:       Date.now(),
-    createdBy:       APP.user.uid,
-    updatedAt:       Date.now()
+    userId:    APP.user.uid,
+    userEmail: APP.user.email,
+    userName:  name,
+    userPhone: wa,
+    items: APP.cart.map(i => ({
+      id:       i.id,
+      name:     i.name,
+      color:    i.color,
+      grade:    i.grade,
+      qty:      i.qty,
+      price:    getPrice(i),
+      currency: LABEL[APP.cur]
+    })),
+    currency:  LABEL[APP.cur],
+    subtotal:  sub,
+    shipping:  ship,
+    total:     sub + ship,
+    region, state, district, place,
+    whatsapp:  wa,
+    status:    'pending',
+    payMethod: APP.payMethod || 'cod',
+    timestamp: Date.now(),
+    createdAt: new Date().toISOString()
   };
 
   // Update Firebase displayName if user edited it
@@ -3116,10 +3080,10 @@ function placeOrder() {
       const updates = {};
       APP.cart.forEach(item => {
         const prod = APP.prods[item.id];
-        if (prod && prod.stock != null) {
-          const newQty = Math.max(0, Number(prod.stock) - item.qty);
-          updates[`products/${item.id}/stock`] = newQty;
-          APP.prods[item.id].stock = newQty;
+        if (prod && prod.quantity != null) {
+          const newQty = Math.max(0, Number(prod.quantity) - item.qty);
+          updates[`products/${item.id}/quantity`] = newQty;
+          APP.prods[item.id].quantity = newQty;
         }
       });
       if (Object.keys(updates).length) db.ref().update(updates);
@@ -3135,7 +3099,7 @@ function placeOrder() {
     })
     .catch(() => {
       toast('Error placing order. Please try again.', '❌');
-      btn.innerHTML = '<i class="fa-solid fa-cart-shopping"></i> Place Order'; btn.disabled = false;
+      btn.textContent = '🛒 Place Order'; btn.disabled = false;
     });
 }
 
@@ -3144,13 +3108,13 @@ function placeOrder() {
 ═══════════════════════════════════ */
 /* Shared steps definition */
 const ALL_STEPS = [
-  { key:'pending',    label:'Order Placed', icon:'<i class="fa-solid fa-clipboard-list"></i>' },
-  { key:'accepted',   label:'Accepted',     icon:'<i class="fa-solid fa-circle-check"></i>' },
-  { key:'packed',     label:'Packed',       icon:'<i class="fa-solid fa-box"></i>' },
-  { key:'dispatched', label:'Dispatched',   icon:'<i class="fa-solid fa-truck"></i>' },
-  { key:'transit',    label:'In Transit',   icon:'<i class="fa-solid fa-plane"></i>' },
-  { key:'arrived',    label:'Arrived',      icon:'<i class="fa-solid fa-plane-arrival"></i>' },
-  { key:'delivered',  label:'Delivered',    icon:'<i class="fa-solid fa-location-dot"></i>' },
+  { key:'pending',    label:'Order Placed', icon:'📋' },
+  { key:'accepted',   label:'Accepted',     icon:'✅' },
+  { key:'packed',     label:'Packed',       icon:'📦' },
+  { key:'dispatched', label:'Dispatched',   icon:'🚚' },
+  { key:'transit',    label:'In Transit',   icon:'✈️' },
+  { key:'arrived',    label:'Arrived',      icon:'🛬' },
+  { key:'delivered',  label:'Delivered',    icon:'📍' },
 ];
 
 /* Cache for open order */
@@ -3167,7 +3131,7 @@ function renderOrders() {
 
     if (!data) {
       el.innerHTML = `<div style="text-align:center;padding:70px 20px;color:var(--muted)">
-        <div style="font-size:48px;margin-bottom:14px;color:var(--green)"><i class="fa-solid fa-box-open"></i></div>
+        <div style="font-size:48px;margin-bottom:14px">📦</div>
         <strong style="font-size:17px;color:var(--text)">No orders yet</strong>
         <p style="margin-top:6px;font-size:13px">Your orders will appear here</p>
         <br><button onclick="navTo('shop')" class="shop-now" style="margin-top:0">Shop Now →</button>
@@ -3191,13 +3155,13 @@ function renderOrders() {
       return `<div class="order-card" style="animation-delay:${i*0.07}s;cursor:pointer" onclick="openOrderDetail('${id}')">
         <div class="ord-card-top">
           <div class="ord-head">
-            <div class="ord-id"><i class="fa-solid fa-calendar-days"></i> ${date} &nbsp;·&nbsp; #${id.slice(-8).toUpperCase()}</div>
+            <div class="ord-id">📅 ${date} &nbsp;·&nbsp; #${id.slice(-8).toUpperCase()}</div>
             <span class="ord-status ${sc}">${status.toUpperCase()}</span>
           </div>
           <div class="ord-items" style="margin-bottom:10px">${items}</div>
           <!-- mini progress bar -->
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-            <span style="font-size:15px">${curStep?curStep.icon:'<i class="fa-solid fa-clipboard-list"></i>'}</span>
+            <span style="font-size:15px">${curStep?curStep.icon:'📋'}</span>
             <div style="flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden">
               <div style="height:100%;width:${pct}%;background:var(--green);border-radius:2px;transition:width 1s ease"></div>
             </div>
@@ -3325,7 +3289,7 @@ function _renderDetail(el, id, o) {
 
     <!-- Items -->
     <div style="background:var(--white);margin:0 12px 12px;border-radius:var(--radius);border:1px solid var(--border);padding:14px">
-      <div style="font-family:var(--font-head);font-size:13px;font-weight:700;color:var(--red);margin-bottom:10px"><i class="fa-solid fa-box"></i> Items</div>
+      <div style="font-family:var(--font-head);font-size:13px;font-weight:700;color:var(--red);margin-bottom:10px">📦 Items</div>
       ${itemsHTML}
       <div style="display:flex;justify-content:space-between;padding:8px 0 2px;font-size:12px;color:var(--muted)">
         <span>Shipping (${o.items?.reduce((a,i)=>a+i.qty,0)||1} items)</span>
@@ -3339,22 +3303,22 @@ function _renderDetail(el, id, o) {
 
     <!-- Timeline -->
     <div style="background:var(--white);margin:0 12px 12px;border-radius:var(--radius);border:1px solid var(--border);padding:14px">
-      <div style="font-family:var(--font-head);font-size:13px;font-weight:700;color:var(--red);margin-bottom:14px"><i class="fa-solid fa-route"></i> Tracking Timeline</div>
+      <div style="font-family:var(--font-head);font-size:13px;font-weight:700;color:var(--red);margin-bottom:14px">🚚 Tracking Timeline</div>
       <div class="ord-timeline" style="padding:0">${buildTimeline(o)}</div>
     </div>
 
     <!-- Delivery Info -->
     <div style="background:var(--white);margin:0 12px 12px;border-radius:var(--radius);border:1px solid var(--border);padding:14px">
-      <div style="font-family:var(--font-head);font-size:13px;font-weight:700;color:var(--red);margin-bottom:10px"><i class="fa-solid fa-location-dot"></i> Delivery Address</div>
+      <div style="font-family:var(--font-head);font-size:13px;font-weight:700;color:var(--red);margin-bottom:10px">📍 Delivery Address</div>
       <div style="font-size:14px;color:var(--text);line-height:1.7">${o.place||''}<br>${o.district?o.district+', ':''} ${o.state||''}<br>${o.region||''}</div>
-      ${o.whatsapp?`<div style="margin-top:8px;font-size:13px;color:var(--muted)"><i class="fa-brands fa-whatsapp" style="color:#25D366"></i> ${o.whatsapp}</div>`:''}
-      ${o.userName&&o.userName!=='guest'?`<div style="margin-top:4px;font-size:13px;color:var(--muted)"><i class="fa-solid fa-user"></i> ${o.userName}</div>`:''}
+      ${o.whatsapp?`<div style="margin-top:8px;font-size:13px;color:var(--muted)">📱 ${o.whatsapp}</div>`:''}
+      ${o.userName&&o.userName!=='guest'?`<div style="margin-top:4px;font-size:13px;color:var(--muted)">👤 ${o.userName}</div>`:''}
     </div>
 
     <!-- Payment -->
     <div style="background:var(--white);margin:0 12px 24px;border-radius:var(--radius);border:1px solid var(--border);padding:14px">
-      <div style="font-family:var(--font-head);font-size:13px;font-weight:700;color:var(--red);margin-bottom:8px"><i class="fa-solid fa-credit-card"></i> Payment</div>
-      <div style="font-size:14px;color:var(--text)"><i class="fa-solid fa-dollar-sign"></i> ${o.payMethod==='cod'?'Pay on Delivery':o.payMethod||'Pay on Delivery'}</div>
+      <div style="font-family:var(--font-head);font-size:13px;font-weight:700;color:var(--red);margin-bottom:8px">💳 Payment</div>
+      <div style="font-size:14px;color:var(--text)">💵 ${o.payMethod==='cod'?'Pay on Delivery':o.payMethod||'Pay on Delivery'}</div>
     </div>`;
 }
 
@@ -3373,7 +3337,7 @@ function togglePw(id, btn) {
   const inp = document.getElementById(id);
   const show = inp.type === 'password';
   inp.type = show ? 'text' : 'password';
-  btn.innerHTML = show ? '<i class="fa-regular fa-eye-slash"></i>' : '<i class="fa-regular fa-eye"></i>';
+  btn.textContent = show ? '🙈' : '👁';
 }
 function doLogin() {
   const email = document.getElementById('l-email').value.trim();
@@ -3450,7 +3414,7 @@ const STATUS_STEP = {
   transit:2, 'in-transit':2, flying:2, arrived:2,
   delivered:3, completed:3
 };
-const STATUS_ICON  = ['<i class="fa-solid fa-box"></i>','<i class="fa-solid fa-truck"></i>','<i class="fa-solid fa-plane"></i>','<i class="fa-solid fa-location-dot"></i>'];
+const STATUS_ICON  = ['📦','🚚','✈️','📍'];
 const STATUS_LABEL = ['Packed','Dispatched','In Transit','Delivered'];
 const STATUS_DESC  = [
   'Your order has been received and is being packed for shipment.',
@@ -3470,10 +3434,10 @@ function runOrderTracker(orderId, status) {
 
   // Move icon
   const positions = ['4px','calc(33% - 18px)','calc(66% - 18px)','calc(100% - 36px)'];
-  const icons     = ['<i class="fa-solid fa-box"></i>','<i class="fa-solid fa-truck"></i>','<i class="fa-solid fa-plane"></i>','<i class="fa-solid fa-location-dot"></i>'];
+  const icons     = ['📦','🚚','✈️','📍'];
   setTimeout(() => {
     const mi = document.getElementById('moving-icon');
-    mi.innerHTML = icons[step];
+    mi.textContent = icons[step];
     mi.style.left  = positions[step];
   }, 300);
 
@@ -3522,7 +3486,7 @@ function renderWishlist() {
   const items = list.map(id => [id, APP.prods[id]]).filter(([,p]) => p);
   if (!items.length) {
     el.innerHTML = `<div class="sub-empty">
-      <div class="e-icon"><i class="fa-regular fa-heart"></i></div>
+      <div class="e-icon">🤍</div>
       <h2>Your Wishlist is Empty</h2>
       <p>Save products you love and buy them later</p>
       <button class="shop-now" onclick="navTo('shop')">Browse Products</button>
@@ -3530,12 +3494,12 @@ function renderWishlist() {
     return;
   }
   el.innerHTML = `<div class="wishlist-grid">${items.map(([id, p]) => {
-    const price = Number(p.price) || 0;
+    const price = Number(p['price_' + APP.cur]) || 0;
     const priceTxt = price ? SYM[APP.cur] + price.toLocaleString() : '—';
     return `<div class="wish-card">
       <button class="wish-rm" onclick="toggleWishlist('${id}');renderWishlist()">✕</button>
-      ${p.imageUrl ? `<img src="${p.imageUrl}" style="width:100%;aspect-ratio:1/1;object-fit:contain;background:#f5f5f7;padding:8px;border-radius:8px;margin-bottom:6px" alt="">` : ''}
-      <div class="wish-name">${p.title||'—'}</div>
+      <div style="font-size:11px;color:var(--muted);font-weight:600">${APP.cats[p.categoryId]?.name||''}</div>
+      <div class="wish-name">${p.model||''}${p.storage?' ['+p.storage+']':''}</div>
       <div class="wish-price">${priceTxt}</div>
       <button class="wish-add" onclick="addToCart('${id}');toast('Added to cart','✓')">＋ Add to Cart</button>
     </div>`;
@@ -3580,7 +3544,7 @@ function renderAddresses() {
   }
   el.innerHTML = `<div style="padding:12px 12px 0">` + list.map(a => `
     <div class="addr-saved">
-      <span class="addr-saved-icon"><i class="fa-solid fa-location-dot" style="color:var(--green)"></i></span>
+      <span class="addr-saved-icon">📍</span>
       <div class="addr-saved-info">
         <div class="addr-saved-name">${a.label}</div>
         <div class="addr-saved-text">${a.full}<br>${a.city}, ${a.region}</div>
@@ -3609,7 +3573,7 @@ function renderProfile() {
     editBtn.onclick       = openEditModal;
     signoutBtn.style.display = 'flex';
   } else {
-    avatarEl.innerHTML  = '<i class="fa-solid fa-user"></i>';
+    avatarEl.textContent  = '👤';
     avatarEl.style.background = 'var(--surface3)';
     avatarEl.style.fontSize   = '22px';
     nameEl.textContent    = 'Guest';
@@ -3626,7 +3590,7 @@ function renderProfile() {
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   const themeIcon  = document.getElementById('theme-pi-icon');
   const themeLabel = document.getElementById('theme-pi-label');
-  if (themeIcon)  themeIcon.innerHTML  = isDark ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
+  if (themeIcon)  themeIcon.textContent  = isDark ? '☀️' : '🌙';
   if (themeLabel) themeLabel.textContent = isDark ? 'Light Mode' : 'Dark Mode';
 }
 function showInfo(key) {
@@ -3700,11 +3664,11 @@ function applyTheme(theme) {
   const isDark = theme === 'dark';
   // Navbar toggle icon
   const toggle = document.getElementById('theme-toggle');
-  if (toggle) toggle.innerHTML = isDark ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
+  if (toggle) toggle.textContent = isDark ? '☀️' : '🌙';
   // Sidebar toggle label
   const sbIcon = document.getElementById('sb-theme-icon');
   const sbLabel = document.getElementById('sb-theme-label');
-  if (sbIcon) sbIcon.innerHTML = isDark ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
+  if (sbIcon) sbIcon.textContent = isDark ? '☀️' : '🌙';
   if (sbLabel) sbLabel.textContent = isDark ? 'Light Mode' : 'Dark Mode';
   // Logos
   const logoSrc = isDark ? LOGO_DARK : LOGO_LIGHT;
@@ -3730,13 +3694,6 @@ function toggleTheme() {
   applyTheme(saved);
 })();
 
-
-
-
-function openProductOverview(pushKey) {
-  const url = `./overview/index.html?key=${encodeURIComponent(pushKey)}`;
-  window.open(url, '_blank', 'noopener,noreferrer');
-}
 </script>
 </body>
 </html>
