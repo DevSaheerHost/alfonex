@@ -3734,6 +3734,12 @@ function toggleTheme() {
 
 
 function openProductOverview(pushKey) {
+  const p = APP.prods[pushKey];
+  if (p) {
+    // Write full product data to localStorage so the overview
+    // page can render instantly without any Firebase fetch.
+    localStorage.setItem('alfonex_preview', JSON.stringify({ key: pushKey, data: p, ts: Date.now() }));
+  }
   const url = `./overview/index.html?key=${encodeURIComponent(pushKey)}`;
   window.open(url, 'alfonex_product');
 }

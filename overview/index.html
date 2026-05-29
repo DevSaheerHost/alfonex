@@ -847,6 +847,9 @@ function restoreBtn(cta, label, origIcon) {
 
 /* ══════════════════════════════════════
    BOOTSTRAP
+   1. Read pushKey from URL
+   2. Try localStorage first → instant render, zero network
+   3. Fall back to Firebase if localStorage miss (e.g. shared link)
 ══════════════════════════════════════ */
 (function init() {
   const params  = new URLSearchParams(window.location.search);
@@ -855,7 +858,22 @@ function restoreBtn(cta, label, origIcon) {
     showError('No product was specified. Please go back and select a product.');
     return;
   }
-  /* Fetch once — no auth required for reading product details */
+
+  /* ── Path 1: localStorage cache (written by the store before opening) ── */
+  try {
+    const raw = localStorage.getItem('alfonex_preview');
+    if (raw) {
+      const cached = JSON.parse(raw);
+      // Only use if the key matches and data is fresh (< 10 minutes)
+      const fresh = (Date.now() - (cached.ts || 0)) < 10 * 60 * 1000;
+      if (cached.key === pushKey && cached.data && fresh) {
+        render(pushKey, cached.data);
+        return; // done — no Firebase needed
+      }
+    }
+  } catch (_) { /* corrupt cache — fall through */ }
+
+  /* ── Path 2: Firebase fallback (shared link / cache miss) ── */
   db.ref(`products/${pushKey}`).once('value')
     .then(snap => {
       if (!snap.exists()) {
