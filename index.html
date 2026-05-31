@@ -3,18 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>iAlfonex – Premium Apple Devices</title>
+<title>Alfonex – Premium Apple Devices</title>
 <meta name="description" content="Buy genuine Apple iPhones, MacBooks, AirPods & Apple Watch at best prices. Available in USD, AED & INR. Fast, trusted delivery.">
 <meta name="keywords" content="iPhone buy online, Apple MacBook UAE India, AirPods price, iWatch, ialfonex, buy iPhone UAE">
-<meta name="author" content="iAlfonex">
+<meta name="author" content="Alfonex">
 <meta name="robots" content="index, follow">
-<meta property="og:title" content="iAlfonex – Premium Apple Devices">
+<meta property="og:title" content="Alfonex – Premium Apple Devices">
 <meta property="og:description" content="Shop genuine Apple products at competitive prices. USD, AED & INR pricing available.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://www.ialfonex.com">
 <meta property="og:image" content="https://www.ialfonex.com/og-image.jpg">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="iAlfonex – Premium Apple Devices">
+<meta name="twitter:title" content="Alfonex – Premium Apple Devices">
 <meta name="twitter:description" content="Shop genuine Apple products at best prices in USD, AED & INR.">
 <meta name="theme-color" content="#2EA056">
 <link rel="icon" href="./assets/meta/icon/logo.png">
@@ -275,21 +275,340 @@ a { text-decoration: none; color: inherit; }
   padding: 1px 8px; border-radius: 20px; font-weight: 700;
 }
 
-/* ─── PRODUCT GRID ─── */
-#product-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
-  gap: 10px; padding: 12px;
+/* ════════════════════════════════════════
+   HOME PAGE — FULL REDESIGN
+════════════════════════════════════════ */
+@keyframes fadeUp   { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
+@keyframes shimmer  { 0%{background-position:-400px 0} 100%{background-position:400px 0} }
+
+/* ── Skeleton loader ── */
+.skel {
+  background: linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);
+  background-size: 400px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 6px;
 }
+
+/* ── Section wrapper ── */
+.home-section { padding: 0 0 8px; animation: fadeIn .4s ease both; }
+.section-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 14px 10px;
+}
+.section-title {
+  font-family: var(--font-head); font-size: 16px; font-weight: 800;
+  display: flex; align-items: center; gap: 7px;
+}
+.section-title-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--green); flex-shrink: 0;
+}
+.section-see-all {
+  font-size: 12px; font-weight: 700; color: var(--green);
+  background: none; border: none; cursor: pointer; padding: 4px 0;
+}
+
+/* ────────────────────────────────────
+   HERO BANNER CAROUSEL
+──────────────────────────────────── */
+.hero-carousel {
+  position: relative; overflow: hidden;
+  margin: 0; background: var(--white);
+  border-bottom: 1px solid var(--border);
+}
+.hero-track {
+  display: flex;
+  transition: transform .45s cubic-bezier(0.4,0,0.2,1);
+}
+.hero-slide {
+  min-width: 100%; position: relative;
+  aspect-ratio: 16/7; overflow: hidden;
+  cursor: pointer;
+}
+.hero-slide-img {
+  width: 100%; height: 100%; object-fit: cover;
+  background: linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);
+}
+/* Fallback gradient slides */
+.hero-slide-bg {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; padding: 20px 24px;
+  position: relative; overflow: hidden;
+}
+.hero-slide-bg::after {
+  content:''; position:absolute; right:-20px; top:-20px;
+  width:200px; height:200px; border-radius:50%;
+  background:rgba(255,255,255,.06); pointer-events:none;
+}
+.hero-badge {
+  font-size: 10px; font-weight: 800; letter-spacing: 1.2px;
+  text-transform: uppercase; padding: 4px 11px; border-radius: 99px;
+  background: rgba(255,255,255,.18); color: #fff;
+  backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,.25);
+  display: inline-block; margin-bottom: 8px;
+}
+.hero-title {
+  font-family: var(--font-head); font-size: clamp(18px,5vw,26px);
+  font-weight: 800; color: #fff; line-height: 1.15;
+  margin-bottom: 4px; letter-spacing: -.3px;
+}
+.hero-sub { font-size: 12px; color: rgba(255,255,255,.7); margin-bottom: 12px; }
+.hero-price {
+  font-family: var(--font-head); font-size: 22px; font-weight: 800;
+  color: #fff; margin-bottom: 10px;
+}
+.hero-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 18px; border-radius: 99px;
+  background: #fff; color: var(--text);
+  font-family: var(--font-head); font-size: 12px; font-weight: 800;
+  border: none; cursor: pointer; transition: transform .15s, box-shadow .15s;
+}
+.hero-btn:hover { transform: scale(1.04); box-shadow: 0 4px 16px rgba(0,0,0,.2); }
+.hero-prod-img {
+  position: absolute; right: 0; bottom: 0;
+  height: 90%; object-fit: contain; opacity: .95;
+  filter: drop-shadow(-8px 4px 18px rgba(0,0,0,.35));
+  pointer-events: none;
+}
+.hero-dots {
+  position: absolute; bottom: 10px; left: 50%;
+  transform: translateX(-50%);
+  display: flex; gap: 5px; z-index: 2;
+}
+.hero-dot {
+  width: 5px; height: 5px; border-radius: 99px;
+  background: rgba(255,255,255,.4);
+  transition: all .3s; border: none; cursor: pointer; padding: 0;
+}
+.hero-dot.active { width: 18px; background: #fff; }
+.hero-arrow {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(255,255,255,.18); backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,.3); color: #fff;
+  font-size: 13px; cursor: pointer; z-index: 2;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s;
+}
+.hero-arrow:hover { background: rgba(255,255,255,.32); }
+.hero-arrow.prev { left: 10px; }
+.hero-arrow.next { right: 10px; }
+
+/* ────────────────────────────────────
+   PROMO STRIP (3 quick value props)
+──────────────────────────────────── */
+.promo-strip {
+  display: flex; overflow-x: auto; gap: 8px;
+  padding: 10px 14px; background: var(--white);
+  border-bottom: 1px solid var(--border);
+  scrollbar-width: none;
+}
+.promo-strip::-webkit-scrollbar { display: none; }
+.promo-chip {
+  flex-shrink: 0; display: flex; align-items: center; gap: 6px;
+  padding: 7px 13px; border-radius: 99px;
+  background: var(--bg); border: 1px solid var(--border);
+  font-size: 11px; font-weight: 700; color: var(--text); white-space: nowrap;
+}
+.promo-chip i { color: var(--green); font-size: 12px; }
+
+/* ────────────────────────────────────
+   CATEGORY QUICK ACCESS
+──────────────────────────────────── */
+.cat-quick-scroll {
+  display: flex; gap: 10px;
+  overflow-x: auto; padding: 4px 14px 12px;
+  scrollbar-width: none;
+}
+.cat-quick-scroll::-webkit-scrollbar { display: none; }
+.cat-quick-item {
+  flex-shrink: 0; display: flex; flex-direction: column;
+  align-items: center; gap: 7px; cursor: pointer;
+  width: 68px;
+}
+.cat-quick-icon {
+  width: 56px; height: 56px; border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; transition: transform .2s;
+  border: 1.5px solid var(--border);
+}
+.cat-quick-item:hover .cat-quick-icon { transform: scale(1.08); }
+.cat-quick-label {
+  font-size: 10px; font-weight: 700; text-align: center;
+  color: var(--text); line-height: 1.2; letter-spacing: .2px;
+}
+
+/* ────────────────────────────────────
+   HORIZONTAL SCROLL CARD STRIP
+──────────────────────────────────── */
+.h-scroll-wrap {
+  overflow-x: auto; display: flex; gap: 10px;
+  padding: 2px 14px 12px; scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+}
+.h-scroll-wrap::-webkit-scrollbar { display: none; }
+
+/* Featured / large card */
+.feat-card {
+  flex-shrink: 0; width: 200px;
+  background: var(--white); border-radius: 14px;
+  box-shadow: var(--shadow-sm); overflow: hidden;
+  cursor: pointer; scroll-snap-align: start;
+  transition: transform .18s, box-shadow .18s;
+  display: flex; flex-direction: column;
+  border: 1px solid var(--border);
+}
+.feat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.feat-card-img {
+  width: 100%; aspect-ratio: 1/1;
+  object-fit: contain; background: #f5f5f7;
+  padding: 14px; display: block;
+}
+.feat-card-body { padding: 10px 12px 12px; }
+.feat-card-label {
+  font-size: 10px; font-weight: 800; letter-spacing: .6px;
+  text-transform: uppercase; color: var(--green); margin-bottom: 4px;
+}
+.feat-card-title {
+  font-family: var(--font-head); font-size: 13px; font-weight: 700;
+  line-height: 1.3; margin-bottom: 6px;
+}
+.feat-card-price {
+  font-family: var(--font-head); font-size: 18px; font-weight: 800;
+  color: var(--text);
+}
+.feat-card-stock { font-size: 10px; color: var(--muted); margin-top: 3px; }
+.feat-card-atc {
+  width: calc(100% - 24px); margin: 0 12px 12px;
+  padding: 8px; background: var(--green); color: #fff;
+  border: none; border-radius: var(--radius-sm);
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  font-family: var(--font-body); transition: background .15s;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+}
+.feat-card-atc:hover:not(:disabled) { background: var(--green-dark); }
+.feat-card-atc:disabled { background: #D1D5DB; cursor: not-allowed; color: var(--muted); }
+
+/* Deal card — wider, horizontal layout inside */
+.deal-card {
+  flex-shrink: 0; width: 260px;
+  background: var(--white); border-radius: 14px;
+  box-shadow: var(--shadow-sm); overflow: hidden;
+  cursor: pointer; scroll-snap-align: start;
+  border: 1px solid var(--border);
+  display: flex; align-items: center; gap: 0;
+  transition: transform .18s, box-shadow .18s;
+}
+.deal-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.deal-card-img {
+  width: 96px; height: 96px; flex-shrink: 0;
+  object-fit: contain; background: #f5f5f7; padding: 10px;
+}
+.deal-card-body { flex: 1; padding: 12px 12px 12px 8px; }
+.deal-card-badge {
+  font-size: 10px; font-weight: 800; padding: 2px 8px;
+  border-radius: 4px; background: #fef3c7; color: #92400e;
+  display: inline-block; margin-bottom: 5px; letter-spacing: .3px;
+}
+.deal-card-title {
+  font-family: var(--font-head); font-size: 12px; font-weight: 700;
+  line-height: 1.3; margin-bottom: 5px;
+}
+.deal-card-price {
+  font-family: var(--font-head); font-size: 16px; font-weight: 800;
+  color: var(--red);
+}
+
+/* New arrival — tall portrait card */
+.new-card {
+  flex-shrink: 0; width: 150px;
+  background: var(--white); border-radius: 14px;
+  box-shadow: var(--shadow-sm); overflow: hidden;
+  cursor: pointer; scroll-snap-align: start;
+  border: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  transition: transform .18s, box-shadow .18s;
+}
+.new-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.new-card-img {
+  width: 100%; aspect-ratio: 3/4;
+  object-fit: contain; background: #f5f5f7; padding: 12px; display: block;
+}
+.new-card-body { padding: 8px 10px 10px; }
+.new-card-new {
+  font-size: 9px; font-weight: 800; letter-spacing: .8px;
+  text-transform: uppercase; color: var(--green);
+  background: var(--green-light); border-radius: 4px;
+  padding: 1px 6px; display: inline-block; margin-bottom: 4px;
+}
+.new-card-title {
+  font-family: var(--font-head); font-size: 11px; font-weight: 700;
+  line-height: 1.3; margin-bottom: 4px;
+}
+.new-card-price {
+  font-family: var(--font-head); font-size: 14px; font-weight: 800;
+  color: var(--text);
+}
+
+/* ────────────────────────────────────
+   BANNER PAIR (2-up)
+──────────────────────────────────── */
+.banner-pair {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 10px; padding: 2px 14px 12px;
+}
+.banner-card {
+  border-radius: 14px; overflow: hidden; cursor: pointer;
+  position: relative; aspect-ratio: 3/2;
+  display: flex; flex-direction: column;
+  justify-content: flex-end; padding: 12px;
+  transition: transform .18s;
+}
+.banner-card:hover { transform: scale(1.02); }
+.banner-card-label {
+  font-size: 10px; font-weight: 800; letter-spacing: .8px;
+  text-transform: uppercase; color: rgba(255,255,255,.8);
+  margin-bottom: 2px;
+}
+.banner-card-title {
+  font-family: var(--font-head); font-size: 14px; font-weight: 800;
+  color: #fff; line-height: 1.2;
+}
+.banner-card-img {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; z-index: 0;
+}
+.banner-card-overlay {
+  position: absolute; inset: 0; z-index: 1;
+  background: linear-gradient(to top, rgba(0,0,0,.65) 0%, transparent 60%);
+}
+.banner-card > *:not(.banner-card-img):not(.banner-card-overlay) { position: relative; z-index: 2; }
+
+/* ────────────────────────────────────
+   MAIN PRODUCT GRID (all products)
+──────────────────────────────────── */
+#product-grid {
+  padding: 2px 14px 12px;
+}
+.prod-grid-inner {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+  gap: 10px;
+}
+
+/* ── Standard card ── */
 .p-card {
-  background: var(--white); border-radius: var(--radius);
+  background: var(--white); border-radius: 12px;
   box-shadow: var(--shadow-sm); overflow: hidden;
   display: flex; flex-direction: column;
   transition: transform 0.18s, box-shadow 0.18s;
   animation: fadeUp 0.35s ease both;
+  border: 1px solid var(--border);
+  cursor: pointer;
 }
 .p-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
-@keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
 .p-card-badge {
   font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
   padding: 4px 10px; text-transform: uppercase;
@@ -305,8 +624,7 @@ a { text-decoration: none; color: inherit; }
 .p-card-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
 .p-card-grade {
   display: inline-block; margin-top: 6px;
-  font-size: 10px; font-weight: 700; padding: 2px 8px;
-  border-radius: 4px;
+  font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px;
 }
 .grade-aplus { background: #dcfce7; color: #15803d; }
 .grade-a     { background: #dbeafe; color: #1d4ed8; }
@@ -325,8 +643,46 @@ a { text-decoration: none; color: inherit; }
 }
 .add-btn:hover:not(:disabled) { background: var(--green-dark); }
 .add-btn:disabled { background: #D1D5DB; cursor: not-allowed; color: var(--muted); }
-.no-prods { grid-column: 1/-1; text-align: center; padding: 60px 20px; color: var(--muted); }
+.no-prods { text-align: center; padding: 60px 20px; color: var(--muted); }
 .no-prods .no-icon { font-size: 44px; margin-bottom: 12px; }
+
+/* ── "Load more" button ── */
+.load-more-wrap { padding: 4px 14px 16px; }
+.load-more-btn {
+  width: 100%; padding: 13px;
+  background: var(--white); border: 1.5px solid var(--border);
+  border-radius: var(--radius); font-family: var(--font-head);
+  font-size: 13px; font-weight: 700; color: var(--text);
+  cursor: pointer; transition: all .15s;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+}
+.load-more-btn:hover { border-color: var(--green); color: var(--green); background: var(--green-light); }
+.load-more-btn.loading { color: var(--muted); pointer-events: none; }
+
+/* ── Filter bar ── */
+.filter-bar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 14px 6px; overflow-x: auto; scrollbar-width: none;
+}
+.filter-bar::-webkit-scrollbar { display: none; }
+.filter-chip {
+  flex-shrink: 0; padding: 5px 13px; border-radius: 99px;
+  border: 1.5px solid var(--border); background: var(--white);
+  font-size: 11px; font-weight: 700; color: var(--muted);
+  cursor: pointer; transition: all .13s; white-space: nowrap;
+  display: flex; align-items: center; gap: 5px;
+}
+.filter-chip.active { background: var(--text); border-color: var(--text); color: #fff; }
+.filter-chip:hover:not(.active) { border-color: var(--green); color: var(--green); }
+.results-label {
+  padding: 4px 14px 8px;
+  font-size: 11px; font-weight: 700; color: var(--muted);
+  display: flex; align-items: center; gap: 6px;
+}
+.results-tag {
+  background: var(--green-light); color: var(--green);
+  padding: 1px 8px; border-radius: 20px; font-weight: 800;
+}
 
 /* ─── PAGE HEADER ─── */
 .pg-header {
@@ -355,7 +711,72 @@ a { text-decoration: none; color: inherit; }
   background: var(--white); border-radius: var(--radius);
   padding: 12px; display: flex; gap: 10px;
   align-items: flex-start; box-shadow: var(--shadow-sm);
+  cursor: pointer; transition: box-shadow .15s; border: 1px solid var(--border);
 }
+.cart-item:hover { box-shadow: 0 4px 18px rgba(0,0,0,.10); }
+.ci-img {
+  width: 62px; height: 62px; flex-shrink: 0;
+  border-radius: 10px; background: var(--bg);
+  object-fit: contain; padding: 4px;
+  border: 1.5px solid var(--border);
+}
+.ci-img-placeholder {
+  width: 62px; height: 62px; flex-shrink: 0;
+  border-radius: 10px; background: var(--bg);
+  border: 1.5px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted); font-size: 20px;
+}
+
+/* ── INLINE PRODUCT OVERVIEW ── */
+#page-product { background: var(--bg); display: none; flex-direction: column; }
+#page-product.active { display: flex; }
+#prod-ov-content { overflow-y: auto; flex: 1; }
+.prod-ov-img-wrap {
+  width: 100%; aspect-ratio: 1/1; max-height: 300px;
+  background: var(--white); display: flex; align-items: center; justify-content: center;
+  overflow: hidden; position: relative;
+}
+.prod-ov-img-badge {
+  position: absolute; top: 12px; left: 12px;
+  padding: 4px 11px; border-radius: 99px; font-size: 11px; font-weight: 700;
+}
+.prod-ov-img-badge.in  { background:rgba(232,249,239,.92);color:var(--green); }
+.prod-ov-img-badge.low { background:rgba(255,251,235,.92);color:#b45309; }
+.prod-ov-img-badge.out { background:rgba(255,242,242,.92);color:var(--red); }
+.prod-ov-body { padding: 18px 16px 32px; }
+.prod-ov-eyebrow { font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--green);display:flex;align-items:center;gap:7px;margin-bottom:5px; }
+.prod-ov-eyebrow::before { content:'';width:14px;height:2px;background:var(--green);border-radius:2px;display:inline-block; }
+.prod-ov-title { font-family:var(--font-head);font-size:20px;font-weight:800;line-height:1.2;margin-bottom:10px; }
+.prod-ov-price { font-family:var(--font-head);font-size:26px;font-weight:800;color:var(--text);margin-bottom:14px; }
+.prod-ov-divider { height:1px;background:var(--border);margin:14px 0; }
+.pov-var-group { margin-bottom: 14px; }
+.pov-var-label { font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:6px; }
+.pov-var-label .sv { font-weight:700;color:var(--text);letter-spacing:0;text-transform:none;font-size:12px; }
+.pov-chips { display:flex;flex-wrap:wrap;gap:8px; }
+.pov-chip { padding:7px 15px;border:1.5px solid var(--border);border-radius:99px;font-size:13px;font-weight:600;color:var(--muted);background:var(--white);cursor:pointer;transition:all .17s;white-space:nowrap;display:inline-flex;align-items:center;gap:7px; }
+.pov-chip:hover:not(.oos){border-color:var(--text);color:var(--text);}
+.pov-chip.sel{border-color:var(--text);background:var(--text);color:#fff;}
+.pov-chip.oos{opacity:.35;cursor:not-allowed;text-decoration:line-through;}
+.pov-chip .cdot{width:13px;height:13px;border-radius:50%;border:1.5px solid rgba(0,0,0,.12);flex-shrink:0;}
+.pov-chip .delta{font-size:10px;opacity:.65;margin-left:2px;}
+.prod-ov-stock-row { display:flex;align-items:center;gap:9px;padding:12px 14px;background:var(--white);border-radius:var(--radius);margin-bottom:14px;border:1px solid var(--border); }
+.pov-sdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.pov-sdot.in{background:var(--green);animation:pdot 2s ease-in-out infinite;}
+.pov-sdot.low{background:#f59e0b;}
+.pov-sdot.out{background:var(--red);}
+@keyframes pdot{0%,100%{box-shadow:0 0 0 0 rgba(46,160,86,.4)}50%{box-shadow:0 0 0 5px rgba(46,160,86,0)}}
+.pov-stext{font-size:13px;font-weight:600;}
+.pov-stext.in{color:var(--green);}
+.pov-stext.low{color:#b45309;}
+.pov-stext.out{color:var(--red);}
+.pov-ssub{font-size:12px;color:var(--muted);margin-left:auto;}
+.prod-ov-desc-label{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+.prod-ov-desc{font-size:14px;line-height:1.8;color:var(--muted);white-space:pre-wrap;word-break:break-word;}
+.prod-ov-atc{width:100%;padding:15px;margin-top:18px;background:var(--text);color:#fff;border:none;border-radius:var(--radius);font-family:var(--font-head);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;transition:transform .18s,box-shadow .18s,background .18s;}
+.prod-ov-atc:hover:not(:disabled){transform:scale(1.02);box-shadow:0 6px 24px rgba(0,0,0,.16);}
+.prod-ov-atc:active{transform:scale(.98);}
+.prod-ov-atc:disabled{background:var(--border);color:var(--muted);cursor:not-allowed;transform:none;}
 .ci-info { flex: 1; min-width: 0; }
 .ci-name { font-family: var(--font-head); font-size: 13px; font-weight: 700; line-height: 1.3; }
 .ci-sub  { font-size: 11px; color: var(--muted); margin-top: 2px; }
@@ -1325,7 +1746,7 @@ a { text-decoration: none; color: inherit; }
     <button class="sb-link" onclick="showInfo('warranty')"><span class="sb-icon"><i class="fa-solid fa-shield-halved"></i></span> Warranty</button>
     <button class="sb-link" onclick="showInfo('policy')"><span class="sb-icon"><i class="fa-solid fa-clipboard-list"></i></span> Return Policy</button>
     <button class="sb-link" onclick="showInfo('contact')"><span class="sb-icon"><i class="fa-solid fa-phone"></i></span> Contact Us</button>
-    <button class="sb-link" onclick="showInfo('about')"><span class="sb-icon"><i class="fa-solid fa-circle-info"></i></span> About iAlfonex</button>
+    <button class="sb-link" onclick="showInfo('about')"><span class="sb-icon"><i class="fa-solid fa-circle-info"></i></span> About Alfonex</button>
   </div>
 </div>
 
@@ -1359,8 +1780,12 @@ a { text-decoration: none; color: inherit; }
 
 <!-- ════════════ SHOP PAGE ════════════ -->
 <div class="page active" id="page-shop">
+
+  <!-- ── Category filter bar (sticky, shown by navTo) ── -->
   <div id="cat-bar"></div>
-  <div id="product-grid"></div>
+
+  <!-- ── Home feed (built by renderHome) ── -->
+  <div id="home-feed"></div>
 
   <!-- ── Shop Footer ── -->
   <div class="shop-footer">
@@ -1505,6 +1930,18 @@ a { text-decoration: none; color: inherit; }
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
   </div>
   <div id="cart-body"></div>
+</div>
+
+<!-- ════════════ PRODUCT OVERVIEW PAGE ════════════ -->
+<div class="page" id="page-product">
+  <div class="pg-header">
+    <button class="back-btn" onclick="prodOvBack()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <h1 id="prod-ov-header-title" style="font-size:15px;font-family:var(--font-head);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;flex:1;text-align:center">Product</h1>
+    <div style="width:40px"></div>
+  </div>
+  <div id="prod-ov-content" style="overflow-y:auto"></div>
 </div>
 
 <!-- ════════════ CHECKOUT PAGE ════════════ -->
@@ -2190,20 +2627,24 @@ const APP = {
   cart:     JSON.parse(localStorage.getItem('ia_cart') || '[]'),
   otpCode:  null,
   otpSent:  false,
-  _loaded:  { cats:false, prods:false }
+  _loaded:  { cats:false, prods:false },
+  _keywordFilter: null,
+  _pendingRoute: null
 };
 
 /* ═══════════════════════════════════
    NAVIGATION
 ═══════════════════════════════════ */
-function navTo(pg) {
+function navTo(pg, opts = {}) {
   if (pg === 'orders' && !APP.user) { navTo('login'); return; }
   if (pg === 'profile')   { renderProfile(); }
   if (pg === 'wishlist')  { renderWishlist(); }
   if (pg === 'addresses') { renderAddresses(); }
   if (pg === 'search')    { openSearchPage(); return; }
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-' + pg).classList.add('active');
+  const pageEl = document.getElementById('page-' + pg);
+  if (!pageEl) return;
+  pageEl.classList.add('active');
   const isShop = pg === 'shop';
   document.getElementById('cur-bar').style.display = isShop ? 'flex' : 'none';
   document.getElementById('cat-bar').style.display = isShop ? 'flex' : 'none';
@@ -2214,14 +2655,37 @@ function navTo(pg) {
     returns:'bn-user', wishlist:'bn-user', addresses:'bn-user',
     warranty:'bn-user', policy:'bn-user', about:'bn-user',
     contact:'bn-user', quality:'bn-user', 'shipping-info':'bn-user',
-    'order-detail':'bn-orders'
+    'order-detail':'bn-orders', product:'bn-shop'
   };
-  if (bmap[pg]) document.getElementById(bmap[pg]).classList.add('active');
+  if (bmap[pg]) document.getElementById(bmap[pg])?.classList.add('active');
   if (pg === 'cart')     renderCart();
   if (pg === 'checkout') renderCheckout();
   if (pg === 'orders')   renderOrders();
-  window.scrollTo(0,0);
+
+  // URL-based routing — back button support
+  if (!opts._fromPopstate) {
+    const hash = pg === 'shop' ? '' : pg;
+    const keyParam = opts.key ? `?key=${encodeURIComponent(opts.key)}` : '';
+    history.pushState({ pg, key: opts.key||null }, '', hash ? `#${hash}${keyParam}` : '#');
+  }
+  window.scrollTo(0, 0);
 }
+
+// Back button / forward
+window.addEventListener('popstate', e => {
+  const state = e.state;
+  if (!state) { navTo('shop', {_fromPopstate:true}); return; }
+  if (state.pg === 'product' && state.key) openProductInline(state.key, {_fromPopstate:true});
+  else navTo(state.pg || 'shop', {_fromPopstate:true});
+});
+
+// Deep-link routing on first load
+(function routeFromHash() {
+  const hash   = window.location.hash.replace('#','').split('?')[0];
+  const params = new URLSearchParams(window.location.hash.includes('?') ? window.location.hash.split('?')[1] : '');
+  if (hash === 'product' && params.get('key')) APP._pendingRoute = { pg:'product', key:params.get('key') };
+  else if (hash && document.getElementById('page-'+hash)) APP._pendingRoute = { pg:hash };
+})();
 
 /* ═══════════════════════════════════
    SIDEBAR
@@ -2332,15 +2796,16 @@ function renderSearchResults(q) {
     results.map(([id,p]) => {
       const price = Number(p.price)||0;
       const priceTxt = price ? SYM[APP.cur]+price.toLocaleString() : '—';
-      return `<div class="search-result-row" onclick="addSearchHistory('${q}');addToCart('${id}')">
+      return `<div class="search-result-row" onclick="addSearchHistory('${q.replace(/'/g,"\\'")}');openProductInline('${id}')">
         ${p.imageUrl
-          ? `<img src="${p.imageUrl}" style="width:36px;height:36px;object-fit:contain;border-radius:6px;background:#f5f5f7;flex-shrink:0" alt="">`
+          ? `<img src="${p.imageUrl}" style="width:44px;height:44px;object-fit:contain;border-radius:8px;background:#f5f5f7;flex-shrink:0;padding:3px;border:1px solid var(--border)" alt="">`
           : `<span class="sr-icon"><i class="fa-solid fa-box"></i></span>`}
         <div style="flex:1;min-width:0">
           <div class="sr-name">${p.title||'—'}</div>
+          ${p.variants?.length ? `<div style="font-size:11px;color:var(--muted);margin-top:1px">${p.variants.map(t=>t.name).join(' · ')}</div>` : ''}
         </div>
         <div class="sr-price">${priceTxt}</div>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="color:var(--muted);margin-left:6px;flex-shrink:0"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="color:var(--muted);margin-left:4px;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
       </div>`;
     }).join('');
 }
@@ -2397,23 +2862,16 @@ function getPrice(item) { return Number(item.price) || 0; }
 function fmt(val) { return SYM[APP.cur] + Number(val).toLocaleString(); }
 function cartSubtotal() { return APP.cart.reduce((s, i) => s + getPrice(i) * i.qty, 0); }
 
-function addToCart(id) {
+function addToCart(id, variantCtx) {
   const p = APP.prods[id]; if (!p) return;
-  const ex = APP.cart.find(i => i.id === id);
+  const effectivePrice = (variantCtx?.price != null) ? Number(variantCtx.price) : Number(p.price)||0;
+  const variantLabel   = variantCtx?.variantLabel || null;
+  const cartKey = variantLabel ? `${id}__${variantLabel}` : id;
+  const ex = APP.cart.find(i => i.id === cartKey);
   if (ex) { ex.qty++; }
-  else {
-    APP.cart.push({
-      id,
-      productId: id,
-      name: p.title || '—',
-      price: Number(p.price) || 0,
-      costPrice: Number(p.costPrice) || 0,
-      qty: 1
-    });
-  }
+  else APP.cart.push({ id:cartKey, productId:id, name:p.title||'—', variantLabel:variantLabel||null, price:effectivePrice, costPrice:Number(p.costPrice)||0, imageUrl:p.imageUrl||'', qty:1 });
   saveCart();
-  toast('Added to cart', '✓');
-  // animate badge
+  toast('Added to cart','✓');
   const nb = document.getElementById('cart-badge');
   nb.style.transform = 'scale(1.4)';
   setTimeout(() => nb.style.transform = '', 200);
@@ -2431,44 +2889,65 @@ function changeQty(id, d) {
 /* ═══════════════════════════════════
    CATEGORY FILTER
 ═══════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   KEYWORD CATEGORY SYSTEM
+   No categoryId in DB — filter purely by title + description
+═══════════════════════════════════════════════════════ */
+
+// Master category definitions — keywords matched against title+description
+const CAT_DEFS = [
+  { id:'all',        label:'All',         icon:'fa-border-all',              keywords:[] },
+  { id:'iphone',     label:'iPhone',      icon:'fa-mobile-screen-button',    keywords:['iphone'] },
+  { id:'mac',        label:'Mac',         icon:'fa-laptop',                  keywords:['macbook','mac mini','mac pro','imac','mac studio'] },
+  { id:'ipad',       label:'iPad',        icon:'fa-tablet-screen-button',    keywords:['ipad'] },
+  { id:'airpod',     label:'AirPods',     icon:'fa-headphones',              keywords:['airpod','airbuds','earbuds','earphone','earpod'] },
+  { id:'watch',      label:'Watch',       icon:'fa-clock',                   keywords:['apple watch','iwatch','smartwatch'] },
+  { id:'case',       label:'Cases',       icon:'fa-shield-halved',           keywords:['case','cover','bumper','skin','protector'] },
+  { id:'accessories',label:'Accessories', icon:'fa-plug',                    keywords:['charger','cable','adapter','lightning','usbc','magsafe','stand','mount','keyboard','mouse','trackpad','hub','dock','pencil','stylus','band','strap','screen guard','tempered'] },
+];
+
+function matchesCat(p, catId) {
+  if (catId === 'all') return true;
+  const def = CAT_DEFS.find(c => c.id === catId);
+  if (!def || !def.keywords.length) return false;
+  const haystack = ((p.title||'') + ' ' + (p.description||'')).toLowerCase();
+  return def.keywords.some(kw => haystack.includes(kw));
+}
+
+function filterByName(name) {
+  // Find the matching CAT_DEF by keyword match on name itself
+  const kw = name.toLowerCase().trim();
+  const cat = CAT_DEFS.find(c => c.id === kw || c.keywords.some(k => k.includes(kw) || kw.includes(k)));
+  filterCat(cat ? cat.id : 'all');
+}
+
 function filterCat(catId) {
-  APP.activeCat = catId;
+  APP.activeCat    = catId;
+  APP._keywordFilter = null;
   document.querySelectorAll('.cat-pill').forEach(p =>
     p.classList.toggle('active', p.dataset.cat === catId)
   );
-  // Clear search when switching category
   const inp = document.getElementById('search-input');
   if (inp && inp.value) {
     inp.value = '';
-    document.getElementById('search-clear').style.display = 'none';
+    const cl = document.getElementById('search-clear');
+    if (cl) cl.style.display = 'none';
   }
   renderProds();
 }
-function filterByName(name) {
-  const match = Object.entries(APP.cats).find(([, c]) =>
-    (c.name||'').toLowerCase().includes(name.toLowerCase())
-  );
-  if (match) filterCat(match[0]);
-  else filterCat('all');
-}
 
 /* ═══════════════════════════════════
-   BUILD CATEGORY BAR
+   BUILD CATEGORY BAR (from CAT_DEFS)
 ═══════════════════════════════════ */
 function buildCatBar() {
   const bar = document.getElementById('cat-bar');
-  bar.innerHTML = '<div class="cat-pill active" data-cat="all" onclick="filterCat(\'all\')">All</div>';
-  Object.entries(APP.cats)
-    .sort((a,b) => (a[1].order||99)-(b[1].order||99))
-    .forEach(([id, cat]) => {
-      const pill = document.createElement('div');
-      pill.className = 'cat-pill';
-      pill.dataset.cat = id;
-      pill.textContent = cat.name;
-      pill.onclick = () => filterCat(id);
-      bar.appendChild(pill);
-    });
+  bar.innerHTML = CAT_DEFS.map(c => `
+    <div class="cat-pill${APP.activeCat===c.id?' active':''}" data-cat="${c.id}"
+      onclick="filterCat('${c.id}')">
+      <i class="fa-solid ${c.icon}" style="font-size:10px;margin-right:4px"></i>${c.label}
+    </div>`).join('');
 }
+
 
 /* ═══════════════════════════════════
    GRADE BADGE CLASS
@@ -2485,80 +2964,251 @@ function gradeClass(g) {
 /* ═══════════════════════════════════
    RENDER PRODUCTS
 ═══════════════════════════════════ */
-function renderProds() {
-  const grid = document.getElementById('product-grid');
-  const inp  = document.getElementById('search-input');
-  const q    = inp ? inp.value.trim().toLowerCase() : '';
+/* ═══════════════════════════════════════════════════════
+   HOME PAGE ENGINE
+═══════════════════════════════════════════════════════ */
+const PAGE_SIZE = 12;
+let _gridPage   = 1;
+let _gridFilter = 'all';
+const HERO_GRADIENTS = [
+  'linear-gradient(135deg,#0f2027,#203a43,#2c5364)',
+  'linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)',
+  'linear-gradient(135deg,#2d1b69,#11998e,#38ef7d)',
+  'linear-gradient(135deg,#373b44,#4286f4)',
+];
 
-  let entries = Object.entries(APP.prods);
+function renderProds() { renderHome(); }
 
-  if (APP.activeCat !== 'all')
-    entries = entries.filter(([, p]) => p.categoryId === APP.activeCat);
-
-  if (q)
-    entries = entries.filter(([, p]) =>
-      (p.title||'').toLowerCase().includes(q)
-    );
-
-  entries.sort((a,b) => (a[1].title||'').localeCompare(b[1].title||''));
-
-  // Result count
-  const countEl = document.getElementById('search-result-count');
-  if (countEl) {
-    if (q) {
-      countEl.innerHTML = entries.length
-        ? `<span class="sc-tag">${entries.length}</span> result${entries.length===1?'':'s'} for "<strong>${q}</strong>"`
-        : `<span style="color:var(--red);font-weight:600">No results for "<strong>${q}</strong>"</span>`;
-    } else if (APP.activeCat !== 'all') {
-      const catName = APP.cats[APP.activeCat]?.name || '';
-      countEl.innerHTML = entries.length
-        ? `<span class="sc-tag">${entries.length}</span> ${catName} product${entries.length===1?'':''}`
-        : '';
-    } else {
-      countEl.innerHTML = '';
-    }
-  }
-
-  if (!entries.length) {
-    grid.innerHTML = `<div class="no-prods">
-      <div class="no-icon">${q ? '<i class="fa-solid fa-magnifying-glass"></i>' : '<i class="fa-solid fa-box-open"></i>'}</div>
-      <strong>${q ? 'No results found' : 'No products found'}</strong>
-      <p style="margin-top:6px;font-size:13px">
-        ${q ? `Try a different keyword or <button onclick="clearSearch()" style="background:none;border:none;color:var(--green);font-weight:700;cursor:pointer;font-size:13px;padding:0">clear search</button>` : 'Check back soon!'}
-      </p>
-    </div>`;
-    return;
-  }
-
-  grid.innerHTML = entries.map(([id, p], idx) => {
-    const price    = Number(p.price) || 0;
-    const priceTxt = price ? SYM[APP.cur] + price.toLocaleString() : '—';
-    const qty      = p.stock != null ? Number(p.stock) : null;
-    const oos      = qty !== null && qty === 0;
-    const delay    = `animation-delay:${Math.min(idx * 0.04, 0.4)}s`;
-
-    let titleDisp = p.title || '—';
-    if (q && titleDisp.toLowerCase().includes(q)) {
-      const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
-      titleDisp = titleDisp.replace(re, '<mark style="background:var(--green-light);color:var(--green-dark);border-radius:2px;padding:0 1px">$1</mark>');
-    }
-
-        return `<div class="p-card" style="${delay}; cursor:pointer;" onclick="openProductOverview('${id}')" title="View full product overview">
-      ${p.imageUrl ? `<img class="p-card-img" src="${p.imageUrl}" alt="${p.title||''}" loading="lazy">` : ''}
-      <div class="p-card-body">
-        <div class="p-card-model">${titleDisp}</div>
-        <div class="p-card-price">${priceTxt}</div>
-        ${qty !== null ? `<div class="p-card-qty">${oos ? '<span style="color:var(--red);font-weight:700">Out of stock</span>' : '<span style="color:#22c55e">●</span> In stock: '+qty}</div>` : ''}
-      </div>
-      <div class="p-card-footer">
-        <button class="add-btn" onclick="event.stopPropagation(); addToCart('${id}')" ${oos ? 'disabled' : ''}>
-          ${oos ? '<i class="fa-solid fa-ban"></i> Out of Stock' : '<i class="fa-solid fa-plus"></i> Add to Cart'}
-        </button>
-      </div>
-    </div>`;
-  }).join('');
+function renderHome() {
+  const feed = document.getElementById('home-feed');
+  if (!feed) return;
+  const allEntries = Object.entries(APP.prods);
+  if (APP.activeCat !== 'all') { renderFilteredGrid(feed, allEntries); return; }
+  _gridPage = 1;
+  APP._keywordFilter = null;
+  const byNewest = [...allEntries].sort((a,b) => (b[1].createdAt||0)-(a[1].createdAt||0));
+  const inStock  = allEntries.filter(([,p]) => Number(p.stock||0) > 0);
+  const heroProduct = byNewest.find(([,p]) => p.imageUrl) || byNewest[0];
+  feed.innerHTML = [
+    buildHeroCarousel(heroProduct, allEntries),
+    buildPromoStrip(),
+    buildCatQuick(),
+    buildHSection('🔥 Featured Products', byNewest.slice(0,10), 'feat'),
+    buildBannerPair(allEntries),
+    buildHSection('🏷️ Hot Deals', inStock.sort(()=>0.5-Math.random()).slice(0,8), 'deal'),
+    buildHSection('✨ New Arrivals', byNewest.slice(0,8), 'new'),
+    buildAllProductsSection(allEntries),
+  ].join('');
+  initHeroCarousel();
 }
 
+function renderFilteredGrid(feed, allEntries) {
+  const catDef = CAT_DEFS.find(c => c.id === APP.activeCat) || CAT_DEFS[0];
+  const entries = allEntries.filter(([,p]) => matchesCat(p, APP.activeCat));
+  const sorted  = applySortFilter(entries, _gridFilter);
+
+  feed.innerHTML = `
+    <div class="home-section">
+      <div class="section-head">
+        <div class="section-title">
+          <span class="section-title-dot"></span>
+          <i class="fa-solid ${catDef.icon}" style="font-size:13px;color:var(--green)"></i>
+          ${catDef.label}
+        </div>
+        <button class="section-see-all" onclick="filterCat('all')">← All</button>
+      </div>
+      ${buildFilterBar()}
+      <div class="results-label">
+        <span class="results-tag">${sorted.length}</span>
+        product${sorted.length !== 1 ? 's' : ''}
+      </div>
+      <div id="product-grid"><div class="prod-grid-inner">
+        ${sorted.length
+          ? sorted.map(([id,p],i) => pCardHTML(id,p,i)).join('')
+          : `<div class="no-prods" style="grid-column:1/-1">
+               <div class="no-icon"><i class="fa-solid fa-box-open"></i></div>
+               <strong>No ${catDef.label} products found</strong>
+               <p style="margin-top:6px;font-size:13px">
+                 <button onclick="filterCat('all')" style="background:none;border:none;color:var(--green);font-weight:700;cursor:pointer;font-size:13px;padding:0">Show all products</button>
+               </p>
+             </div>`
+        }
+      </div></div>
+    </div>`;
+}
+
+function buildHeroCarousel(heroProduct, allEntries) {
+  const slides = [];
+  if (heroProduct) {
+    const [id, p] = heroProduct;
+    const price = p.price ? SYM[APP.cur]+Number(p.price).toLocaleString() : '';
+    slides.push(`<div class="hero-slide" onclick="openProductInline('${id}')">
+      <div class="hero-slide-bg" style="background:${HERO_GRADIENTS[0]}">
+        <div style="flex:1;z-index:1;position:relative">
+          <div class="hero-badge">New Arrival</div>
+          <div class="hero-title">${(p.title||'').split(' ').slice(0,4).join(' ')}</div>
+          ${price?`<div class="hero-price">${price}</div>`:''}
+          <button class="hero-btn"><i class="fa-solid fa-bag-shopping"></i> Shop Now</button>
+        </div>
+        ${p.imageUrl?`<img class="hero-prod-img" src="${p.imageUrl}" alt="">`:''} 
+      </div></div>`);
+  }
+  const catPromos = [
+    {label:'iPhones',title:'Latest iPhones\nIn Stock',gradient:HERO_GRADIENTS[1],icon:'fa-mobile-screen-button',cat:'iphone'},
+    {label:'MacBooks',title:'MacBook Pro\n& Air',gradient:HERO_GRADIENTS[2],icon:'fa-laptop',cat:'macbook'},
+    {label:'AirPods',title:'True Wireless\nAudio',gradient:HERO_GRADIENTS[3],icon:'fa-headphones',cat:'airpod'},
+  ];
+  catPromos.forEach(s => {
+    slides.push(`<div class="hero-slide" onclick="filterByName('${s.cat}')">
+      <div class="hero-slide-bg" style="background:${s.gradient}">
+        <div style="flex:1;z-index:1;position:relative">
+          <div class="hero-badge">${s.label}</div>
+          <div class="hero-title" style="white-space:pre-line">${s.title}</div>
+          <button class="hero-btn"><i class="fa-solid ${s.icon}"></i> Explore</button>
+        </div>
+        <div style="position:absolute;right:20px;font-size:80px;opacity:.1;z-index:0"><i class="fa-solid ${s.icon}"></i></div>
+      </div></div>`);
+  });
+  const dots = slides.map((_,i)=>`<button class="hero-dot${i===0?' active':''}" onclick="heroGoTo(${i})"></button>`).join('');
+  return `<div class="hero-carousel" id="hero-carousel">
+    <div class="hero-track" id="hero-track">${slides.join('')}</div>
+    <button class="hero-arrow prev" onclick="heroShift(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+    <button class="hero-arrow next" onclick="heroShift(1)"><i class="fa-solid fa-chevron-right"></i></button>
+    <div class="hero-dots" id="hero-dots">${dots}</div>
+  </div>`;
+}
+
+function buildPromoStrip() {
+  const chips = [{icon:'fa-shield-halved',text:'Genuine Products'},{icon:'fa-truck-fast',text:'Fast Shipping'},{icon:'fa-rotate-left',text:'Easy Returns'},{icon:'fa-lock',text:'Secure Payment'},{icon:'fa-headset',text:'24/7 Support'},{icon:'fa-certificate',text:'Warranty Included'}];
+  return `<div class="promo-strip">${chips.map(c=>`<div class="promo-chip"><i class="fa-solid ${c.icon}"></i>${c.text}</div>`).join('')}</div>`;
+}
+
+function buildCatQuick() {
+  const defs = [{label:'iPhone',icon:'📱',color:'#eff6ff',name:'iphone'},{label:'MacBook',icon:'💻',color:'#f0fdf4',name:'macbook'},{label:'AirPods',icon:'🎧',color:'#fdf4ff',name:'airpod'},{label:'iPad',icon:'🖥️',color:'#fff7ed',name:'ipad'},{label:'Watch',icon:'⌚',color:'#ecfdf5',name:'watch'},{label:'Cases',icon:'🛡️',color:'#fef2f2',name:'case'},{label:'Chargers',icon:'🔌',color:'#fffbeb',name:'charger'},{label:'All',icon:'🛒',color:'#f3f4f6',name:'all'}];
+  return `<div class="home-section"><div class="cat-quick-scroll">${defs.map(c=>`<div class="cat-quick-item" onclick="${c.name==='all'?"filterCat('all')":`filterByName('${c.name}')`}"><div class="cat-quick-icon" style="background:${c.color}">${c.icon}</div><div class="cat-quick-label">${c.label}</div></div>`).join('')}</div></div>`;
+}
+
+function buildHSection(title, entries, type) {
+  if (!entries.length) return '';
+  const cards = entries.map(([id,p]) => {
+    const price = Number(p.price||0);
+    const priceTxt = price ? SYM[APP.cur]+price.toLocaleString() : '—';
+    const oos = Number(p.stock||0) === 0;
+    if (type==='feat') return `<div class="feat-card" onclick="openProductInline('${id}')">${p.imageUrl?`<img class="feat-card-img" src="${p.imageUrl}" alt="" loading="lazy">`:'<div class="feat-card-img" style="display:flex;align-items:center;justify-content:center;font-size:40px;background:#f5f5f7">📦</div>'}<div class="feat-card-body"><div class="feat-card-label">Featured</div><div class="feat-card-title">${p.title||'—'}</div><div class="feat-card-price">${priceTxt}</div><div class="feat-card-stock">${oos?'<span style="color:var(--red)">Out of stock</span>':'<span style="color:var(--green)">● In stock</span>'}</div></div><button class="feat-card-atc" onclick="event.stopPropagation();addToCart('${id}')" ${oos?'disabled':''}>${oos?'<i class="fa-solid fa-ban"></i> Out of Stock':'<i class="fa-solid fa-plus"></i> Add to Cart'}</button></div>`;
+    if (type==='deal') return `<div class="deal-card" onclick="openProductInline('${id}')">${p.imageUrl?`<img class="deal-card-img" src="${p.imageUrl}" alt="" loading="lazy">`:'<div class="deal-card-img" style="display:flex;align-items:center;justify-content:center;font-size:32px">📦</div>'}<div class="deal-card-body"><div class="deal-card-badge">🏷️ Deal</div><div class="deal-card-title">${p.title||'—'}</div><div class="deal-card-price">${priceTxt}</div></div></div>`;
+    if (type==='new')  return `<div class="new-card" onclick="openProductInline('${id}')">${p.imageUrl?`<img class="new-card-img" src="${p.imageUrl}" alt="" loading="lazy">`:'<div class="new-card-img" style="display:flex;align-items:center;justify-content:center;font-size:36px;background:#f5f5f7">📦</div>'}<div class="new-card-body"><div class="new-card-new">New</div><div class="new-card-title">${p.title||'—'}</div><div class="new-card-price">${priceTxt}</div></div></div>`;
+    return '';
+  }).join('');
+  return `<div class="home-section"><div class="section-head"><div class="section-title"><span class="section-title-dot"></span>${title}</div><button class="section-see-all" onclick="filterCat('all')">See all →</button></div><div class="h-scroll-wrap">${cards}</div></div>`;
+}
+
+function buildBannerPair(allEntries) {
+  const banners = [{gradient:'linear-gradient(135deg,#0f2027,#2c5364)',label:'iPhones',title:'Latest Models Available Now',name:'iphone'},{gradient:'linear-gradient(135deg,#2d1b69,#11998e)',label:'MacBooks',title:'Power Meets Portability',name:'macbook'}];
+  return `<div class="home-section"><div class="banner-pair">${banners.map(b=>{const match=allEntries.find(([,p])=>(p.title||'').toLowerCase().includes(b.name)&&p.imageUrl);return `<div class="banner-card" style="background:${b.gradient}" onclick="filterByName('${b.name}')">${match?`<img class="banner-card-img" src="${match[1].imageUrl}" alt="" loading="lazy"><div class="banner-card-overlay"></div>`:''}<div class="banner-card-label">${b.label}</div><div class="banner-card-title">${b.title}</div></div>`;}).join('')}</div></div>`;
+}
+
+function buildAllProductsSection(allEntries) {
+  const sorted  = applySortFilter(allEntries, _gridFilter);
+  const visible = sorted.slice(0, PAGE_SIZE);
+  const hasMore = sorted.length > PAGE_SIZE;
+  return `<div class="home-section">
+    <div class="section-head">
+      <div class="section-title"><span class="section-title-dot"></span>All Products</div>
+      <span style="font-size:11px;color:var(--muted);font-weight:600">${sorted.length} items</span>
+    </div>
+    ${buildFilterBar()}
+    <div id="product-grid">
+      <div class="prod-grid-inner" id="prod-grid-inner">
+        ${visible.map(([id,p],i) => pCardHTML(id,p,i)).join('')}
+      </div>
+    </div>
+    ${hasMore ? `<div class="load-more-wrap">
+      <button class="load-more-btn" id="load-more-btn" onclick="loadMoreProds()">
+        <i class="fa-solid fa-chevron-down"></i> Load more (${sorted.length - PAGE_SIZE} remaining)
+      </button></div>` : ''}
+  </div>`;
+}
+
+function buildFilterBar() {
+  const filters = [{id:'all',label:'All',icon:'fa-border-all'},{id:'instock',label:'In Stock',icon:'fa-circle-check'},{id:'newest',label:'Newest',icon:'fa-clock-rotate-left'},{id:'price-asc',label:'Price ↑',icon:'fa-arrow-up'},{id:'price-desc',label:'Price ↓',icon:'fa-arrow-down'}];
+  return `<div class="filter-bar">${filters.map(f=>`<button class="filter-chip${_gridFilter===f.id?' active':''}" onclick="setGridFilter('${f.id}')"><i class="fa-solid ${f.icon}"></i>${f.label}</button>`).join('')}</div>`;
+}
+
+function applySortFilter(entries, filter) {
+  let e = [...entries];
+  if (filter==='instock') e=e.filter(([,p])=>Number(p.stock||0)>0);
+  if (filter==='newest')  e.sort((a,b)=>(b[1].createdAt||0)-(a[1].createdAt||0));
+  if (filter==='price-asc')  e.sort((a,b)=>(Number(a[1].price)||0)-(Number(b[1].price)||0));
+  if (filter==='price-desc') e.sort((a,b)=>(Number(b[1].price)||0)-(Number(a[1].price)||0));
+  return e;
+}
+
+function setGridFilter(f) {
+  _gridFilter = f;
+  renderHome();
+  setTimeout(()=>document.getElementById('product-grid')?.scrollIntoView({behavior:'smooth',block:'start'}),80);
+}
+
+function loadMoreProds() {
+  _gridPage++;
+  const allEntries = Object.entries(APP.prods);
+  const filtered   = APP.activeCat !== 'all'
+    ? allEntries.filter(([,p]) => matchesCat(p, APP.activeCat))
+    : allEntries;
+  const sorted  = applySortFilter(filtered, _gridFilter);
+  const start   = (_gridPage - 1) * PAGE_SIZE;
+  const visible = sorted.slice(start, start + PAGE_SIZE);
+  const hasMore = sorted.length > start + PAGE_SIZE;
+
+  const inner = document.getElementById('prod-grid-inner');
+  if (inner) inner.insertAdjacentHTML('beforeend', visible.map(([id,p],i) => pCardHTML(id,p,start+i)).join(''));
+
+  const btn = document.getElementById('load-more-btn');
+  if (btn) {
+    if (hasMore) {
+      btn.innerHTML = `<i class="fa-solid fa-chevron-down"></i> Load more (${sorted.length - start - PAGE_SIZE} remaining)`;
+    } else {
+      btn.closest('.load-more-wrap').remove();
+    }
+  }
+}
+
+function pCardHTML(id, p, idx) {
+  const price = Number(p.price)||0;
+  const priceTxt = price ? SYM[APP.cur]+price.toLocaleString() : '—';
+  const qty = p.stock!=null ? Number(p.stock) : null;
+  const oos = qty!==null && qty===0;
+  const delay = `animation-delay:${Math.min(idx*0.04,0.4)}s`;
+  return `<div class="p-card" style="${delay}" onclick="openProductInline('${id}')">
+    ${p.imageUrl?`<img class="p-card-img" src="${p.imageUrl}" alt="${(p.title||'').replace(/"/g,'&quot;')}" loading="lazy">`:'<div class="p-card-img" style="display:flex;align-items:center;justify-content:center;font-size:40px;background:#f5f5f7">📦</div>'}
+    <div class="p-card-body">
+      <div class="p-card-model">${p.title||'—'}</div>
+      <div class="p-card-price">${priceTxt}</div>
+      ${qty!==null?`<div class="p-card-qty">${oos?'<span style="color:var(--red);font-weight:700">Out of stock</span>':'<span style="color:#22c55e">●</span> In stock: '+qty}</div>`:''}
+    </div>
+    <div class="p-card-footer">
+      <button class="add-btn" onclick="event.stopPropagation();addToCart('${id}')" ${oos?'disabled':''}>
+        ${oos?'<i class="fa-solid fa-ban"></i> Out of Stock':'<i class="fa-solid fa-plus"></i> Add to Cart'}
+      </button>
+    </div></div>`;
+}
+
+let _heroIdx=0,_heroTimer=null,_heroTotal=0;
+function initHeroCarousel(){
+  const t=document.getElementById('hero-track');
+  if(!t)return;
+  _heroTotal=t.children.length; _heroIdx=0;
+  clearInterval(_heroTimer);
+  _heroTimer=setInterval(()=>heroShift(1),4200);
+}
+function heroGoTo(i){_heroIdx=i;_applyHeroPos();clearInterval(_heroTimer);_heroTimer=setInterval(()=>heroShift(1),4200);}
+function heroShift(dir){_heroIdx=(_heroIdx+dir+_heroTotal)%_heroTotal;_applyHeroPos();}
+function _applyHeroPos(){
+  const t=document.getElementById('hero-track');
+  if(!t)return;
+  t.style.transform=`translateX(-${_heroIdx*100}%)`;
+  document.querySelectorAll('.hero-dot').forEach((d,i)=>d.classList.toggle('active',i===_heroIdx));
+}
 
 /* ═══════════════════════════════════
    RENDER CART
@@ -2574,32 +3224,41 @@ function renderCart() {
     </div>`;
     return;
   }
-  const sub  = cartSubtotal();
-  const totalQty = APP.cart.reduce((a,i) => a + i.qty, 0);
-  const ship = SHIP[APP.cur] * totalQty;
-  const total = sub + ship;
+  const sub      = cartSubtotal();
+  const totalQty = APP.cart.reduce((a,i) => a+i.qty, 0);
+  const ship     = SHIP[APP.cur] * totalQty;
+  const total    = sub + ship;
 
   el.innerHTML = `
     <div class="cart-list">
       ${APP.cart.map(item => {
+        const prod    = APP.prods[item.productId || item.id.split('__')[0]];
+        const imgUrl  = item.imageUrl || prod?.imageUrl || '';
+        const imgHTML = imgUrl
+          ? `<img class="ci-img" src="${imgUrl}" alt="" loading="lazy">`
+          : `<div class="ci-img-placeholder"><i class="fa-solid fa-box"></i></div>`;
         const ip = getPrice(item) * item.qty;
-        return `<div class="cart-item">
-          <div class="ci-info">
+        const variantLine = item.variantLabel ? `<div class="ci-sub" style="font-size:11px;color:var(--muted);font-weight:600;margin-top:1px">${item.variantLabel}</div>` : '';
+        const prodKey = item.productId || item.id.split('__')[0];
+        return `<div class="cart-item" onclick="openProductInline('${prodKey}')">
+          ${imgHTML}
+          <div class="ci-info" style="flex:1;min-width:0">
             <div class="ci-name">${item.name}</div>
+            ${variantLine}
             <div class="ci-price">${fmt(ip)}</div>
-            <div class="ci-controls">
+            <div class="ci-controls" onclick="event.stopPropagation()">
               <button class="qty-btn" onclick="changeQty('${item.id}',-1)">−</button>
               <span class="qty-val">${item.qty}</span>
               <button class="qty-btn" onclick="changeQty('${item.id}',1)">+</button>
             </div>
           </div>
-          <button class="rm-btn" onclick="removeItem('${item.id}')" title="Remove">✕</button>
+          <button class="rm-btn" onclick="event.stopPropagation();removeItem('${item.id}')" title="Remove">✕</button>
         </div>`;
       }).join('')}
     </div>
     <div class="cart-summary">
-      <div class="sum-row"><span>Subtotal (${APP.cart.reduce((a,i)=>a+i.qty,0)} items)</span><span>${fmt(sub)}</span></div>
-      <div class="sum-row"><span><i class="fa-solid fa-truck"></i> Shipping <span style="font-size:11px;font-weight:400;color:var(--muted)">(international, per item)</span></span><span>${fmt(ship)}</span></div>
+      <div class="sum-row"><span>Subtotal (${totalQty} items)</span><span>${fmt(sub)}</span></div>
+      <div class="sum-row"><span><i class="fa-solid fa-truck"></i> Shipping <span style="font-size:11px;font-weight:400;color:var(--muted)">(per item)</span></span><span>${fmt(ship)}</span></div>
       <div class="sum-row total"><span>Total</span><span>${fmt(total)}</span></div>
       <button class="chk-btn" onclick="navTo('checkout')">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/></svg>
@@ -3068,12 +3727,13 @@ function placeOrder() {
   const ship     = SHIP[APP.cur] * totalQty;
 
   const orderItems = APP.cart.map(i => ({
-    productId: i.productId || i.id,
-    title:     i.name,
-    qty:       i.qty,
-    unitPrice: getPrice(i),
-    costPrice: Number(i.costPrice) || 0,
-    lineTotal: getPrice(i) * i.qty
+    productId:    i.productId || i.id.split('__')[0],
+    title:        i.name,
+    variantLabel: i.variantLabel || null,
+    qty:          i.qty,
+    unitPrice:    getPrice(i),
+    costPrice:    Number(i.costPrice) || 0,
+    lineTotal:    getPrice(i) * i.qty
   }));
   const totalCost   = orderItems.reduce((s, i) => s + i.costPrice * i.qty, 0);
   const totalAmount = sub + ship;
@@ -3095,7 +3755,7 @@ function placeOrder() {
     profit:          profit,
     amountPaid:      0,
     paymentStatus:   'Unpaid',
-    status:          'pending',
+    status:          'Pending',
     payMethod:       APP.payMethod || 'cod',
     notes:           '',
     courier:         '',
@@ -3175,18 +3835,23 @@ function renderOrders() {
       return;
     }
 
-    const sorted = Object.entries(data).sort((a,b) => (b[1].timestamp||0)-(a[1].timestamp||0));
+    const sorted = Object.entries(data).sort((a,b) => (b[1].createdAt||b[1].timestamp||0)-(a[1].createdAt||a[1].timestamp||0));
     el.innerHTML = sorted.map(([id, o], i) => {
-      const date   = new Date(o.timestamp||Date.now()).toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'});
-      const items  = (o.items||[]).map(it=>`${it.name} ×${it.qty}`).join(', ');
-      const sym    = {USD:'$',AED:'AED ',INR:'₹'}[o.currency||'USD']||'';
-      const status = (o.status||'pending').toLowerCase();
+      const date   = new Date(o.createdAt||o.timestamp||Date.now()).toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'});
+      const items  = (o.items||[]).map(it => {
+        const name = it.title || it.name || '—';
+        return it.variantLabel ? `${name} (${it.variantLabel}) ×${it.qty}` : `${name} ×${it.qty}`;
+      }).join(', ');
+      const sym    = {USD:'$',AED:'AED ',INR:'₹'}[o.currency||'USD']||'$';
+      const status = (o.status||'Pending').toLowerCase();
       const sc     = status==='delivered'||status==='completed' ? 's-confirmed'
                    : status==='dispatched'||status==='transit'||status==='arrived'||status==='flying' ? 's-shipped'
                    : status==='accepted'||status==='packed' ? 's-confirmed' : 's-pending';
       const step   = ALL_STEPS.findIndex(s=>s.key===status);
       const pct    = Math.round(((step<0?0:step)/(ALL_STEPS.length-1))*100);
       const curStep= ALL_STEPS[step<0?0:step];
+      // address: support both old (region/state) and new (customerCountry/customerState) field names
+      const addr   = [o.customerCountry||o.region, o.customerState||o.state].filter(Boolean).join(' · ');
 
       return `<div class="order-card" style="animation-delay:${i*0.07}s;cursor:pointer" onclick="openOrderDetail('${id}')">
         <div class="ord-card-top">
@@ -3206,7 +3871,7 @@ function renderOrders() {
           <div style="font-size:11px;color:var(--muted);text-align:right">Tap to see full timeline →</div>
         </div>
         <div class="ord-footer">
-          <div class="ord-addr">${o.region||''}${o.state?' · '+o.state:''}</div>
+          <div class="ord-addr">${addr||'—'}</div>
           <div class="ord-total">${sym}${(o.total||0).toLocaleString()} ${o.currency||''}</div>
         </div>
       </div>`;
@@ -3299,19 +3964,37 @@ function renderOrderDetail(id) {
 }
 
 function _renderDetail(el, id, o) {
-  const date   = new Date(o.timestamp||Date.now()).toLocaleDateString('en-US',{weekday:'short',day:'numeric',month:'long',year:'numeric'});
-  const sym    = {USD:'$',AED:'AED ',INR:'₹'}[o.currency||'USD']||'';
-  const status = (o.status||'pending');
-  const sc     = status==='delivered'||status==='completed'?'s-confirmed':status==='dispatched'||status==='transit'||status==='arrived'?'s-shipped':status==='accepted'||status==='packed'?'s-confirmed':'s-pending';
+  const date   = new Date(o.createdAt||o.timestamp||Date.now()).toLocaleDateString('en-US',{weekday:'short',day:'numeric',month:'long',year:'numeric'});
+  const sym    = {USD:'$',AED:'AED ',INR:'₹'}[o.currency||'USD']||'$';
+  const status = (o.status||'Pending');
+  const statusL = status.toLowerCase();
+  const sc     = statusL==='delivered'||statusL==='completed' ? 's-confirmed'
+               : statusL==='dispatched'||statusL==='transit'||statusL==='arrived'||statusL==='flying' ? 's-shipped'
+               : statusL==='accepted'||statusL==='packed' ? 's-confirmed' : 's-pending';
 
-  const itemsHTML = (o.items||[]).map(it=>`
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
-      <div>
-        <div style="font-size:13px;font-weight:700;color:var(--text)">${it.name}</div>
-        <div style="font-size:11px;color:var(--muted)">${[it.color,it.grade].filter(Boolean).join(' · ')} &nbsp;·&nbsp; Qty: ${it.qty}</div>
+  const itemsHTML = (o.items||[]).map(it => {
+    const name    = it.title || it.name || '—';
+    const price   = it.unitPrice ?? it.price ?? 0;
+    const varLine = it.variantLabel
+      ? `<div style="margin-top:3px;display:inline-flex;align-items:center;gap:4px;background:#e8f9ef;color:#1d7a40;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700"><i class="fa-solid fa-tag" style="font-size:9px"></i>${it.variantLabel}</div>`
+      : '';
+    return `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700;color:var(--text)">${name}</div>
+        ${varLine}
+        <div style="font-size:11px;color:var(--muted);margin-top:3px">Qty: ${it.qty} &nbsp;·&nbsp; ${sym}${Number(price).toLocaleString()} each</div>
       </div>
-      <div style="font-family:var(--font-head);font-weight:800;color:var(--red);font-size:14px">${sym}${(it.price*it.qty).toLocaleString()}</div>
-    </div>`).join('');
+      <div style="font-family:var(--font-head);font-weight:800;color:var(--red);font-size:14px;margin-left:12px;flex-shrink:0">${sym}${(Number(price)*it.qty).toLocaleString()}</div>
+    </div>`}).join('');
+
+  // support both old and new address field names
+  const addrLine  = o.customerPlace  || o.place    || '';
+  const district  = o.customerDistrict || o.district || '';
+  const stateVal  = o.customerState  || o.state    || '';
+  const country   = o.customerCountry|| o.region   || '';
+  const phone     = o.customerPhone  || o.whatsapp || '';
+  const custName  = o.customerName   || o.userName || '';
 
   el.innerHTML = `
     <!-- Header -->
@@ -3346,9 +4029,13 @@ function _renderDetail(el, id, o) {
     <!-- Delivery Info -->
     <div style="background:var(--white);margin:0 12px 12px;border-radius:var(--radius);border:1px solid var(--border);padding:14px">
       <div style="font-family:var(--font-head);font-size:13px;font-weight:700;color:var(--red);margin-bottom:10px"><i class="fa-solid fa-location-dot"></i> Delivery Address</div>
-      <div style="font-size:14px;color:var(--text);line-height:1.7">${o.place||''}<br>${o.district?o.district+', ':''} ${o.state||''}<br>${o.region||''}</div>
-      ${o.whatsapp?`<div style="margin-top:8px;font-size:13px;color:var(--muted)"><i class="fa-brands fa-whatsapp" style="color:#25D366"></i> ${o.whatsapp}</div>`:''}
-      ${o.userName&&o.userName!=='guest'?`<div style="margin-top:4px;font-size:13px;color:var(--muted)"><i class="fa-solid fa-user"></i> ${o.userName}</div>`:''}
+      <div style="font-size:14px;color:var(--text);line-height:1.7">
+        ${addrLine ? `${addrLine}<br>` : ''}
+        ${district ? `${district}, ` : ''}${stateVal ? `${stateVal}<br>` : ''}
+        ${country}
+      </div>
+      ${phone ? `<div style="margin-top:8px;font-size:13px;color:var(--muted)"><i class="fa-brands fa-whatsapp" style="color:#25D366"></i> ${phone}</div>` : ''}
+      ${custName && custName!=='guest' ? `<div style="margin-top:4px;font-size:13px;color:var(--muted)"><i class="fa-solid fa-user"></i> ${custName}</div>` : ''}
     </div>
 
     <!-- Payment -->
@@ -3652,11 +4339,15 @@ auth.onAuthStateChanged(user => {
     document.getElementById('sb-user-email').textContent = user.email || '';
     document.getElementById('nav-user-ic').onclick = () => navTo('profile');
     document.getElementById('bn-user').onclick     = () => navTo('profile');
+    // If user is on the login page while already signed in → go to profile
+    const loginPage = document.getElementById('page-login');
+    if (loginPage && loginPage.classList.contains('active')) navTo('profile');
   } else {
-    document.getElementById('nav-user-ic').onclick = () => navTo('profile');
-    document.getElementById('bn-user').onclick     = () => navTo('profile');
+    // Logged out → user icon goes to login
+    document.getElementById('nav-user-ic').onclick = () => navTo('login');
+    document.getElementById('bn-user').onclick     = () => navTo('login');
   }
-  // Re-render checkout button if checkout page is currently open
+  // Re-render checkout if open
   const coPage = document.getElementById('page-checkout');
   if (coPage && coPage.classList.contains('active')) renderCheckout();
 });
@@ -3665,27 +4356,33 @@ auth.onAuthStateChanged(user => {
    FIREBASE LISTENERS
 ═══════════════════════════════════ */
 function tryHide() {
-  if (!APP._loaded.cats || !APP._loaded.prods) return;
+  // Categories are now keyword-based (no Firebase cats needed)
+  // Only wait for products to load
+  if (!APP._loaded.prods) return;
   buildCatBar();
   renderProds();
   const l = document.getElementById('loader');
   l.style.opacity = '0';
   setTimeout(() => l.style.display = 'none', 400);
+  if (APP._pendingRoute) {
+    const r = APP._pendingRoute; APP._pendingRoute = null;
+    setTimeout(() => {
+      if (r.pg === 'product' && r.key) openProductInline(r.key, {_fromPopstate:true});
+      else if (r.pg) navTo(r.pg, {_fromPopstate:true});
+    }, 50);
+  }
 }
 
 db.ref('categories').orderByChild('order').on('value', snap => {
   APP.cats = snap.val() || {};
   APP._loaded.cats = true;
-  buildCatBar();
-  tryHide();
-  if (APP._loaded.prods) renderProds();
+  // No-op — cats not used for filtering anymore
 });
 
 db.ref('products').on('value', snap => {
   APP.prods = snap.val() || {};
   APP._loaded.prods = true;
   tryHide();
-  if (APP._loaded.cats) renderProds();
 });
 
 /* Init */
@@ -3733,13 +4430,158 @@ function toggleTheme() {
 
 
 
-function openProductOverview(pushKey) {
+/* ═══════════════════════════════════════════════
+   INLINE PRODUCT OVERVIEW PAGE
+═══════════════════════════════════════════════ */
+const COLOUR_MAP_APP = {
+  black:'#1c1c1e',white:'#f5f5f7',red:'#e53935',blue:'#3b82f6',
+  green:'#2EA056',yellow:'#f59e0b',pink:'#ec4899',purple:'#8b5cf6',
+  gold:'#d4a017',silver:'#c0c0c0',gray:'#9ca3af',grey:'#9ca3af',
+  midnight:'#1c1c2e',starlight:'#f5f0e8',titanium:'#8a8480',
+  'desert titanium':'#c8a97e','natural titanium':'#b8b0a8',
+  'black titanium':'#3a3a3c','white titanium':'#e8e4e0',
+  coral:'#ff7f6e',mint:'#3eb489',teal:'#0d9488',orange:'#f97316',
+  'deep purple':'#4c1d95','space gray':'#6b7280','space black':'#1c1c1c',
+};
+let _POV = { key:null, product:null, selections:{}, basePrice:0, prevPage:'shop', _effectivePrice:null };
+
+function prodOvBack() { navTo(_POV.prevPage || 'shop'); }
+
+function openProductInline(pushKey, opts = {}) {
   const p = APP.prods[pushKey];
-  if (p) {
-    // Write full product data to localStorage so the overview
-    // page can render instantly without any Firebase fetch.
-    localStorage.setItem('alfonex_preview', JSON.stringify({ key: pushKey, data: p, ts: Date.now() }));
+  if (!p) return;
+  _POV = { key:pushKey, product:p, selections:{}, basePrice:Number(p.price||0), prevPage:'shop', _effectivePrice:null };
+
+  const currentPage = document.querySelector('.page.active');
+  _POV.prevPage = currentPage ? currentPage.id.replace('page-','') : 'shop';
+
+  const stock = Number(p.stock||0);
+  const sc = povStockClass(stock);
+  const badgeText = sc==='in'?'In Stock':sc==='low'?`Only ${stock} left`:'Out of Stock';
+
+  let variantsHTML = '';
+  if (p.variants && p.variants.length) {
+    variantsHTML = p.variants.map(type => {
+      const chips = type.values.map(val => {
+        const hex = COLOUR_MAP_APP[(val.label||'').toLowerCase().trim()];
+        const oos = val.stock!==null && val.stock!==undefined && val.stock<=0;
+        const delta = (val.price!==null&&val.price!==undefined) ? val.price-_POV.basePrice : 0;
+        const deltaHTML = delta!==0 ? `<span class="delta">${delta>0?'+':''}$${Math.abs(delta).toFixed(0)}</span>` : '';
+        const dotHTML = hex ? `<span class="cdot" style="background:${hex}"></span>` : '';
+        return `<button class="pov-chip${oos?' oos':''}" data-type="${escHtml(type.name)}" data-label="${escHtml(val.label)}"
+          onclick="povSelectVariant('${escJs(type.name)}','${escJs(val.label)}')" ${oos?'disabled':''}>${dotHTML}${val.label}${deltaHTML}</button>`;
+      }).join('');
+      return `<div class="pov-var-group" data-type="${escHtml(type.name)}">
+        <div class="pov-var-label">${type.name} <span class="sv" id="pov-sv-${escHtml(type.name)}"></span></div>
+        <div class="pov-chips">${chips}</div>
+      </div>`;
+    }).join('');
   }
+
+  const imgHTML = p.imageUrl
+    ? `<img src="${p.imageUrl}" alt="${escHtml(p.title||'')}" loading="lazy" style="width:100%;height:100%;object-fit:contain;padding:16px">`
+    : `<div style="font-size:48px;color:#ddd;display:flex;align-items:center;justify-content:center;height:100%"><i class="fa-regular fa-image"></i></div>`;
+
+  document.getElementById('prod-ov-header-title').textContent = p.title || 'Product';
+  document.getElementById('prod-ov-content').innerHTML = `
+    <div class="prod-ov-img-wrap">
+      ${imgHTML}
+      <span class="prod-ov-img-badge ${sc}" id="pov-badge">${badgeText}</span>
+    </div>
+    <div class="prod-ov-body">
+      <div class="prod-ov-eyebrow">${povCat(p.title)}</div>
+      <div class="prod-ov-title">${p.title||'—'}</div>
+      <div class="prod-ov-price" id="pov-price">${SYM[APP.cur]}${Number(p.price||0).toLocaleString()}</div>
+      ${variantsHTML ? `<div class="prod-ov-divider"></div>${variantsHTML}` : ''}
+      <div class="prod-ov-divider"></div>
+      <div class="prod-ov-stock-row">
+        <span class="pov-sdot ${sc}" id="pov-sdot"></span>
+        <span class="pov-stext ${sc}" id="pov-stext">${sc==='in'?'In Stock':sc==='low'?`Only ${stock} left`:'Out of Stock'}</span>
+        <span class="pov-ssub" id="pov-ssub">${sc==='in'?`${stock} units available`:sc==='low'?'Order soon':'Check back later'}</span>
+      </div>
+      ${p.description ? `<div class="prod-ov-desc-label">About this product</div><div class="prod-ov-desc">${escHtml(p.description)}</div>` : ''}
+      <button class="prod-ov-atc" id="pov-atc" onclick="povAddToCart()"
+        ${(p.variants&&p.variants.length)||sc==='out' ? 'disabled' : ''}>
+        <i class="fa-solid fa-bag-shopping" id="pov-atc-icon"></i>
+        <span id="pov-atc-label">${sc==='out'?'Out of Stock':p.variants&&p.variants.length?'Select options above':'Add to Cart'}</span>
+      </button>
+    </div>`;
+
+  // Fix icon class properly
+  const iconEl = document.getElementById('pov-atc-icon');
+  if (iconEl) {
+    if (sc==='out') iconEl.className = 'fa-solid fa-ban';
+    else if (p.variants&&p.variants.length) iconEl.className = 'fa-solid fa-hand-pointer';
+    else iconEl.className = 'fa-solid fa-bag-shopping';
+  }
+
+  navTo('product', { key:pushKey, ...(opts._fromPopstate?{_fromPopstate:true}:{}) });
+}
+
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escJs(s)   { return String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+function povCat(title) {
+  const t = (title||'').toLowerCase();
+  if (t.includes('iphone')||t.includes('samsung')||t.includes('pixel')) return 'Smartphone';
+  if (t.includes('ipad')||t.includes('tablet')) return 'Tablet';
+  if (t.includes('mac')||t.includes('laptop')) return 'Laptop';
+  if (t.includes('watch')||t.includes('band')) return 'Wearable';
+  if (t.includes('airpod')||t.includes('buds')||t.includes('earphone')) return 'Audio';
+  return 'Product';
+}
+
+function povStockClass(q) {
+  if (q<=0) return 'out';
+  if (q<=5) return 'low';
+  return 'in';
+}
+
+function povSelectVariant(typeName, label) {
+  _POV.selections[typeName] = label;
+  document.querySelectorAll(`.pov-chip[data-type="${typeName}"]`).forEach(c => c.classList.toggle('sel', c.dataset.label===label));
+  const svEl = document.getElementById(`pov-sv-${typeName}`);
+  if (svEl) svEl.textContent = '— '+label;
+  const p = _POV.product;
+  let price = _POV.basePrice, stock = Number(p.stock||0);
+  if (p.variants) p.variants.forEach(type => {
+    const sel = _POV.selections[type.name]; if (!sel) return;
+    const val = type.values.find(v=>v.label===sel); if (!val) return;
+    if (val.price!==null&&val.price!==undefined) price = val.price;
+    if (val.stock!==null&&val.stock!==undefined) stock = val.stock;
+  });
+  _POV._effectivePrice = price;
+  document.getElementById('pov-price').textContent = SYM[APP.cur]+Number(price).toLocaleString();
+  const sc = povStockClass(stock);
+  const dot=document.getElementById('pov-sdot'), txt=document.getElementById('pov-stext'), sub=document.getElementById('pov-ssub'), badge=document.getElementById('pov-badge');
+  dot.className=`pov-sdot ${sc}`; txt.className=`pov-stext ${sc}`;
+  if(sc==='in') {txt.textContent='In Stock';sub.textContent=`${stock} units available`;badge.textContent='In Stock';}
+  if(sc==='low'){txt.textContent=`Only ${stock} left`;sub.textContent='Order soon';badge.textContent=`Only ${stock} left`;}
+  if(sc==='out'){txt.textContent='Out of Stock';sub.textContent='Check back later';badge.textContent='Out of Stock';}
+  badge.className=`prod-ov-img-badge ${sc}`;
+  const allSel = p.variants.every(t=>_POV.selections[t.name]);
+  const atc=document.getElementById('pov-atc'), albl=document.getElementById('pov-atc-label'), aicon=document.getElementById('pov-atc-icon');
+  if(sc==='out'){atc.disabled=true;albl.textContent='Out of Stock';aicon.className='fa-solid fa-ban';}
+  else if(!allSel){atc.disabled=true;albl.textContent='Select options above';aicon.className='fa-solid fa-hand-pointer';}
+  else{atc.disabled=false;albl.textContent='Add to Cart';aicon.className='fa-solid fa-bag-shopping';}
+}
+
+function povAddToCart() {
+  const p=_POV.product, id=_POV.key;
+  const variantLabel = Object.values(_POV.selections).filter(Boolean).join(' / ') || null;
+  const price = _POV._effectivePrice ?? _POV.basePrice;
+  const cartKey = variantLabel ? `${id}__${variantLabel}` : id;
+  const ex = APP.cart.find(i=>i.id===cartKey);
+  if (ex) { ex.qty++; }
+  else APP.cart.push({ id:cartKey, productId:id, name:p.title||'—', variantLabel:variantLabel||null, price, costPrice:Number(p.costPrice)||0, qty:1, imageUrl:p.imageUrl||'' });
+  saveCart();
+  toast('Added to cart','✓');
+  const atc=document.getElementById('pov-atc'), lbl=document.getElementById('pov-atc-label'), ico=document.getElementById('pov-atc-icon');
+  atc.disabled=true; atc.style.background='var(--green)'; ico.className='fa-solid fa-check'; lbl.textContent='Added!';
+  setTimeout(()=>{ atc.disabled=false; atc.style.background=''; ico.className='fa-solid fa-bag-shopping'; lbl.textContent='Add to Cart'; },1600);
+}
+
+function openProductOverview(pushKey) {
   const url = `./overview/index.html?key=${encodeURIComponent(pushKey)}`;
   window.open(url, 'alfonex_product');
 }
