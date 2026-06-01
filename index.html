@@ -689,7 +689,7 @@ a { text-decoration: none; color: inherit; }
   background: var(--white); padding: 14px 14px;
   display: flex; align-items: center; gap: 10px;
   border-bottom: 1px solid var(--border);
-  position: sticky; top: 0px; z-index: 10;
+  position: sticky; top: 36px; z-index: 10;
 }
 .pg-header h1 { font-family: var(--font-head); font-size: 17px; font-weight: 700; flex: 1; }
 .back-btn {
@@ -728,218 +728,78 @@ a { text-decoration: none; color: inherit; }
   color: var(--muted); font-size: 20px;
 }
 
-/* ══════════════════════════════════════════
-   PRODUCT OVERVIEW PAGE — FULL REDESIGN
-══════════════════════════════════════════ */
+/* ══ INLINE PRODUCT OVERVIEW ══════════════════════ */
 #page-product { background: var(--bg); display: none; flex-direction: column; overflow: hidden; }
 #page-product.active { display: flex; }
-#prod-ov-content { overflow-y: auto; flex: 1; padding-bottom: 90px; /* room for sticky ATC */ }
+#prod-ov-content { overflow-y: auto; flex: 1; padding-bottom: 88px; }
 
-/* ── Image ── */
 .prod-ov-img-wrap {
-  width: 100%; background: var(--white);
-  border-bottom: 1px solid var(--border);
-  position: relative; overflow: hidden;
-  aspect-ratio: 1 / 1; max-height: 340px;
+  width: 100%; aspect-ratio: 1/1; max-height: 320px;
+  background: var(--white); border-bottom: 1px solid var(--border);
   display: flex; align-items: center; justify-content: center;
+  overflow: hidden; position: relative;
 }
-.prod-ov-img-wrap img {
-  width: 100%; height: 100%;
-  object-fit: contain; padding: 20px;
-  transition: transform .4s ease;
-}
-.prod-ov-img-badge {
-  position: absolute; top: 12px; right: 12px;
-  padding: 4px 10px; border-radius: 6px;
-  font-size: 10px; font-weight: 800; letter-spacing: .4px;
-  text-transform: uppercase;
-}
-.prod-ov-img-badge.in  { background: #dcfce7; color: #15803d; }
-.prod-ov-img-badge.low { background: #fef3c7; color: #92400e; }
-.prod-ov-img-badge.out { background: #fee2e2; color: #b91c1c; }
-.prod-ov-no-img {
-  font-size: 64px; opacity: .15;
-  display: flex; align-items: center; justify-content: center;
-  width: 100%; height: 100%; min-height: 200px;
-}
-
-/* ── Body ── */
+.prod-ov-img-wrap img { width:100%;height:100%;object-fit:contain;padding:20px; }
+.prod-ov-no-img { font-size:64px;opacity:.12;display:flex;align-items:center;justify-content:center;width:100%;height:100%;min-height:200px; }
+.prod-ov-img-badge { position:absolute;top:10px;right:10px;padding:3px 9px;border-radius:6px;font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase; }
+.prod-ov-img-badge.in  { background:#dcfce7;color:#15803d; }
+.prod-ov-img-badge.low { background:#fef3c7;color:#92400e; }
+.prod-ov-img-badge.out { background:#fee2e2;color:#b91c1c; }
 .prod-ov-body { padding: 16px 16px 0; }
+.prod-ov-eyebrow { font-size:10px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--green);display:flex;align-items:center;gap:6px;margin-bottom:4px; }
+.prod-ov-eyebrow::before { content:'';width:12px;height:2px;background:var(--green);border-radius:2px;flex-shrink:0; }
+.prod-ov-title { font-family:var(--font-head);font-size:20px;font-weight:800;line-height:1.25;color:var(--text);letter-spacing:-.3px;margin-bottom:6px; }
+.prod-ov-price-row { display:flex;align-items:baseline;gap:8px;margin-bottom:4px; }
+.prod-ov-price { font-family:var(--font-head);font-size:30px;font-weight:800;color:var(--text);letter-spacing:-.6px;transition:opacity .12s; }
+.prod-ov-price.flash { opacity:0; }
+.prod-ov-price-note { font-size:12px;color:var(--muted);font-weight:500; }
+.prod-ov-divider { height:1px;background:var(--border);margin:14px 0; }
+.prod-ov-stock-row { display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--white);border-radius:var(--radius);border:1px solid var(--border);margin-bottom:16px; }
+.pov-sdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.pov-sdot.in{background:var(--green);animation:pdot 2s ease-in-out infinite;}
+.pov-sdot.low{background:#f59e0b;}
+.pov-sdot.out{background:var(--red);}
+@keyframes pdot{0%,100%{box-shadow:0 0 0 0 rgba(46,160,86,.4)}50%{box-shadow:0 0 0 5px rgba(46,160,86,0)}}
+.pov-stext{font-size:13px;font-weight:700;}
+.pov-stext.in{color:var(--green);}
+.pov-stext.low{color:#b45309;}
+.pov-stext.out{color:var(--red);}
+.pov-ssub{font-size:12px;color:var(--muted);margin-left:auto;}
+.prod-ov-desc-label{font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+.prod-ov-desc{font-size:14px;line-height:1.8;color:var(--muted);white-space:pre-wrap;word-break:break-word;margin-bottom:16px;}
 
-/* eyebrow */
-.prod-ov-eyebrow {
-  font-size: 10px; font-weight: 800; letter-spacing: 1.2px;
-  text-transform: uppercase; color: var(--green);
-  display: flex; align-items: center; gap: 6px; margin-bottom: 4px;
-}
-.prod-ov-eyebrow::before {
-  content: ''; width: 12px; height: 2px;
-  background: var(--green); border-radius: 2px; flex-shrink: 0;
-}
+/* ══ VARIANT SELECTOR ══════════════════════════════ */
+.pov-variants-wrap { display:flex;flex-direction:column;gap:0; }
+.pov-var-section { padding:14px 0 4px; }
+.pov-var-header { display:flex;align-items:center;gap:5px;margin-bottom:10px; }
+.pov-var-name { font-size:11px;font-weight:800;letter-spacing:.9px;text-transform:uppercase;color:var(--muted); }
+.pov-var-sep { color:var(--border);font-size:11px; }
+.pov-var-selected { font-size:13px;font-weight:700;color:var(--text); }
+.pov-chips { display:flex;flex-wrap:wrap;gap:8px; }
+.pov-chip { display:inline-flex;align-items:center;gap:5px;padding:8px 12px;background:var(--white);border:1.5px solid var(--border);border-radius:10px;cursor:pointer;user-select:none;transition:border-color .13s,background .13s,transform .1s; }
+.pov-chip:active { transform:scale(.96); }
+.pov-chip-dot { width:13px;height:13px;border-radius:50%;flex-shrink:0;border:1.5px solid rgba(0,0,0,.1); }
+.pov-chip-label { font-family:var(--font-head);font-size:13px;font-weight:700;color:var(--text);letter-spacing:-.1px;line-height:1; }
+.pov-chip-delta { font-size:11px;font-weight:600;color:var(--muted);margin-left:1px; }
+.pov-chip:hover:not(.oos):not(.sel) { border-color:#aaa; }
+.pov-chip.sel { background:var(--text);border-color:var(--text); }
+.pov-chip.sel .pov-chip-label { color:#fff; }
+.pov-chip.sel .pov-chip-delta { color:rgba(255,255,255,.6); }
+.pov-chip.sel .pov-chip-dot   { border-color:rgba(255,255,255,.35); }
+.pov-chip.oos { opacity:.38;cursor:not-allowed;pointer-events:none; }
+.pov-chip.oos .pov-chip-label { text-decoration:line-through; }
 
-/* title + price row */
-.prod-ov-title {
-  font-family: var(--font-head); font-size: 20px; font-weight: 800;
-  line-height: 1.25; color: var(--text); margin-bottom: 8px;
-  letter-spacing: -.3px;
-}
-.prod-ov-price-row {
-  display: flex; align-items: baseline; gap: 8px; margin-bottom: 16px;
-}
-.prod-ov-price {
-  font-family: var(--font-head); font-size: 28px; font-weight: 800;
-  color: var(--text); letter-spacing: -.5px; transition: opacity .15s;
-}
-.prod-ov-price.updating { opacity: 0; }
-.prod-ov-price-note {
-  font-size: 12px; color: var(--muted); font-weight: 500;
-}
-
-/* ── Variant sections ── */
-.prod-ov-divider { height: 1px; background: var(--border); margin: 14px 0; }
-
-.pov-var-section { margin-bottom: 16px; }
-.pov-var-header {
-  display: flex; align-items: baseline; gap: 6px; margin-bottom: 10px;
-}
-.pov-var-name {
-  font-size: 11px; font-weight: 800; letter-spacing: .8px;
-  text-transform: uppercase; color: var(--muted);
-}
-.pov-var-selected {
-  font-size: 12px; font-weight: 700; color: var(--text);
-}
-.pov-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-
-/* Base chip */
-.pov-chip {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 9px 14px;
-  border: 1.5px solid var(--border);
-  border-radius: 10px;
-  background: var(--white);
-  cursor: pointer;
-  transition: all .15s;
-  user-select: none;
-  position: relative;
-}
-.pov-chip-label {
-  font-family: var(--font-head);
-  font-size: 13px; font-weight: 700;
-  color: var(--text); letter-spacing: -.1px;
-}
-.pov-chip-price {
-  font-size: 11px; font-weight: 600;
-  color: var(--muted);
-  background: var(--bg);
-  padding: 1px 6px; border-radius: 4px;
-}
-/* Selected state */
-.pov-chip.sel {
-  border-color: var(--text); background: var(--text);
-}
-.pov-chip.sel .pov-chip-label { color: #fff; }
-.pov-chip.sel .pov-chip-price {
-  background: rgba(255,255,255,.15); color: rgba(255,255,255,.8);
-}
-/* Hover */
-.pov-chip:hover:not(.oos):not(.sel) {
-  border-color: var(--text);
-}
-/* Out of stock */
-.pov-chip.oos {
-  opacity: .4; cursor: not-allowed;
-}
-.pov-chip.oos .pov-chip-label { text-decoration: line-through; }
-
-/* Colour dot inside chip */
-.pov-cdot {
-  width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0;
-  border: 1.5px solid rgba(0,0,0,.12);
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,.3);
-}
-.pov-chip.sel .pov-cdot { border-color: rgba(255,255,255,.4); }
-
-/* ── Stock row ── */
-.prod-ov-stock-row {
-  display: flex; align-items: center; gap: 8px;
-  padding: 11px 14px;
-  background: var(--white);
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  margin-bottom: 16px;
-}
-.pov-sdot {
-  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-}
-.pov-sdot.in  { background: var(--green); animation: pdot 2s ease-in-out infinite; }
-.pov-sdot.low { background: #f59e0b; }
-.pov-sdot.out { background: var(--red); }
-@keyframes pdot {
-  0%,100% { box-shadow: 0 0 0 0 rgba(46,160,86,.4); }
-  50%      { box-shadow: 0 0 0 5px rgba(46,160,86,0); }
-}
-.pov-stext { font-size: 13px; font-weight: 700; }
-.pov-stext.in  { color: var(--green); }
-.pov-stext.low { color: #b45309; }
-.pov-stext.out { color: var(--red); }
-.pov-ssub { font-size: 12px; color: var(--muted); margin-left: auto; }
-
-/* ── Description ── */
-.prod-ov-desc-label {
-  font-size: 10px; font-weight: 800; letter-spacing: .8px;
-  text-transform: uppercase; color: var(--muted); margin-bottom: 8px;
-}
-.prod-ov-desc {
-  font-size: 14px; line-height: 1.8; color: var(--muted);
-  white-space: pre-wrap; word-break: break-word;
-}
-
-/* ── Sticky ATC bar ── */
-.pov-sticky-bar {
-  position: fixed; bottom: 0; left: 0; right: 0; z-index: 300;
-  background: var(--white);
-  border-top: 1px solid var(--border);
-  padding: 10px 16px;
-  padding-bottom: calc(10px + env(safe-area-inset-bottom));
-  display: none;
-  align-items: center; gap: 12px;
-  box-shadow: 0 -4px 20px rgba(0,0,0,.08);
-}
-#page-product.active .pov-sticky-bar { display: flex; }
-.pov-sticky-info { flex: 1; min-width: 0; }
-.pov-sticky-name {
-  font-size: 12px; font-weight: 700; color: var(--text);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.pov-sticky-price {
-  font-family: var(--font-head); font-size: 18px; font-weight: 800;
-  color: var(--text); letter-spacing: -.3px;
-}
-.pov-atc-btn {
-  flex-shrink: 0;
-  display: flex; align-items: center; gap: 8px;
-  padding: 13px 22px;
-  background: var(--green); color: #fff;
-  border: none; border-radius: var(--radius);
-  font-family: var(--font-head); font-size: 14px; font-weight: 800;
-  cursor: pointer; letter-spacing: -.1px;
-  transition: transform .15s, background .15s, box-shadow .15s;
-  white-space: nowrap;
-}
-.pov-atc-btn:hover:not(:disabled) {
-  background: var(--green-dark);
-  transform: scale(1.02);
-  box-shadow: 0 4px 16px rgba(46,160,86,.35);
-}
-.pov-atc-btn:active { transform: scale(.97); }
-.pov-atc-btn:disabled {
-  background: var(--border); color: var(--muted);
-  cursor: not-allowed; transform: none; box-shadow: none;
-}
-.pov-atc-btn.added {
-  background: var(--text);
-}
+/* ══ STICKY ATC BAR ══════════════════════════════ */
+.pov-sticky-bar { position:fixed;bottom:0;left:0;right:0;z-index:300;background:var(--white);border-top:1px solid var(--border);padding:10px 16px;padding-bottom:calc(10px + env(safe-area-inset-bottom));display:none;align-items:center;gap:12px;box-shadow:0 -4px 24px rgba(0,0,0,.09); }
+#page-product.active .pov-sticky-bar { display:flex; }
+.pov-sticky-info { flex:1;min-width:0;overflow:hidden; }
+.pov-sticky-name { font-size:12px;font-weight:600;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:1px; }
+.pov-sticky-price { font-family:var(--font-head);font-size:20px;font-weight:800;color:var(--text);letter-spacing:-.4px;line-height:1; }
+.pov-atc-btn { flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:8px;min-width:150px;padding:13px 20px;background:var(--green);color:#fff;border:none;border-radius:var(--radius);font-family:var(--font-head);font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap;letter-spacing:-.1px;transition:background .15s,transform .12s,box-shadow .15s; }
+.pov-atc-btn:hover:not(:disabled) { background:var(--green-dark);transform:scale(1.02);box-shadow:0 4px 18px rgba(46,160,86,.3); }
+.pov-atc-btn:active:not(:disabled) { transform:scale(.97); }
+.pov-atc-btn:disabled { background:var(--border);color:var(--muted);cursor:not-allowed;transform:none;box-shadow:none; }
+.pov-atc-btn.done { background:var(--text); }
 .ci-info { flex: 1; min-width: 0; }
 .ci-name { font-family: var(--font-head); font-size: 13px; font-weight: 700; line-height: 1.3; }
 .ci-sub  { font-size: 11px; color: var(--muted); margin-top: 2px; }
@@ -2101,14 +1961,14 @@ a { text-decoration: none; color: inherit; }
     <button class="back-btn" onclick="prodOvBack()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><polyline points="15 18 9 12 15 6"/></svg>
     </button>
-    <h1 id="prod-ov-header-title" style="font-size:15px;font-family:var(--font-head);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;text-align:center">Product</h1>
+    <h1 id="prod-ov-header-title" style="font-size:15px;font-family:var(--font-head);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;flex:1;text-align:center">Product</h1>
     <div style="width:40px"></div>
   </div>
-  <div id="prod-ov-content"></div>
-  <!-- Sticky Add to Cart bar -->
+  <div id="prod-ov-content" style="overflow-y:auto"></div>
+  <!-- Sticky ATC bar -->
   <div class="pov-sticky-bar">
     <div class="pov-sticky-info">
-      <div class="pov-sticky-name" id="pov-sticky-name">—</div>
+      <div class="pov-sticky-name" id="pov-sticky-name"></div>
       <div class="pov-sticky-price" id="pov-sticky-price">—</div>
     </div>
     <button class="pov-atc-btn" id="pov-atc" onclick="povAddToCart()">
@@ -4625,221 +4485,105 @@ function openProductInline(pushKey, opts = {}) {
   const p = APP.prods[pushKey];
   if (!p) return;
   _POV = { key:pushKey, product:p, selections:{}, basePrice:Number(p.price||0), prevPage:'shop', _effectivePrice:null };
-
   const currentPage = document.querySelector('.page.active');
   _POV.prevPage = currentPage ? currentPage.id.replace('page-','') : 'shop';
 
   const stock = Number(p.stock||0);
   const sc    = povStockClass(stock);
-  const hasVariants = p.variants && p.variants.length > 0;
+  const hasV  = p.variants && p.variants.length > 0;
 
-  /* ── Variants HTML ── */
-  let variantsHTML = '';
-  if (hasVariants) {
-    variantsHTML = `<div class="prod-ov-divider"></div>` + p.variants.map(type => {
-      const chips = type.values.map(val => {
-        const hex  = COLOUR_MAP_APP[(val.label||'').toLowerCase().trim()];
-        const oos  = val.stock !== null && val.stock !== undefined && val.stock <= 0;
-        // Price shown on chip = val.price (full price), compare to base for +/- display
-        const hasPrice = val.price !== null && val.price !== undefined;
-        const diff = hasPrice ? val.price - _POV.basePrice : 0;
-        const priceTag = hasPrice
-          ? `<span class="pov-chip-price">${diff > 0 ? '+' : diff < 0 ? '' : ''}${SYM[APP.cur]}${Math.abs(diff) > 0 ? Math.abs(diff).toLocaleString() : val.price.toLocaleString()}</span>`
-          : '';
-        const dot = hex ? `<span class="pov-cdot" style="background:${hex}"></span>` : '';
-        return `<button class="pov-chip${oos?' oos':''}"
-          data-type="${escHtml(type.name)}" data-label="${escHtml(val.label)}"
-          onclick="povSelectVariant('${escJs(type.name)}','${escJs(val.label)}')"
-          ${oos?'disabled':''}>
-          ${dot}<span class="pov-chip-label">${escHtml(val.label)}</span>${priceTag}
-        </button>`;
-      }).join('');
-      return `<div class="pov-var-section" data-type="${escHtml(type.name)}">
-        <div class="pov-var-header">
-          <span class="pov-var-name">${escHtml(type.name)}</span>
-          <span class="pov-var-selected" id="pov-sv-${escHtml(type.name)}"></span>
-        </div>
-        <div class="pov-chips">${chips}</div>
-      </div>`;
-    }).join('');
+  /* Build variant sections */
+  let varHTML = '';
+  if (hasV) {
+    varHTML = '<div class="prod-ov-divider"></div><div class="pov-variants-wrap">'
+      + p.variants.map(type => {
+          const chips = type.values.map(val => {
+            const hex  = COLOUR_MAP_APP[(val.label||'').toLowerCase().trim()];
+            const oos  = val.stock !== null && val.stock !== undefined && Number(val.stock) <= 0;
+            // delta = how much this option adds above base price
+            const hasPr = val.price !== null && val.price !== undefined;
+            const delta = hasPr ? Number(val.price) - _POV.basePrice : 0;
+            const deltaStr = hasPr
+              ? (delta === 0
+                  ? ''
+                  : `<span class="pov-chip-delta">${delta > 0 ? '+' : ''}${SYM[APP.cur]}${Math.abs(delta).toLocaleString()}</span>`)
+              : '';
+            const dot = hex ? `<span class="pov-chip-dot" style="background:${hex}"></span>` : '';
+            return `<button class="pov-chip${oos?' oos':''}"
+              data-type="${escHtml(type.name)}" data-label="${escHtml(val.label)}"
+              data-delta="${hasPr ? delta : 0}"
+              onclick="povSelectVariant('${escJs(type.name)}','${escJs(val.label)}')"
+              ${oos?'disabled':''}>${dot}<span class="pov-chip-label">${escHtml(val.label)}</span>${deltaStr}</button>`;
+          }).join('');
+          return `<div class="pov-var-section" data-type="${escHtml(type.name)}">
+            <div class="pov-var-header">
+              <span class="pov-var-name">${escHtml(type.name)}</span>
+              <span class="pov-var-sep">—</span>
+              <span class="pov-var-selected" id="pov-sv-${escHtml(type.name)}"></span>
+            </div>
+            <div class="pov-chips">${chips}</div>
+          </div>`;
+        }).join('')
+      + '</div>';
   }
 
-  /* ── Image ── */
   const imgHTML = p.imageUrl
     ? `<img src="${p.imageUrl}" alt="${escHtml(p.title||'')}" loading="lazy">`
     : `<div class="prod-ov-no-img"><i class="fa-regular fa-image"></i></div>`;
 
-  /* ── Badge text ── */
-  const badgeText = sc==='in' ? 'In Stock' : sc==='low' ? `Only ${stock} left` : 'Out of Stock';
-
-  /* ── Render content ── */
   document.getElementById('prod-ov-header-title').textContent = p.title || 'Product';
   document.getElementById('prod-ov-content').innerHTML = `
     <div class="prod-ov-img-wrap">
       ${imgHTML}
-      <span class="prod-ov-img-badge ${sc}" id="pov-badge">${badgeText}</span>
+      <span class="prod-ov-img-badge ${sc}" id="pov-badge">${sc==='in'?'In Stock':sc==='low'?'Only '+stock+' left':'Out of Stock'}</span>
     </div>
     <div class="prod-ov-body">
       <div class="prod-ov-eyebrow">${povCat(p.title)}</div>
       <div class="prod-ov-title">${escHtml(p.title||'—')}</div>
       <div class="prod-ov-price-row">
         <div class="prod-ov-price" id="pov-price">${SYM[APP.cur]}${Number(p.price||0).toLocaleString()}</div>
-        ${hasVariants ? `<div class="prod-ov-price-note" id="pov-price-note">base price</div>` : ''}
+        ${hasV ? '<div class="prod-ov-price-note" id="pov-price-note">base price</div>' : ''}
       </div>
-      ${variantsHTML}
+      ${varHTML}
       <div class="prod-ov-divider"></div>
       <div class="prod-ov-stock-row">
         <span class="pov-sdot ${sc}" id="pov-sdot"></span>
-        <span class="pov-stext ${sc}" id="pov-stext">${sc==='in'?'In Stock':sc==='low'?`Only ${stock} left`:'Out of Stock'}</span>
-        <span class="pov-ssub" id="pov-ssub">${sc==='in'?`${stock} units available`:sc==='low'?'Order soon':'Check back later'}</span>
+        <span class="pov-stext ${sc}" id="pov-stext">${sc==='in'?'In Stock':sc==='low'?'Only '+stock+' left':'Out of Stock'}</span>
+        <span class="pov-ssub" id="pov-ssub">${sc==='in'?stock+' units available':sc==='low'?'Order soon':'Check back later'}</span>
       </div>
-      ${p.description ? `<div class="prod-ov-desc-label">About this product</div><div class="prod-ov-desc">${escHtml(p.description)}</div>` : ''}
+      ${p.description ? '<div class="prod-ov-desc-label">About this product</div><div class="prod-ov-desc">'+escHtml(p.description)+'</div>' : ''}
     </div>`;
 
-  /* ── Sticky bar ── */
-  _povUpdateStickyBar();
-
+  _povRefreshBar();
   navTo('product', { key:pushKey, ...(opts._fromPopstate?{_fromPopstate:true}:{}) });
 }
 
-/* Update sticky ATC bar state */
-function _povUpdateStickyBar() {
+/* ── Refresh sticky ATC bar ── */
+function _povRefreshBar() {
   const p   = _POV.product;
-  const sc  = povStockClass(Number(p.stock||0));
-  const hasVariants = p.variants && p.variants.length > 0;
-  const allSel = !hasVariants || p.variants.every(t => _POV.selections[t.name]);
   const price = _POV._effectivePrice ?? _POV.basePrice;
+  const sc    = povStockClass(Number(p.stock||0));
+  const hasV  = p.variants && p.variants.length > 0;
+  const allSel = !hasV || p.variants.every(t => _POV.selections[t.name]);
 
-  const btn  = document.getElementById('pov-atc');
-  const lbl  = document.getElementById('pov-atc-label');
-  const ico  = document.getElementById('pov-atc-icon');
-  const sprice = document.getElementById('pov-sticky-price');
   const sname  = document.getElementById('pov-sticky-name');
+  const sprice = document.getElementById('pov-sticky-price');
+  const btn    = document.getElementById('pov-atc');
+  const lbl    = document.getElementById('pov-atc-label');
+  const ico    = document.getElementById('pov-atc-icon');
 
-  if (sname) sname.textContent = p.title || '—';
+  if (sname)  sname.textContent  = p.title || '';
   if (sprice) sprice.textContent = SYM[APP.cur] + Number(price).toLocaleString();
-
   if (!btn) return;
+
   btn.className = 'pov-atc-btn';
-
   if (sc === 'out') {
-    btn.disabled = true;
-    lbl.textContent = 'Out of Stock';
-    ico.className = 'fa-solid fa-ban';
+    btn.disabled = true; lbl.textContent = 'Out of Stock'; ico.className = 'fa-solid fa-ban';
   } else if (!allSel) {
-    btn.disabled = true;
-    lbl.textContent = 'Select options';
-    ico.className = 'fa-solid fa-hand-pointer';
+    btn.disabled = true; lbl.textContent = 'Select options'; ico.className = 'fa-solid fa-hand-pointer';
   } else {
-    btn.disabled = false;
-    lbl.textContent = 'Add to Cart';
-    ico.className = 'fa-solid fa-bag-shopping';
+    btn.disabled = false; lbl.textContent = 'Add to Cart'; ico.className = 'fa-solid fa-bag-shopping';
   }
-}
-
-function povSelectVariant(typeName, label) {
-  _POV.selections[typeName] = label;
-
-  /* Update chip UI */
-  document.querySelectorAll(`.pov-chip[data-type="${typeName}"]`).forEach(c =>
-    c.classList.toggle('sel', c.dataset.label === label)
-  );
-
-  /* Show selected value next to label */
-  const svEl = document.getElementById(`pov-sv-${typeName}`);
-  if (svEl) svEl.textContent = '— ' + label;
-
-  /* Recompute effective price + stock */
-  const p = _POV.product;
-  let price = _POV.basePrice;
-  let stock = Number(p.stock || 0);
-
-  if (p.variants) {
-    // Price: use the SELECTED variant's price (it's a full price, not delta)
-    // Rule: last type that has a price set wins; if multiple types,
-    // we SUM the deltas above base price for each selected type.
-    // Simplest correct approach: start from base, add deltas per type.
-    let totalDelta = 0;
-    p.variants.forEach(type => {
-      const sel = _POV.selections[type.name];
-      if (!sel) return;
-      const val = type.values.find(v => v.label === sel);
-      if (!val) return;
-      if (val.price !== null && val.price !== undefined) {
-        totalDelta += val.price - _POV.basePrice;
-      }
-      if (val.stock !== null && val.stock !== undefined) stock = val.stock;
-    });
-    price = _POV.basePrice + totalDelta;
-  }
-
-  _POV._effectivePrice = price;
-
-  /* Update price display */
-  const priceEl = document.getElementById('pov-price');
-  if (priceEl) {
-    priceEl.classList.add('updating');
-    setTimeout(() => {
-      priceEl.textContent = SYM[APP.cur] + Number(price).toLocaleString();
-      priceEl.classList.remove('updating');
-    }, 100);
-  }
-  /* Remove "base price" note once a selection is made */
-  const noteEl = document.getElementById('pov-price-note');
-  if (noteEl) noteEl.style.display = 'none';
-
-  /* Update stock UI */
-  const sc = povStockClass(stock);
-  const dot   = document.getElementById('pov-sdot');
-  const txt   = document.getElementById('pov-stext');
-  const sub   = document.getElementById('pov-ssub');
-  const badge = document.getElementById('pov-badge');
-  if (dot) dot.className = `pov-sdot ${sc}`;
-  if (txt) { txt.className = `pov-stext ${sc}`;
-    txt.textContent = sc==='in'?'In Stock':sc==='low'?`Only ${stock} left`:'Out of Stock'; }
-  if (sub) sub.textContent = sc==='in'?`${stock} units available`:sc==='low'?'Order soon':'Check back later';
-  if (badge) { badge.className=`prod-ov-img-badge ${sc}`;
-    badge.textContent = sc==='in'?'In Stock':sc==='low'?`Only ${stock} left`:'Out of Stock'; }
-
-  /* Refresh sticky bar */
-  _povUpdateStickyBar();
-}
-
-function povAddToCart() {
-  const p  = _POV.product;
-  const id = _POV.key;
-  if (!p || !id) return;
-
-  const variantLabel = Object.values(_POV.selections).filter(Boolean).join(' / ') || null;
-  const price   = _POV._effectivePrice ?? _POV.basePrice;
-  const cartKey = variantLabel ? `${id}__${variantLabel}` : id;
-
-  const ex = APP.cart.find(i => i.id === cartKey);
-  if (ex) { ex.qty++; }
-  else APP.cart.push({
-    id: cartKey, productId: id,
-    name: p.title || '—',
-    variantLabel: variantLabel || null,
-    price, costPrice: Number(p.costPrice)||0,
-    qty: 1, imageUrl: p.imageUrl || ''
-  });
-  saveCart();
-  toast('Added to cart', '✓');
-
-  /* Button feedback */
-  const btn = document.getElementById('pov-atc');
-  const lbl = document.getElementById('pov-atc-label');
-  const ico = document.getElementById('pov-atc-icon');
-  btn.disabled = true;
-  btn.classList.add('added');
-  ico.className = 'fa-solid fa-check';
-  lbl.textContent = 'Added!';
-  setTimeout(() => {
-    btn.disabled = false;
-    btn.classList.remove('added');
-    ico.className = 'fa-solid fa-bag-shopping';
-    lbl.textContent = 'Add to Cart';
-  }, 1600);
 }
 
 function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -4855,55 +4599,86 @@ function povCat(title) {
   return 'Product';
 }
 
-function povStockClass(q) {
-  if (q<=0) return 'out';
-  if (q<=5) return 'low';
-  return 'in';
-}
+function povStockClass(q) { return q<=0?'out':q<=5?'low':'in'; }
 
 function povSelectVariant(typeName, label) {
   _POV.selections[typeName] = label;
-  document.querySelectorAll(`.pov-chip[data-type="${typeName}"]`).forEach(c => c.classList.toggle('sel', c.dataset.label===label));
-  const svEl = document.getElementById(`pov-sv-${typeName}`);
-  if (svEl) svEl.textContent = '— '+label;
+
+  /* Update chip visual */
+  document.querySelectorAll(`.pov-chip[data-type="${typeName}"]`).forEach(c =>
+    c.classList.toggle('sel', c.dataset.label === label)
+  );
+  const svEl = document.getElementById('pov-sv-'+typeName);
+  if (svEl) svEl.textContent = label;
+
+  /* Hide "base price" note on first selection */
+  const note = document.getElementById('pov-price-note');
+  if (note) note.style.display = 'none';
+
+  /* ── Price: base + sum of deltas from ALL selected types ── */
   const p = _POV.product;
-  let price = _POV.basePrice, stock = Number(p.stock||0);
-  if (p.variants) p.variants.forEach(type => {
-    const sel = _POV.selections[type.name]; if (!sel) return;
-    const val = type.values.find(v=>v.label===sel); if (!val) return;
-    if (val.price!==null&&val.price!==undefined) price = val.price;
-    if (val.stock!==null&&val.stock!==undefined) stock = val.stock;
-  });
-  _POV._effectivePrice = price;
-  document.getElementById('pov-price').textContent = SYM[APP.cur]+Number(price).toLocaleString();
+  let totalDelta = 0;
+  let stock = Number(p.stock || 0);
+
+  if (p.variants) {
+    p.variants.forEach(type => {
+      const selLabel = _POV.selections[type.name];
+      if (!selLabel) return;
+      const val = type.values.find(v => v.label === selLabel);
+      if (!val) return;
+      /* delta stored on chip as data-delta, or recompute */
+      if (val.price !== null && val.price !== undefined) {
+        totalDelta += Number(val.price) - _POV.basePrice;
+      }
+      if (val.stock !== null && val.stock !== undefined) stock = Number(val.stock);
+    });
+  }
+
+  const newPrice = Math.max(0, _POV.basePrice + totalDelta);
+  _POV._effectivePrice = newPrice;
+
+  /* Animate price */
+  const priceEl = document.getElementById('pov-price');
+  if (priceEl) {
+    priceEl.classList.add('flash');
+    setTimeout(() => {
+      priceEl.textContent = SYM[APP.cur] + newPrice.toLocaleString();
+      priceEl.classList.remove('flash');
+    }, 110);
+  }
+
+  /* Update stock indicators */
   const sc = povStockClass(stock);
-  const dot=document.getElementById('pov-sdot'), txt=document.getElementById('pov-stext'), sub=document.getElementById('pov-ssub'), badge=document.getElementById('pov-badge');
-  dot.className=`pov-sdot ${sc}`; txt.className=`pov-stext ${sc}`;
-  if(sc==='in') {txt.textContent='In Stock';sub.textContent=`${stock} units available`;badge.textContent='In Stock';}
-  if(sc==='low'){txt.textContent=`Only ${stock} left`;sub.textContent='Order soon';badge.textContent=`Only ${stock} left`;}
-  if(sc==='out'){txt.textContent='Out of Stock';sub.textContent='Check back later';badge.textContent='Out of Stock';}
-  badge.className=`prod-ov-img-badge ${sc}`;
-  const allSel = p.variants.every(t=>_POV.selections[t.name]);
-  const atc=document.getElementById('pov-atc'), albl=document.getElementById('pov-atc-label'), aicon=document.getElementById('pov-atc-icon');
-  if(sc==='out'){atc.disabled=true;albl.textContent='Out of Stock';aicon.className='fa-solid fa-ban';}
-  else if(!allSel){atc.disabled=true;albl.textContent='Select options above';aicon.className='fa-solid fa-hand-pointer';}
-  else{atc.disabled=false;albl.textContent='Add to Cart';aicon.className='fa-solid fa-bag-shopping';}
+  const dot   = document.getElementById('pov-sdot');
+  const txt   = document.getElementById('pov-stext');
+  const sub   = document.getElementById('pov-ssub');
+  const badge = document.getElementById('pov-badge');
+  if (dot) dot.className = 'pov-sdot '+sc;
+  if (txt) { txt.className='pov-stext '+sc; txt.textContent=sc==='in'?'In Stock':sc==='low'?'Only '+stock+' left':'Out of Stock'; }
+  if (sub) sub.textContent = sc==='in'?stock+' units available':sc==='low'?'Order soon':'Check back later';
+  if (badge) { badge.className='prod-ov-img-badge '+sc; badge.textContent=sc==='in'?'In Stock':sc==='low'?'Only '+stock+' left':'Out of Stock'; }
+
+  _povRefreshBar();
 }
 
 function povAddToCart() {
-  const p=_POV.product, id=_POV.key;
+  const p  = _POV.product, id = _POV.key;
+  if (!p || !id) return;
   const variantLabel = Object.values(_POV.selections).filter(Boolean).join(' / ') || null;
-  const price = _POV._effectivePrice ?? _POV.basePrice;
-  const cartKey = variantLabel ? `${id}__${variantLabel}` : id;
-  const ex = APP.cart.find(i=>i.id===cartKey);
+  const price   = _POV._effectivePrice ?? _POV.basePrice;
+  const cartKey = variantLabel ? id+'__'+variantLabel : id;
+  const ex = APP.cart.find(i => i.id === cartKey);
   if (ex) { ex.qty++; }
   else APP.cart.push({ id:cartKey, productId:id, name:p.title||'—', variantLabel:variantLabel||null, price, costPrice:Number(p.costPrice)||0, qty:1, imageUrl:p.imageUrl||'' });
   saveCart();
   toast('Added to cart','✓');
-  const atc=document.getElementById('pov-atc'), lbl=document.getElementById('pov-atc-label'), ico=document.getElementById('pov-atc-icon');
-  atc.disabled=true; atc.style.background='var(--green)'; ico.className='fa-solid fa-check'; lbl.textContent='Added!';
-  setTimeout(()=>{ atc.disabled=false; atc.style.background=''; ico.className='fa-solid fa-bag-shopping'; lbl.textContent='Add to Cart'; },1600);
+  const btn=document.getElementById('pov-atc'), lbl=document.getElementById('pov-atc-label'), ico=document.getElementById('pov-atc-icon');
+  btn.disabled=true; btn.classList.add('done'); ico.className='fa-solid fa-check'; lbl.textContent='Added!';
+  setTimeout(() => {
+    btn.disabled=false; btn.classList.remove('done'); ico.className='fa-solid fa-bag-shopping'; lbl.textContent='Add to Cart';
+  }, 1600);
 }
+
 
 function openProductOverview(pushKey) {
   const url = `./overview/index.html?key=${encodeURIComponent(pushKey)}`;
