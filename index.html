@@ -3844,6 +3844,7 @@ function placeOrder() {
     paymentStatus:   'Unpaid',
     status:          'Pending',
     payMethod:       APP.payMethod || 'cod',
+    currency:        APP.cur.toUpperCase(),
     notes:           '',
     courier:         '',
     trackingNo:      '',
@@ -3862,11 +3863,12 @@ function placeOrder() {
       // Decrement product quantities
       const updates = {};
       APP.cart.forEach(item => {
-        const prod = APP.prods[item.id];
+        const pid = item.productId || item.id.split('__')[0];
+        const prod = APP.prods[pid];
         if (prod && prod.stock != null) {
           const newQty = Math.max(0, Number(prod.stock) - item.qty);
-          updates[`products/${item.id}/stock`] = newQty;
-          APP.prods[item.id].stock = newQty;
+          updates[`products/${pid}/stock`] = newQty;
+          APP.prods[pid].stock = newQty;
         }
       });
       if (Object.keys(updates).length) db.ref().update(updates);
@@ -3929,7 +3931,7 @@ function renderOrders() {
         const name = it.title || it.name || '—';
         return it.variantLabel ? `${name} (${it.variantLabel}) ×${it.qty}` : `${name} ×${it.qty}`;
       }).join(', ');
-      const sym    = {USD:'$',AED:'AED ',INR:'₹'}[o.currency||'USD']||'$';
+      const sym    = {USD:'$',AED:'AED ',INR:'₹'}[(o.currency||'USD').toUpperCase()]||'$';
       const status = (o.status||'Pending').toLowerCase();
       const sc     = status==='delivered'||status==='completed' ? 's-confirmed'
                    : status==='dispatched'||status==='transit'||status==='arrived'||status==='flying' ? 's-shipped'
@@ -3959,7 +3961,7 @@ function renderOrders() {
         </div>
         <div class="ord-footer">
           <div class="ord-addr">${addr||'—'}</div>
-          <div class="ord-total">${sym}${(o.total||0).toLocaleString()} ${o.currency||''}</div>
+          <div class="ord-total">${sym}${(o.total||0).toLocaleString()}</div>
         </div>
       </div>`;
     }).join('');
@@ -4052,7 +4054,7 @@ function renderOrderDetail(id) {
 
 function _renderDetail(el, id, o) {
   const date   = new Date(o.createdAt||o.timestamp||Date.now()).toLocaleDateString('en-US',{weekday:'short',day:'numeric',month:'long',year:'numeric'});
-  const sym    = {USD:'$',AED:'AED ',INR:'₹'}[o.currency||'USD']||'$';
+  const sym    = {USD:'$',AED:'AED ',INR:'₹'}[(o.currency||'USD').toUpperCase()]||'$';
   const status = (o.status||'Pending');
   const statusL = status.toLowerCase();
   const sc     = statusL==='delivered'||statusL==='completed' ? 's-confirmed'
@@ -4103,7 +4105,7 @@ function _renderDetail(el, id, o) {
       </div>
       <div style="display:flex;justify-content:space-between;padding:8px 0 2px;font-family:var(--font-head);font-weight:800;font-size:16px;border-top:1px solid var(--border);margin-top:6px">
         <span>Total</span>
-        <span style="color:var(--red)">${sym}${(o.total||0).toLocaleString()} ${o.currency||''}</span>
+        <span style="color:var(--red)">${sym}${(o.total||0).toLocaleString()}</span>
       </div>
     </div>
 
