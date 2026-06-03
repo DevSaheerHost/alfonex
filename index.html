@@ -689,7 +689,7 @@ a { text-decoration: none; color: inherit; }
   background: var(--white); padding: 14px 14px;
   display: flex; align-items: center; gap: 10px;
   border-bottom: 1px solid var(--border);
-  position: sticky; top: 36px; z-index: 10;
+  position: sticky; top: 0px; z-index: 10;
 }
 .pg-header h1 { font-family: var(--font-head); font-size: 17px; font-weight: 700; flex: 1; }
 .back-btn {
@@ -736,15 +736,26 @@ a { text-decoration: none; color: inherit; }
 .prod-ov-img-wrap {
   width: 100%; aspect-ratio: 1/1; max-height: 320px;
   background: var(--white); border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: center;
   overflow: hidden; position: relative;
 }
-.prod-ov-img-wrap img { width:100%;height:100%;object-fit:contain;padding:20px; }
+/* ── Image carousel ── */
+.pov-img-track { display:flex; width:100%; height:100%; transition:transform .32s cubic-bezier(.4,0,.2,1); }
+.pov-img-slide { min-width:100%; height:100%; display:flex; align-items:center; justify-content:center; }
+.pov-img-slide img { width:100%;height:100%;object-fit:contain;padding:20px; }
 .prod-ov-no-img { font-size:64px;opacity:.12;display:flex;align-items:center;justify-content:center;width:100%;height:100%;min-height:200px; }
-.prod-ov-img-badge { position:absolute;top:10px;right:10px;padding:3px 9px;border-radius:6px;font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase; }
+.prod-ov-img-badge { position:absolute;top:10px;right:10px;padding:3px 9px;border-radius:6px;font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;z-index:2; }
 .prod-ov-img-badge.in  { background:#dcfce7;color:#15803d; }
 .prod-ov-img-badge.low { background:#fef3c7;color:#92400e; }
 .prod-ov-img-badge.out { background:#fee2e2;color:#b91c1c; }
+/* thumbnail dots */
+.pov-img-dots { position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:5px;z-index:2; }
+.pov-img-dot { width:6px;height:6px;border-radius:50%;background:rgba(0,0,0,.22);border:none;cursor:pointer;padding:0;transition:background .15s,transform .15s; }
+.pov-img-dot.active { background:var(--green);transform:scale(1.3); }
+/* thumbnail strip */
+.pov-thumb-strip { display:flex;gap:7px;padding:10px 16px 0;overflow-x:auto;scrollbar-width:none; }
+.pov-thumb-strip::-webkit-scrollbar { display:none; }
+.pov-thumb { width:52px;height:52px;border-radius:8px;object-fit:cover;border:2px solid var(--border);cursor:pointer;flex-shrink:0;transition:border-color .15s; }
+.pov-thumb.active { border-color:var(--green); }
 .prod-ov-body { padding: 16px 16px 0; }
 .prod-ov-eyebrow { font-size:10px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--green);display:flex;align-items:center;gap:6px;margin-bottom:4px; }
 .prod-ov-eyebrow::before { content:'';width:12px;height:2px;background:var(--green);border-radius:2px;flex-shrink:0; }
@@ -2667,8 +2678,49 @@ const APP = {
 };
 
 /* ═══════════════════════════════════
-   NAVIGATION
+   CURRENCY PRICE HELPER
+   Picks the right stored price for the
+   current currency, falls back to USD price
 ═══════════════════════════════════ */
+function getProdPrice(p) {
+  if (!p) return 0;
+  const cur = APP.cur;
+  if (cur === 'inr' && p.priceINR != null && Number(p.priceINR) > 0) return Number(p.priceINR);
+  if (cur === 'aed' && p.priceAED != null && Number(p.priceAED) > 0) return Number(p.priceAED);
+  if (cur === 'usd' && p.priceUSD != null && Number(p.priceUSD) > 0) return Number(p.priceUSD);
+  return Number(p.price) || 0;  /* fallback to base price */
+}
+
+/* ═══════════════════════════════════
+   AUTO-DETECT CURRENCY FROM LOCATION
+   Uses ipapi.co (free, no key needed)
+   Runs once on load; user can still
+   manually override via currency buttons
+═══════════════════════════════════ */
+(async function autoDetectCurrency() {
+  /* Skip if user already manually picked a currency this session */
+  const saved = sessionStorage.getItem('ia_cur_manual');
+  if (saved) { APP.cur = saved; _applyCurBtn(saved); return; }
+
+  try {
+    const res  = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(4000) });
+    const data = await res.json();
+    const cc   = (data.country_code || '').toUpperCase();
+    let cur = 'usd'; // default
+    if (cc === 'IN') cur = 'inr';
+    else if (['AE','SA','OM','BH','KW','QA'].includes(cc)) cur = 'aed';
+    APP.cur = cur;
+    _applyCurBtn(cur);
+  } catch {
+    /* silent fail — keep default usd */
+  }
+})();
+
+function _applyCurBtn(cur) {
+  document.querySelectorAll('.cur-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.cur === cur);
+  });
+}
 function navTo(pg, opts = {}) {
   if (pg === 'orders' && !APP.user) { navTo('login'); return; }
   if (pg === 'profile')   { renderProfile(); }
@@ -2828,7 +2880,7 @@ function renderSearchResults(q) {
   }
   el.innerHTML = `<div style="padding:8px 0 4px 12px;font-size:11px;color:var(--muted);font-weight:700;letter-spacing:0.5px;text-transform:uppercase">${results.length} result${results.length===1?'':'s'}</div>` +
     results.map(([id,p]) => {
-      const price = Number(p.price)||0;
+      const price = getProdPrice(p);
       const priceTxt = price ? SYM[APP.cur]+price.toLocaleString() : '—';
       return `<div class="search-result-row" onclick="addSearchHistory('${q.replace(/'/g,"\\'")}');openProductInline('${id}')">
         ${p.imageUrl
@@ -2856,6 +2908,7 @@ document.querySelectorAll('.cur-btn').forEach(btn => {
     document.querySelectorAll('.cur-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     APP.cur = btn.dataset.cur;
+    sessionStorage.setItem('ia_cur_manual', APP.cur);  /* remember manual pick */
     renderProds();
     if (document.getElementById('page-cart').classList.contains('active')) renderCart();
     if (document.getElementById('page-checkout').classList.contains('active')) renderCheckout();
@@ -2898,7 +2951,7 @@ function cartSubtotal() { return APP.cart.reduce((s, i) => s + getPrice(i) * i.q
 
 function addToCart(id, variantCtx) {
   const p = APP.prods[id]; if (!p) return;
-  const effectivePrice = (variantCtx?.price != null) ? Number(variantCtx.price) : Number(p.price)||0;
+  const effectivePrice = (variantCtx?.price != null) ? Number(variantCtx.price) : getProdPrice(p);
   const variantLabel   = variantCtx?.variantLabel || null;
   const cartKey = variantLabel ? `${id}__${variantLabel}` : id;
   const ex = APP.cart.find(i => i.id === cartKey);
@@ -3075,7 +3128,7 @@ function buildHeroCarousel(heroProduct, allEntries) {
   const slides = [];
   if (heroProduct) {
     const [id, p] = heroProduct;
-    const price = p.price ? SYM[APP.cur]+Number(p.price).toLocaleString() : '';
+    const price = getProdPrice(p) ? SYM[APP.cur]+Number(getProdPrice(p)).toLocaleString() : '';
     slides.push(`<div class="hero-slide" onclick="openProductInline('${id}')">
       <div class="hero-slide-bg" style="background:${HERO_GRADIENTS[0]}">
         <div style="flex:1;z-index:1;position:relative">
@@ -3125,7 +3178,7 @@ function buildCatQuick() {
 function buildHSection(title, entries, type) {
   if (!entries.length) return '';
   const cards = entries.map(([id,p]) => {
-    const price = Number(p.price||0);
+    const price = getProdPrice(p);
     const priceTxt = price ? SYM[APP.cur]+price.toLocaleString() : '—';
     const oos = Number(p.stock||0) === 0;
     if (type==='feat') return `<div class="feat-card" onclick="openProductInline('${id}')">${p.imageUrl?`<img class="feat-card-img" src="${p.imageUrl}" alt="" loading="lazy">`:'<div class="feat-card-img" style="display:flex;align-items:center;justify-content:center;font-size:40px;background:#f5f5f7">📦</div>'}<div class="feat-card-body"><div class="feat-card-label">Featured</div><div class="feat-card-title">${p.title||'—'}</div><div class="feat-card-price">${priceTxt}</div><div class="feat-card-stock">${oos?'<span style="color:var(--red)">Out of stock</span>':'<span style="color:var(--green)">● In stock</span>'}</div></div><button class="feat-card-atc" onclick="event.stopPropagation();addToCart('${id}')" ${oos?'disabled':''}>${oos?'<i class="fa-solid fa-ban"></i> Out of Stock':'<i class="fa-solid fa-plus"></i> Add to Cart'}</button></div>`;
@@ -3172,8 +3225,8 @@ function applySortFilter(entries, filter) {
   let e = [...entries];
   if (filter==='instock') e=e.filter(([,p])=>Number(p.stock||0)>0);
   if (filter==='newest')  e.sort((a,b)=>(b[1].createdAt||0)-(a[1].createdAt||0));
-  if (filter==='price-asc')  e.sort((a,b)=>(Number(a[1].price)||0)-(Number(b[1].price)||0));
-  if (filter==='price-desc') e.sort((a,b)=>(Number(b[1].price)||0)-(Number(a[1].price)||0));
+  if (filter==='price-asc')  e.sort((a,b)=>getProdPrice(a[1])-getProdPrice(b[1]));
+  if (filter==='price-desc') e.sort((a,b)=>getProdPrice(b[1])-getProdPrice(a[1]));
   return e;
 }
 
@@ -3208,7 +3261,7 @@ function loadMoreProds() {
 }
 
 function pCardHTML(id, p, idx) {
-  const price = Number(p.price)||0;
+  const price = getProdPrice(p);
   const priceTxt = price ? SYM[APP.cur]+price.toLocaleString() : '—';
   const qty = p.stock!=null ? Number(p.stock) : null;
   const oos = qty!==null && qty===0;
@@ -4477,14 +4530,14 @@ const COLOUR_MAP_APP = {
   coral:'#ff7f6e',mint:'#3eb489',teal:'#0d9488',orange:'#f97316',
   'deep purple':'#4c1d95','space gray':'#6b7280','space black':'#1c1c1c',
 };
-let _POV = { key:null, product:null, selections:{}, basePrice:0, prevPage:'shop', _effectivePrice:null };
+let _POV = { key:null, product:null, selections:{}, basePrice:0, prevPage:'shop', _effectivePrice:null, _imgIdx:0, _imgTotal:0 };
 
 function prodOvBack() { navTo(_POV.prevPage || 'shop'); }
 
 function openProductInline(pushKey, opts = {}) {
   const p = APP.prods[pushKey];
   if (!p) return;
-  _POV = { key:pushKey, product:p, selections:{}, basePrice:Number(p.price||0), prevPage:'shop', _effectivePrice:null };
+  _POV = { key:pushKey, product:p, selections:{}, basePrice:getProdPrice(p), prevPage:'shop', _effectivePrice:null };
   const currentPage = document.querySelector('.page.active');
   _POV.prevPage = currentPage ? currentPage.id.replace('page-','') : 'shop';
 
@@ -4493,6 +4546,15 @@ function openProductInline(pushKey, opts = {}) {
   const hasV  = p.variants && p.variants.length > 0;
 
   /* Build variant sections */
+  /* Currency conversion ratio: variant prices are stored in USD by admin.
+     We convert them to the current display currency using the product's
+     stored per-currency price vs its base USD price.
+     e.g. if base USD=800 and priceINR=84999, ratio=84999/800=106.25
+     So a variant at USD 790 becomes ₹790*106.25 = ₹83,937 */
+  const _usdBase = Number(p.price) || 1;
+  const _curBase = getProdPrice(p);
+  const _curRatio = _usdBase > 0 ? _curBase / _usdBase : 1;
+
   let varHTML = '';
   if (hasV) {
     varHTML = '<div class="prod-ov-divider"></div><div class="pov-variants-wrap">'
@@ -4500,9 +4562,10 @@ function openProductInline(pushKey, opts = {}) {
           const chips = type.values.map(val => {
             const hex  = COLOUR_MAP_APP[(val.label||'').toLowerCase().trim()];
             const oos  = val.stock !== null && val.stock !== undefined && Number(val.stock) <= 0;
-            // delta = how much this option adds above base price
+            // val.price is in USD — convert to current currency
             const hasPr = val.price !== null && val.price !== undefined;
-            const delta = hasPr ? Number(val.price) - _POV.basePrice : 0;
+            const valPriceCur = hasPr ? Math.round(Number(val.price) * _curRatio) : null;
+            const delta = hasPr ? valPriceCur - _POV.basePrice : 0;
             const deltaStr = hasPr
               ? (delta === 0
                   ? ''
@@ -4527,21 +4590,36 @@ function openProductInline(pushKey, opts = {}) {
       + '</div>';
   }
 
-  const imgHTML = p.imageUrl
-    ? `<img src="${p.imageUrl}" alt="${escHtml(p.title||'')}" loading="lazy">`
+  /* Build image carousel (primary + extras) */
+  const allImgs = [p.imageUrl, ...(Array.isArray(p.imageUrls) ? p.imageUrls : [])].filter(Boolean);
+  _POV._imgIdx = 0;
+  const carouselHTML = allImgs.length
+    ? `<div class="pov-img-track" id="pov-img-track">
+        ${allImgs.map(u=>`<div class="pov-img-slide"><img src="${escHtml(u)}" alt="" loading="lazy"></div>`).join('')}
+       </div>
+       ${allImgs.length > 1 ? `<div class="pov-img-dots" id="pov-img-dots">${allImgs.map((_,i)=>`<button class="pov-img-dot${i===0?' active':''}" onclick="povGoImg(${i})"></button>`).join('')}</div>` : ''}`
     : `<div class="prod-ov-no-img"><i class="fa-regular fa-image"></i></div>`;
+
+  const thumbStripHTML = allImgs.length > 1
+    ? `<div class="pov-thumb-strip" id="pov-thumb-strip">
+        ${allImgs.map((u,i)=>`<img class="pov-thumb${i===0?' active':''}" src="${escHtml(u)}" alt="" onclick="povGoImg(${i})" loading="lazy">`).join('')}
+       </div>` : '';
+
+  /* Touch-swipe support for carousel */
+  _POV._imgTotal = allImgs.length;
 
   document.getElementById('prod-ov-header-title').textContent = p.title || 'Product';
   document.getElementById('prod-ov-content').innerHTML = `
-    <div class="prod-ov-img-wrap">
-      ${imgHTML}
+    <div class="prod-ov-img-wrap" id="pov-img-wrap">
+      ${carouselHTML}
       <span class="prod-ov-img-badge ${sc}" id="pov-badge">${sc==='in'?'In Stock':sc==='low'?'Only '+stock+' left':'Out of Stock'}</span>
     </div>
+    ${thumbStripHTML}
     <div class="prod-ov-body">
       <div class="prod-ov-eyebrow">${povCat(p.title)}</div>
       <div class="prod-ov-title">${escHtml(p.title||'—')}</div>
       <div class="prod-ov-price-row">
-        <div class="prod-ov-price" id="pov-price">${SYM[APP.cur]}${Number(p.price||0).toLocaleString()}</div>
+        <div class="prod-ov-price" id="pov-price">${SYM[APP.cur]}${getProdPrice(p).toLocaleString()}</div>
         ${hasV ? '<div class="prod-ov-price-note" id="pov-price-note">base price</div>' : ''}
       </div>
       ${varHTML}
@@ -4556,6 +4634,7 @@ function openProductInline(pushKey, opts = {}) {
 
   _povRefreshBar();
   navTo('product', { key:pushKey, ...(opts._fromPopstate?{_fromPopstate:true}:{}) });
+  setTimeout(_initPovSwipe, 80);
 }
 
 /* ── Refresh sticky ATC bar ── */
@@ -4584,6 +4663,31 @@ function _povRefreshBar() {
   } else {
     btn.disabled = false; lbl.textContent = 'Add to Cart'; ico.className = 'fa-solid fa-bag-shopping';
   }
+}
+
+/* ── Product image carousel navigation ── */
+function povGoImg(i) {
+  _POV._imgIdx = i;
+  const track = document.getElementById('pov-img-track');
+  if (track) track.style.transform = `translateX(-${i * 100}%)`;
+  document.querySelectorAll('.pov-img-dot').forEach((d,di) => d.classList.toggle('active', di === i));
+  document.querySelectorAll('.pov-thumb').forEach((t,ti) => t.classList.toggle('active', ti === i));
+}
+
+/* Touch swipe on image area */
+function _initPovSwipe() {
+  const wrap = document.getElementById('pov-img-wrap');
+  if (!wrap || _POV._imgTotal <= 1) return;
+  let sx = 0;
+  wrap.addEventListener('touchstart', e => { sx = e.touches[0].clientX; }, { passive:true });
+  wrap.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - sx;
+    if (Math.abs(dx) < 40) return;
+    const next = dx < 0
+      ? Math.min(_POV._imgIdx + 1, _POV._imgTotal - 1)
+      : Math.max(_POV._imgIdx - 1, 0);
+    povGoImg(next);
+  }, { passive:true });
 }
 
 function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -4620,15 +4724,20 @@ function povSelectVariant(typeName, label) {
   let totalDelta = 0;
   let stock = Number(p.stock || 0);
 
+  /* Currency ratio: variant prices stored in USD, convert to display currency */
+  const _usdBase = Number(p.price) || 1;
+  const _curBase = getProdPrice(p);
+  const _curRatio = _usdBase > 0 ? _curBase / _usdBase : 1;
+
   if (p.variants) {
     p.variants.forEach(type => {
       const selLabel = _POV.selections[type.name];
       if (!selLabel) return;
       const val = type.values.find(v => v.label === selLabel);
       if (!val) return;
-      /* delta stored on chip as data-delta, or recompute */
       if (val.price !== null && val.price !== undefined) {
-        totalDelta += Number(val.price) - _POV.basePrice;
+        const valPriceCur = Math.round(Number(val.price) * _curRatio);
+        totalDelta += valPriceCur - _POV.basePrice;
       }
       if (val.stock !== null && val.stock !== undefined) stock = Number(val.stock);
     });
