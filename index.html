@@ -196,20 +196,19 @@ a { text-decoration: none; color: inherit; }
 }
 
 /* ─── CURRENCY BAR ─── */
-#cur-bar {
-  display: flex; justify-content: center; align-items: center;
-  gap: 6px; padding: 8px 12px;
-  background: var(--white); border-bottom: 1px solid var(--border);
-}
+/* cur-bar removed — currency moved to Account > Settings */
 .cur-btn {
-  padding: 5px 14px; border: 1.5px solid var(--border);
+  padding: 6px 16px; border: 1.5px solid var(--border);
   background: var(--white); color: var(--muted);
   font-family: var(--font-head); font-weight: 700;
-  font-size: 11px; border-radius: 20px; cursor: pointer;
-  transition: all 0.13s;
+  font-size: 12px; border-radius: 20px; cursor: pointer;
+  transition: all 0.13s; flex: 1; text-align: center;
 }
 .cur-btn.active { background: var(--green); border-color: var(--green); color: var(--white); }
 .cur-btn:hover:not(.active) { border-color: var(--green); color: var(--green); }
+.cur-setting-row {
+  display: flex; gap: 8px; padding: 10px 16px 14px;
+}
 
 /* ─── CAT BAR ─── */
 #cat-bar {
@@ -1110,6 +1109,34 @@ a { text-decoration: none; color: inherit; }
 .wish-price { font-family: var(--font-head); font-size: 15px; font-weight: 800; color: var(--red); margin: 6px 0; }
 .wish-add   { width: 100%; padding: 8px; background: var(--add-btn-bg); color: var(--add-btn-fg); border: none; border-radius: var(--radius-sm); font-size: 12px; font-weight: 700; transition: opacity 0.15s; }
 .wish-add:hover { opacity: 0.85; }
+/* Wishlist heart button — product grid card */
+.wish-btn {
+  position: absolute; top: 8px; right: 8px;
+  width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(255,255,255,.92);
+  border: none; cursor: pointer; z-index: 2;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,.14);
+  transition: transform .18s cubic-bezier(.34,1.56,.64,1), background .15s;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.wish-btn svg { transition: transform .18s cubic-bezier(.34,1.56,.64,1); }
+.wish-btn:active { transform: scale(.9); }
+.wish-btn:hover { transform: scale(1.12); background: #fff; }
+.wish-btn.wishlisted { background: #fff0f0; }
+.wish-btn.wishlisted svg { transform: scale(1.1); }
+/* Heart in product overlay header */
+.pov-wish-btn {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--surface2); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: transform .18s cubic-bezier(.34,1.56,.64,1), background .15s;
+}
+.pov-wish-btn:active { transform: scale(.88); }
+.pov-wish-btn:hover { background: #fff0f0; }
+.pov-wish-btn.wishlisted { background: #fff0f0; }
 
 /* ══ EDIT PROFILE MODAL ══ */
 #edit-modal-overlay {
@@ -1265,49 +1292,43 @@ a { text-decoration: none; color: inherit; }
 .tsc-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
 .tracker-acts { display: flex; flex-direction: column; gap: 10px; }
 
-/* ══ PAYMENT METHOD (existing, keep position) ══ */
-
-  display: flex; align-items: center; gap: 12px;
-  padding: 13px 14px; border-radius: var(--radius-sm);
+/* ══ PAYMENT METHOD ══ */
+.pay-option {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 14px;
+  border-radius: var(--radius-sm);
   border: 2px solid var(--border);
-  background: var(--white); margin-bottom: 8px;
-  cursor: pointer; transition: border-color 0.15s, background 0.15s;
-  position: relative;
+  background: var(--white);
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
 }
 .pay-option.selected {
   border-color: var(--green);
   background: var(--green-light);
 }
-.pay-option.coming-soon { cursor: not-allowed; opacity: 0.55; }
+.pay-option.coming-soon { cursor: not-allowed; opacity: 0.6; }
 .pay-icon {
-  width: 40px; height: 28px; border-radius: 5px;
+  width: 44px; height: 32px; border-radius: 6px;
   display: flex; align-items: center; justify-content: center;
   font-size: 14px; font-weight: 800; flex-shrink: 0;
   border: 1.5px solid var(--border);
   background: var(--white);
 }
 .pay-info { flex: 1; min-width: 0; }
-.pay-name { font-size: 14px; font-weight: 700; color: var(--text); }
-.pay-sub  { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.pay-name { font-size: 14px; font-weight: 700; color: var(--text); line-height: 1.3; }
+.pay-sub  { font-size: 11px; color: var(--muted); margin-top: 2px; }
 .pay-badge {
   font-size: 9px; font-weight: 800; letter-spacing: 0.5px;
-  padding: 2px 7px; border-radius: 20px;
-  background: var(--amber); color: #fff; text-transform: uppercase;
-  flex-shrink: 0;
+  padding: 3px 9px; border-radius: 20px;
+  background: #6B7280; color: #fff; text-transform: uppercase;
+  white-space: nowrap; flex-shrink: 0;
 }
-.pay-radio {
-  width: 18px; height: 18px; border-radius: 50%;
-  border: 2px solid var(--border); flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  transition: border-color 0.15s;
-}
-.pay-option.selected .pay-radio { border-color: var(--green); }
-.pay-radio::after {
-  content: ''; width: 9px; height: 9px;
-  border-radius: 50%; background: var(--green);
-  display: none;
-}
-.pay-option.selected .pay-radio::after { display: block; }
+/* radio hidden from UI — selection shown via border only */
+.pay-radio { display: none; }
 
 #place-order-btn {
   width: 100%; padding: 16px;
@@ -1554,7 +1575,7 @@ a { text-decoration: none; color: inherit; }
 [data-theme="dark"] .s-shipped       { background: #1e2a4a; color: #60a5fa; }
 [data-theme="dark"] .btn-ghost       { background: #1c1c1e; }
 [data-theme="dark"] .cur-btn         { background: #1c1c1e; color: var(--muted); border-color: #2a2a2a; }
-[data-theme="dark"] .cur-btn.active  { background: var(--green); color: #fff; }
+[data-theme="dark"] .cur-btn.active  { background: var(--green); color: #fff; border-color: var(--green); }
 [data-theme="dark"] .cat-pill        { background: #1c1c1e; color: var(--muted); border-color: #2a2a2a; }
 [data-theme="dark"] mark             { background: #0d2a1a !important; color: #4ade80 !important; }
 
@@ -1806,11 +1827,7 @@ a { text-decoration: none; color: inherit; }
 </nav>
 
 <!-- ════ CURRENCY BAR ════ -->
-<div id="cur-bar">
-  <button class="cur-btn active" data-cur="usd">$ USD</button>
-  <button class="cur-btn"        data-cur="aed">🇦🇪 AED</button>
-  <button class="cur-btn"        data-cur="inr">₹ INR</button>
-</div>
+<!-- cur-bar removed — currency picker moved to Account > Settings -->
 
 <!-- ════════════ SHOP PAGE ════════════ -->
 <div class="page active" id="page-shop">
@@ -1973,7 +1990,7 @@ a { text-decoration: none; color: inherit; }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><polyline points="15 18 9 12 15 6"/></svg>
     </button>
     <h1 id="prod-ov-header-title" style="font-size:15px;font-family:var(--font-head);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;flex:1;text-align:center">Product</h1>
-    <div style="width:40px"></div>
+    <button class="pov-wish-btn" id="pov-wish-btn" onclick="povToggleWish()" title="Add to Wishlist">🤍</button>
   </div>
   <div id="prod-ov-content" style="overflow-y:auto"></div>
   <!-- Sticky ATC bar -->
@@ -2200,6 +2217,19 @@ a { text-decoration: none; color: inherit; }
   <div class="profile-section">
     <div class="profile-section-title">Settings</div>
     <div class="profile-row">
+      <!-- Currency Picker -->
+      <div class="profile-item" style="flex-direction:column;align-items:flex-start;gap:0;cursor:default">
+        <div style="display:flex;align-items:center;gap:10px;width:100%;padding-bottom:4px">
+          <div class="pi-icon"><i class="fa-solid fa-coins"></i></div>
+          <span class="pi-label">Currency</span>
+          <span style="margin-left:auto;font-size:11px;font-weight:700;color:var(--green)" id="cur-active-label">USD</span>
+        </div>
+        <div class="cur-setting-row" style="width:100%;box-sizing:border-box;padding-left:0;padding-right:0">
+          <button class="cur-btn" data-cur="usd">$ USD</button>
+          <button class="cur-btn" data-cur="aed">🇦🇪 AED</button>
+          <button class="cur-btn" data-cur="inr">₹ INR</button>
+        </div>
+      </div>
       <div class="profile-item" onclick="toggleTheme();renderProfile()">
         <div class="pi-icon" id="theme-pi-icon"><i class="fa-solid fa-moon"></i></div>
         <span class="pi-label" id="theme-pi-label">Dark Mode</span>
@@ -2667,6 +2697,7 @@ const APP = {
   cur:      'usd',
   cats:     {},
   prods:    {},
+  banners:  {},
   activeCat:'all',
   user:     null,
   cart:     JSON.parse(localStorage.getItem('ia_cart') || '[]'),
@@ -2720,6 +2751,8 @@ function _applyCurBtn(cur) {
   document.querySelectorAll('.cur-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.cur === cur);
   });
+  const lbl = document.getElementById('cur-active-label');
+  if (lbl) lbl.textContent = cur.toUpperCase();
 }
 function navTo(pg, opts = {}) {
   if (pg === 'orders' && !APP.user) { navTo('login'); return; }
@@ -2731,8 +2764,9 @@ function navTo(pg, opts = {}) {
   const pageEl = document.getElementById('page-' + pg);
   if (!pageEl) return;
   pageEl.classList.add('active');
+  APP.activeSection = pg;
   const isShop = pg === 'shop';
-  document.getElementById('cur-bar').style.display = isShop ? 'flex' : 'none';
+  /* cur-bar removed */
   document.getElementById('cat-bar').style.display = isShop ? 'flex' : 'none';
   document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active'));
   const bmap = {
@@ -2800,7 +2834,7 @@ function clearSearchHistory() {
 function openSearchPage() {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-search').classList.add('active');
-  document.getElementById('cur-bar').style.display = 'none';
+  /* cur-bar removed */
   document.getElementById('cat-bar').style.display = 'none';
   document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active'));
   document.getElementById('bn-search').classList.add('active');
@@ -2864,37 +2898,153 @@ function clearSearchPage() {
   renderSearchHome();
 }
 
+/* ═══════════════════════════════════════
+   FUZZY SEARCH ENGINE
+   Handles:
+   • Tokenised multi-word  "apple macbook"
+   • No-space merges       "iPhone15" → "iphone 15"
+   • Abbreviations         "ip15" → "iphone 15"
+   • Spec tokens           "256gb" matches variant values
+   • Partial/prefix        "macb" → "macbook"
+   • Typo tolerance        1-char edit distance on short words
+   • Alias map             "ip"→"iphone", "mb"→"macbook" …
+   • Relevance scoring     exact > starts-with > token > fuzzy
+═══════════════════════════════════════ */
+const _ALIASES = {
+  'ip':'iphone','iph':'iphone',
+  'mb':'macbook','mac':'macbook',
+  'ap':'apple','apl':'apple',
+  'apods':'airpods',
+  'sam':'samsung','sg':'samsung',
+  'gal':'galaxy',
+  'mi':'xiaomi','xm':'xiaomi',
+  'op':'oneplus',
+  'rl':'realme','rm':'realme',
+  'vv':'vivo',
+  'tab':'tablet',
+  'latest':'new','newest':'new',
+  'cheap':'budget',
+  'case':'cover',
+  'earphone':'earphones','buds':'earbuds','tws':'earbuds',
+  'charger':'charger','cable':'cable',
+  'watch':'watch',
+  'laptop':'laptop','notebook':'laptop',
+};
+
+function _editDist(a, b) {
+  if (Math.abs(a.length - b.length) > 2) return 99;
+  const m = a.length, n = b.length;
+  const dp = [];
+  for (let i = 0; i <= m; i++) { dp[i] = []; for (let j = 0; j <= n; j++) dp[i][j] = i||j; }
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = a[i-1]===b[j-1] ? dp[i-1][j-1] : 1+Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+  return dp[m][n];
+}
+
+function _tokenise(str) {
+  return (str||'').toLowerCase()
+    .replace(/([a-z])([0-9])/g, '$1 $2')   /* iphone15 → iphone 15  */
+    .replace(/([0-9])([a-z])/g, '$1 $2')   /* 15pro    → 15 pro     */
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim().split(/\s+/).filter(Boolean);
+}
+
+function _buildCorpus(p) {
+  const parts = [p.title||'', p.description||'', p.category||''];
+  if (Array.isArray(p.variants))
+    p.variants.forEach(t => { parts.push(t.name||''); (t.values||[]).forEach(v => parts.push(v.label||'')); });
+  return parts.join(' ');
+}
+
+function _scoreProduct(p, queryTokens) {
+  const corpusTokens = _tokenise(_buildCorpus(p));
+  const corpusStr    = corpusTokens.join(' ');
+  let score = 0;
+
+  for (const qt of queryTokens) {
+    if (!qt) continue;
+    const alias    = _ALIASES[qt];
+    const variants = alias ? [qt, alias] : [qt];
+    let best = 0;
+
+    for (const qv of variants) {
+      for (const ct of corpusTokens) {
+        if (ct === qv)                                         { best = Math.max(best, 10); }
+        else if (ct.startsWith(qv))                           { best = Math.max(best,  8); }
+        else if (ct.includes(qv) || qv.includes(ct))         { best = Math.max(best,  6); }
+        else if (qv.length >= 3 && ct.length >= 3 && _editDist(ct, qv) <= 1) { best = Math.max(best, 4); }
+      }
+      if (corpusStr.includes(qv)) best = Math.max(best, 5);
+    }
+    if (best === 0) return 0;   /* all query tokens must score something */
+    score += best;
+  }
+
+  /* Bonus: full query string appears in title */
+  if (_tokenise(p.title||'').join(' ').includes(queryTokens.join(' '))) score += 15;
+  return score;
+}
+
 function renderSearchResults(q) {
-  const ql = q.toLowerCase();
-  const results = Object.entries(APP.prods).filter(([,p]) =>
-    (p.title||'').toLowerCase().includes(ql)
-  ).slice(0,30);
   const el = document.getElementById('search-page-content');
-  if (!results.length) {
+  const queryTokens = _tokenise(q);
+  if (!queryTokens.length) { renderSearchHome(); return; }
+
+  const scored = Object.entries(APP.prods)
+    .map(([id, p]) => ({ id, p, score: _scoreProduct(p, queryTokens) }))
+    .filter(x => x.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 30);
+
+  if (!scored.length) {
+    /* "Did you mean?" — pick 3 closest titles by fuzzy token score */
+    const suggestions = Object.values(APP.prods)
+      .map(p => {
+        const s = queryTokens.reduce((acc, qt) => {
+          const best = _tokenise(p.title||'').reduce((m, ct) => Math.min(m, _editDist(ct, qt)), 99);
+          return acc + Math.max(0, 3 - best);
+        }, 0);
+        return { title: p.title||'', s };
+      })
+      .filter(x => x.s > 0)
+      .sort((a, b) => b.s - a.s)
+      .slice(0, 3);
+
+    const suggestHTML = suggestions.length
+      ? `<p style="margin-top:10px;font-size:12px;color:var(--muted)">Did you mean:&nbsp;
+          ${suggestions.map(s => `<button onclick="runSearch('${s.title.replace(/'/g, "\\'")}')"
+            style="background:none;border:1.5px solid var(--green);border-radius:20px;padding:3px 10px;font-size:12px;cursor:pointer;color:var(--green);margin:3px 2px">${escHtml(s.title)}</button>`).join('')}
+         </p>` : '';
+
     el.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--muted)">
       <div style="font-size:44px;margin-bottom:12px;color:var(--green)"><i class="fa-solid fa-magnifying-glass"></i></div>
-      <strong style="color:var(--text);font-size:16px">No results for "${q}"</strong>
-      <p style="margin-top:6px;font-size:13px">Try a different keyword</p>
+      <strong style="color:var(--text);font-size:16px">No results for "${escHtml(q)}"</strong>
+      <p style="margin-top:6px;font-size:13px">Try different keywords</p>
+      ${suggestHTML}
     </div>`;
     return;
   }
-  el.innerHTML = `<div style="padding:8px 0 4px 12px;font-size:11px;color:var(--muted);font-weight:700;letter-spacing:0.5px;text-transform:uppercase">${results.length} result${results.length===1?'':'s'}</div>` +
-    results.map(([id,p]) => {
-      const price = getProdPrice(p);
+
+  el.innerHTML =
+    `<div style="padding:8px 0 4px 12px;font-size:11px;color:var(--muted);font-weight:700;letter-spacing:0.5px;text-transform:uppercase">${scored.length} result${scored.length===1?'':'s'}</div>` +
+    scored.map(({id, p}) => {
+      const price    = getProdPrice(p);
       const priceTxt = price ? SYM[APP.cur]+price.toLocaleString() : '—';
       return `<div class="search-result-row" onclick="addSearchHistory('${q.replace(/'/g,"\\'")}');openProductInline('${id}')">
         ${p.imageUrl
           ? `<img src="${p.imageUrl}" style="width:44px;height:44px;object-fit:contain;border-radius:8px;background:#f5f5f7;flex-shrink:0;padding:3px;border:1px solid var(--border)" alt="">`
           : `<span class="sr-icon"><i class="fa-solid fa-box"></i></span>`}
         <div style="flex:1;min-width:0">
-          <div class="sr-name">${p.title||'—'}</div>
-          ${p.variants?.length ? `<div style="font-size:11px;color:var(--muted);margin-top:1px">${p.variants.map(t=>t.name).join(' · ')}</div>` : ''}
+          <div class="sr-name">${escHtml(p.title||'—')}</div>
+          ${p.variants?.length ? `<div style="font-size:11px;color:var(--muted);margin-top:1px">${p.variants.map(t=>escHtml(t.name)).join(' · ')}</div>` : ''}
         </div>
         <div class="sr-price">${priceTxt}</div>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="color:var(--muted);margin-left:4px;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
       </div>`;
     }).join('');
 }
+
 
 function focusSearch() { navTo('search'); }
 function onSearch() {}
@@ -2903,16 +3053,19 @@ function clearSearch() { clearSearchPage(); }
 /* ═══════════════════════════════════
    CURRENCY
 ═══════════════════════════════════ */
-document.querySelectorAll('.cur-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.cur-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    APP.cur = btn.dataset.cur;
-    sessionStorage.setItem('ia_cur_manual', APP.cur);  /* remember manual pick */
-    renderProds();
-    if (document.getElementById('page-cart').classList.contains('active')) renderCart();
-    if (document.getElementById('page-checkout').classList.contains('active')) renderCheckout();
-  });
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.cur-btn');
+  if (!btn) return;
+  document.querySelectorAll('.cur-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll(`.cur-btn[data-cur="${btn.dataset.cur}"]`).forEach(b => b.classList.add('active'));
+  APP.cur = btn.dataset.cur;
+  sessionStorage.setItem('ia_cur_manual', APP.cur);
+  /* Update label in settings */
+  const lbl = document.getElementById('cur-active-label');
+  if (lbl) lbl.textContent = APP.cur.toUpperCase();
+  renderProds();
+  if (document.getElementById('page-cart').classList.contains('active')) renderCart();
+  if (document.getElementById('page-checkout').classList.contains('active')) renderCheckout();
 });
 
 /* ═══════════════════════════════════
@@ -3125,6 +3278,61 @@ function renderFilteredGrid(feed, allEntries) {
 }
 
 function buildHeroCarousel(heroProduct, allEntries) {
+  /* ── Use admin-configured banners if any are active ── */
+  const adminBanners = Object.values(APP.banners)
+    .filter(b => b.active !== false)
+    .sort((a,b) => (a.order||0) - (b.order||0));
+
+  if (adminBanners.length) {
+    const slides = adminBanners.map(b => {
+      /* Resolve click action */
+      let onclick = '';
+      if (b.actionType === 'product' && b.productId) {
+        onclick = `openProductInline('${b.productId}')`;
+      } else if (b.actionType === 'category' && b.category) {
+        onclick = `filterByName('${b.category.replace(/'/g,"\\'")}')`;
+      } else if (b.actionType === 'new_arrivals') {
+        onclick = `filterByName('new')`;
+      } else if (b.actionType === 'featured') {
+        onclick = `filterByName('featured')`;
+      } else {
+        onclick = `filterCat('all')`;
+      }
+
+      /* Resolve image — explicit > product image > nothing */
+      let imgHTML = '';
+      if (b.imageUrl) {
+        imgHTML = `<img class="hero-prod-img" src="${escHtml(b.imageUrl)}" alt="">`;
+      } else if (b.actionType === 'product' && b.productId && APP.prods[b.productId]?.imageUrl) {
+        imgHTML = `<img class="hero-prod-img" src="${escHtml(APP.prods[b.productId].imageUrl)}" alt="">`;
+      }
+
+      const grad = b.gradient || HERO_GRADIENTS[0];
+      const badge = b.badge || '';
+      const btnLabel = b.btnLabel || 'Shop Now';
+
+      return `<div class="hero-slide" onclick="${onclick}">
+        <div class="hero-slide-bg" style="background:${grad}">
+          <div style="flex:1;z-index:1;position:relative">
+            ${badge ? `<div class="hero-badge">${escHtml(badge)}</div>` : ''}
+            <div class="hero-title">${escHtml(b.title||'')}</div>
+            ${b.subtitle ? `<div class="hero-price" style="font-size:14px;font-weight:500;opacity:.85">${escHtml(b.subtitle)}</div>` : ''}
+            <button class="hero-btn"><i class="fa-solid fa-bag-shopping"></i> ${escHtml(btnLabel)}</button>
+          </div>
+          ${imgHTML}
+        </div></div>`;
+    });
+
+    const dots = slides.map((_,i) => `<button class="hero-dot${i===0?' active':''}" onclick="heroGoTo(${i})"></button>`).join('');
+    return `<div class="hero-carousel" id="hero-carousel">
+      <div class="hero-track" id="hero-track">${slides.join('')}</div>
+      <button class="hero-arrow prev" onclick="heroShift(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+      <button class="hero-arrow next" onclick="heroShift(1)"><i class="fa-solid fa-chevron-right"></i></button>
+      <div class="hero-dots" id="hero-dots">${dots}</div>
+    </div>`;
+  }
+
+  /* ── Fallback: auto-generate from products (original behaviour) ── */
   const slides = [];
   if (heroProduct) {
     const [id, p] = heroProduct;
@@ -3133,7 +3341,7 @@ function buildHeroCarousel(heroProduct, allEntries) {
       <div class="hero-slide-bg" style="background:${HERO_GRADIENTS[0]}">
         <div style="flex:1;z-index:1;position:relative">
           <div class="hero-badge">New Arrival</div>
-          <div class="hero-title">${(p.title||'').split(' ').slice(0,4).join(' ')}</div>
+          <div class="hero-title">${escHtml((p.title||'').split(' ').slice(0,4).join(' '))}</div>
           ${price?`<div class="hero-price">${price}</div>`:''}
           <button class="hero-btn"><i class="fa-solid fa-bag-shopping"></i> Shop Now</button>
         </div>
@@ -3141,9 +3349,9 @@ function buildHeroCarousel(heroProduct, allEntries) {
       </div></div>`);
   }
   const catPromos = [
-    {label:'iPhones',title:'Latest iPhones\nIn Stock',gradient:HERO_GRADIENTS[1],icon:'fa-mobile-screen-button',cat:'iphone'},
-    {label:'MacBooks',title:'MacBook Pro\n& Air',gradient:HERO_GRADIENTS[2],icon:'fa-laptop',cat:'macbook'},
-    {label:'AirPods',title:'True Wireless\nAudio',gradient:HERO_GRADIENTS[3],icon:'fa-headphones',cat:'airpod'},
+    {label:'iPhones',  title:'Latest iPhones\nIn Stock',   gradient:HERO_GRADIENTS[1], icon:'fa-mobile-screen-button', cat:'iphone'},
+    {label:'MacBooks', title:'MacBook Pro\n& Air',          gradient:HERO_GRADIENTS[2], icon:'fa-laptop',               cat:'macbook'},
+    {label:'AirPods',  title:'True Wireless\nAudio',        gradient:HERO_GRADIENTS[3], icon:'fa-headphones',           cat:'airpod'},
   ];
   catPromos.forEach(s => {
     slides.push(`<div class="hero-slide" onclick="filterByName('${s.cat}')">
@@ -3164,6 +3372,7 @@ function buildHeroCarousel(heroProduct, allEntries) {
     <div class="hero-dots" id="hero-dots">${dots}</div>
   </div>`;
 }
+
 
 function buildPromoStrip() {
   const chips = [{icon:'fa-shield-halved',text:'Genuine Products'},{icon:'fa-truck-fast',text:'Fast Shipping'},{icon:'fa-rotate-left',text:'Easy Returns'},{icon:'fa-lock',text:'Secure Payment'},{icon:'fa-headset',text:'24/7 Support'},{icon:'fa-certificate',text:'Warranty Included'}];
@@ -3266,7 +3475,11 @@ function pCardHTML(id, p, idx) {
   const qty = p.stock!=null ? Number(p.stock) : null;
   const oos = qty!==null && qty===0;
   const delay = `animation-delay:${Math.min(idx*0.04,0.4)}s`;
-  return `<div class="p-card" style="${delay}" onclick="openProductInline('${id}')">
+  const wished = getWishlist().includes(id);
+  const _hSVG_out  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
+  const _hSVG_fill = `<svg viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" stroke-width="2" width="18" height="18"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
+  return `<div class="p-card" style="${delay};position:relative" onclick="openProductInline('${id}')">
+    <button class="wish-btn${wished?' wishlisted':''}" id="wbtn-${id}" onclick="event.stopPropagation();toggleWishlist('${id}');syncHeartBtns('${id}')" title="${wished?'Remove from Wishlist':'Add to Wishlist'}">${wished?_hSVG_fill:_hSVG_out}</button>
     ${p.imageUrl?`<img class="p-card-img" src="${p.imageUrl}" alt="${(p.title||'').replace(/"/g,'&quot;')}" loading="lazy">`:'<div class="p-card-img" style="display:flex;align-items:center;justify-content:center;font-size:40px;background:#f5f5f7">📦</div>'}
     <div class="p-card-body">
       <div class="p-card-model">${p.title||'—'}</div>
@@ -3655,7 +3868,7 @@ function renderCheckout() {
           <div class="pay-name">Pay on Delivery</div>
           <div class="pay-sub">Cash payment when you receive your order</div>
         </div>
-        <div class="pay-radio"></div>
+
       </div>
 
       <!-- Apple Pay — Coming Soon -->
@@ -3665,7 +3878,7 @@ function renderCheckout() {
           <div class="pay-name">Apple Pay</div>
           <div class="pay-sub">One-tap checkout</div>
         </div>
-        <span class="pay-badge" style="background:#6B7280;">Soon</span>
+        <span class="pay-badge">Soon</span>
       </div>
 
       <!-- Card — Coming Soon -->
@@ -3681,7 +3894,7 @@ function renderCheckout() {
           <div class="pay-name">Debit / Credit Card</div>
           <div class="pay-sub">Visa, Mastercard, AMEX</div>
         </div>
-        <span class="pay-badge" style="background:#6B7280;">Soon</span>
+        <span class="pay-badge">Soon</span>
       </div>
 
       <!-- Tabby — Coming Soon -->
@@ -3691,7 +3904,7 @@ function renderCheckout() {
           <div class="pay-name">Tabby</div>
           <div class="pay-sub">Split into 4 payments, 0% interest</div>
         </div>
-        <span class="pay-badge" style="background:#6B7280;">Soon</span>
+        <span class="pay-badge">Soon</span>
       </div>
 
       <!-- Tamara — Coming Soon -->
@@ -3701,7 +3914,7 @@ function renderCheckout() {
           <div class="pay-name">Tamara</div>
           <div class="pay-sub">Pay in 6 interest-free instalments</div>
         </div>
-        <span class="pay-badge" style="background:#6B7280;">Soon</span>
+        <span class="pay-badge">Soon</span>
       </div>
     </div>
 
@@ -3860,15 +4073,33 @@ function placeOrder() {
 
   db.ref('orders').push(order)
     .then(ref => {
-      // Decrement product quantities
+      // Decrement product + variant quantities
       const updates = {};
       APP.cart.forEach(item => {
-        const pid = item.productId || item.id.split('__')[0];
+        const pid  = item.productId || item.id.split('__')[0];
         const prod = APP.prods[pid];
-        if (prod && prod.stock != null) {
+        if (!prod) return;
+
+        // Decrement top-level product stock
+        if (prod.stock != null) {
           const newQty = Math.max(0, Number(prod.stock) - item.qty);
           updates[`products/${pid}/stock`] = newQty;
           APP.prods[pid].stock = newQty;
+        }
+
+        // Decrement variant-level stock if a variant was selected
+        if (item.variantLabel && Array.isArray(prod.variants)) {
+          prod.variants.forEach((type, tIdx) => {
+            (type.values || []).forEach((val, vIdx) => {
+              // variantLabel may be "Storage: 512GB / Color: Silver" or just "512GB" etc.
+              // Match if the value label appears anywhere in the variantLabel string
+              if (item.variantLabel.includes(val.label) && val.stock != null) {
+                const newVStock = Math.max(0, Number(val.stock) - item.qty);
+                updates[`products/${pid}/variants/${tIdx}/values/${vIdx}/stock`] = newVStock;
+                APP.prods[pid].variants[tIdx].values[vIdx].stock = newVStock;
+              }
+            });
+          });
         }
       });
       if (Object.keys(updates).length) db.ref().update(updates);
@@ -3972,7 +4203,7 @@ function openOrderDetail(id) {
   APP._currentOrderId = id;
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-order-detail').classList.add('active');
-  document.getElementById('cur-bar').style.display='none';
+  /* cur-bar removed */
   document.getElementById('cat-bar').style.display='none';
   document.querySelectorAll('.bn-item').forEach(b=>b.classList.remove('active'));
   document.getElementById('bn-orders').classList.add('active');
@@ -4280,10 +4511,36 @@ function saveWishlist(list) { localStorage.setItem('ia_wishlist', JSON.stringify
 function toggleWishlist(id) {
   const list = getWishlist();
   const idx  = list.indexOf(id);
-  if (idx === -1) { list.push(id); toast('Added to Wishlist', '🤍'); }
-  else            { list.splice(idx, 1); toast('Removed from Wishlist', '💔'); }
+  if (idx === -1) { list.push(id); toast('Added to Wishlist', '❤️'); }
+  else            { list.splice(idx, 1); toast('Removed from Wishlist', '🤍'); }
   saveWishlist(list);
   updateWishlistCount();
+  syncHeartBtns(id);
+}
+
+function syncHeartBtns(id) {
+  const wished = getWishlist().includes(id);
+  /* Grid card button */
+  const _svgOut  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
+  const _svgFill = `<svg viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" stroke-width="2" width="18" height="18"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
+  const btn = document.getElementById('wbtn-' + id);
+  if (btn) {
+    btn.innerHTML = wished ? _svgFill : _svgOut;
+    btn.title = wished ? 'Remove from Wishlist' : 'Add to Wishlist';
+    btn.classList.toggle('wishlisted', wished);
+  }
+  /* Product overlay header button */
+  const povBtn = document.getElementById('pov-wish-btn');
+  if (povBtn && _POV?.key === id) {
+    povBtn.innerHTML = wished ? _svgFill : _svgOut;
+    povBtn.classList.toggle('wishlisted', wished);
+  }
+}
+
+function povToggleWish() {
+  const id = _POV?.key;
+  if (!id) return;
+  toggleWishlist(id);
 }
 
 function updateWishlistCount() {
@@ -4306,14 +4563,15 @@ function renderWishlist() {
     return;
   }
   el.innerHTML = `<div class="wishlist-grid">${items.map(([id, p]) => {
-    const price = Number(p.price) || 0;
+    const price = getProdPrice(p);
     const priceTxt = price ? SYM[APP.cur] + price.toLocaleString() : '—';
+    const oos = Number(p.stock||0) === 0;
     return `<div class="wish-card">
-      <button class="wish-rm" onclick="toggleWishlist('${id}');renderWishlist()">✕</button>
-      ${p.imageUrl ? `<img src="${p.imageUrl}" style="width:100%;aspect-ratio:1/1;object-fit:contain;background:#f5f5f7;padding:8px;border-radius:8px;margin-bottom:6px" alt="">` : ''}
-      <div class="wish-name">${p.title||'—'}</div>
+      <button class="wish-rm" onclick="toggleWishlist('${id}');renderWishlist()" title="Remove from Wishlist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      ${p.imageUrl ? `<img src="${p.imageUrl}" style="width:100%;aspect-ratio:1/1;object-fit:contain;background:#f5f5f7;padding:8px;border-radius:8px;margin-bottom:6px" alt="" onclick="openProductInline('${id}')">` : ''}
+      <div class="wish-name" onclick="openProductInline('${id}')" style="cursor:pointer">${escHtml(p.title||'—')}</div>
       <div class="wish-price">${priceTxt}</div>
-      <button class="wish-add" onclick="addToCart('${id}');toast('Added to cart','✓')">＋ Add to Cart</button>
+      <button class="wish-add" onclick="addToCart('${id}')" ${oos?'disabled':''}>${oos?'<i class="fa-solid fa-ban"></i> Out of Stock':'＋ Add to Cart'}</button>
     </div>`;
   }).join('')}</div>`;
 }
@@ -4468,6 +4726,11 @@ db.ref('categories').orderByChild('order').on('value', snap => {
   // No-op — cats not used for filtering anymore
 });
 
+db.ref('banners').on('value', snap => {
+  APP.banners = snap.val() || {};
+  if (APP.activeSection === 'home') renderProds();
+});
+
 db.ref('products').on('value', snap => {
   APP.prods = snap.val() || {};
   APP._loaded.prods = true;
@@ -4611,6 +4874,15 @@ function openProductInline(pushKey, opts = {}) {
   _POV._imgTotal = allImgs.length;
 
   document.getElementById('prod-ov-header-title').textContent = p.title || 'Product';
+  /* Sync wishlist heart in header */
+  const _povWishBtn = document.getElementById('pov-wish-btn');
+  if (_povWishBtn) {
+    const _w = getWishlist().includes(pushKey);
+    _povWishBtn.innerHTML = _w
+      ? `<svg viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" stroke-width="2" width="20" height="20"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`
+      : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
+    _povWishBtn.classList.toggle('wishlisted', _w);
+  }
   document.getElementById('prod-ov-content').innerHTML = `
     <div class="prod-ov-img-wrap" id="pov-img-wrap">
       ${carouselHTML}
