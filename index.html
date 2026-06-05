@@ -2870,8 +2870,14 @@ function navTo(pg, opts = {}) {
 
 // Back button / forward
 window.addEventListener('popstate', e => {
+  /* Device back from all-products overlay */
+  if (document.getElementById('all-prods-page')?.classList.contains('visible')) {
+    closeAllProdsPage(true);
+    return;
+  }
   const state = e.state;
   if (!state) { navTo('shop', {_fromPopstate:true}); return; }
+  if (state.page === 'all-prods') { closeAllProdsPage(true); return; }
   if (state.pg === 'product' && state.key) openProductInline(state.key, {_fromPopstate:true});
   else navTo(state.pg || 'shop', {_fromPopstate:true});
 });
@@ -3326,13 +3332,16 @@ function openAllProdsPage(title, entries) {
   document.getElementById('ap-title').textContent = _apTitle;
   _apRender();
   document.getElementById('all-prods-page').classList.add('visible');
-  /* Prevent home-feed from scrolling behind */
   document.getElementById('home-feed').style.overflow = 'hidden';
+  /* Push a history entry so the device back button closes the overlay */
+  history.pushState({ page: 'all-prods', title: _apTitle }, '', '#all-products');
 }
 
-function closeAllProdsPage() {
+function closeAllProdsPage(fromPopstate) {
   document.getElementById('all-prods-page').classList.remove('visible');
   document.getElementById('home-feed').style.overflow = '';
+  /* If closed by our back button (not by browser popstate), go back in history */
+  if (!fromPopstate && location.hash === '#all-products') history.back();
 }
 
 function apSetFilter(btn) {
