@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>404 – Page Not Found | Alfonex</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="./assets/meta/icon/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+/* ── CSS Variables — matches Alfonex theme ── */
+:root {
+  --green:       #2EA056;
+  --green-light: #EAFBF1;
+  --green-dark:  #1d7a40;
+  --green-glow:  rgba(46,160,86,0.25);
+  --text:        #111827;
+  --muted:       #6B7280;
+  --border:      #E5E7EB;
+  --bg:          #F3F4F6;
+  --white:       #ffffff;
+  --font-head:   'Sora', sans-serif;
+  --font-body:   'DM Sans', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: var(--font-body);
+  background: #0a0f0c;
+  color: var(--white);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Canvas behind everything ── */
+#bg-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  display: block;
+}
+
+/* ── Radial green glow at centre ── */
+.glow-orb {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px; height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(46,160,86,0.14) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 1;
+  animation: pulseGlow 4s ease-in-out infinite;
+}
+@keyframes pulseGlow {
+  0%, 100% { transform: translate(-50%,-50%) scale(1); opacity: 1; }
+  50%       { transform: translate(-50%,-50%) scale(1.15); opacity: 0.7; }
+}
+
+/* ── Fine grid overlay ── */
+.grid-overlay {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(46,160,86,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(46,160,86,.04) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+}
+
+/* ── Main content ── */
+.content {
+  position: relative; z-index: 10;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  height: 100vh;
+  padding: 24px;
+  text-align: center;
+  gap: 0;
+}
+
+/* ── Logo ── */
+.logo-wrap {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 36px;
+  opacity: 0; animation: fadeUp .6s .1s ease forwards;
+}
+.logo-mark {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: var(--green);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-head); font-weight: 900;
+  font-size: 18px; color: #fff;
+  box-shadow: 0 0 20px var(--green-glow);
+}
+.logo-name {
+  font-family: var(--font-head); font-weight: 800;
+  font-size: 18px; letter-spacing: -.3px; color: #fff;
+}
+.logo-name span { color: var(--green); }
+
+/* ── 404 number ── */
+.error-num {
+  font-family: var(--font-head);
+  font-size: clamp(100px, 22vw, 180px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -6px;
+  background: linear-gradient(135deg, #fff 30%, var(--green) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 40px rgba(46,160,86,0.35));
+  opacity: 0;
+  animation: fadeUp .7s .2s ease forwards, shimmer 4s 1s ease-in-out infinite;
+  margin-bottom: 4px;
+  position: relative;
+}
+/* Reflection below 404 */
+.error-num::after {
+  content: '404';
+  position: absolute;
+  left: 0; right: 0;
+  bottom: -20px;
+  background: linear-gradient(135deg, rgba(255,255,255,.12) 30%, rgba(46,160,86,.12) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  transform: scaleY(-1);
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, transparent 80%);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, transparent 80%);
+  pointer-events: none;
+}
+
+@keyframes shimmer {
+  0%, 100% { filter: drop-shadow(0 0 40px rgba(46,160,86,0.35)); }
+  50%       { filter: drop-shadow(0 0 60px rgba(46,160,86,0.55)); }
+}
+
+/* ── Label tag ── */
+.error-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(46,160,86,.12);
+  border: 1px solid rgba(46,160,86,.3);
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 11px; font-weight: 700; letter-spacing: .8px;
+  text-transform: uppercase; color: var(--green);
+  margin-bottom: 18px;
+  opacity: 0; animation: fadeUp .6s .35s ease forwards;
+}
+.error-tag::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); animation: blink 1.4s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+/* ── Heading & sub ── */
+.error-title {
+  font-family: var(--font-head);
+  font-size: clamp(20px, 5vw, 28px);
+  font-weight: 800; letter-spacing: -.4px;
+  color: #fff; margin-bottom: 10px;
+  opacity: 0; animation: fadeUp .6s .45s ease forwards;
+}
+.error-sub {
+  font-size: 14px; color: rgba(255,255,255,.5);
+  max-width: 300px; line-height: 1.6;
+  margin-bottom: 36px;
+  opacity: 0; animation: fadeUp .6s .55s ease forwards;
+}
+
+/* ── Action buttons ── */
+.btn-row {
+  display: flex; gap: 12px; flex-wrap: wrap;
+  justify-content: center;
+  opacity: 0; animation: fadeUp .6s .65s ease forwards;
+}
+
+.btn-home {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--green);
+  color: #fff;
+  border: none; border-radius: 50px;
+  padding: 13px 28px;
+  font-family: var(--font-head); font-size: 14px; font-weight: 700;
+  cursor: pointer; text-decoration: none;
+  box-shadow: 0 4px 20px rgba(46,160,86,.4), 0 0 0 0 rgba(46,160,86,.3);
+  transition: transform .18s, box-shadow .18s;
+  position: relative; overflow: hidden;
+}
+.btn-home::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,.15) 50%, transparent 70%);
+  transform: translateX(-100%);
+  transition: transform .4s;
+}
+.btn-home:hover::after { transform: translateX(100%); }
+.btn-home:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(46,160,86,.5), 0 0 0 4px rgba(46,160,86,.15); }
+.btn-home:active { transform: scale(.97); }
+
+.btn-back {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.8);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 50px;
+  padding: 13px 24px;
+  font-family: var(--font-head); font-size: 14px; font-weight: 600;
+  cursor: pointer; text-decoration: none;
+  backdrop-filter: blur(8px);
+  transition: background .18s, transform .18s, border-color .18s;
+}
+.btn-back:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.22); transform: translateY(-2px); }
+.btn-back:active { transform: scale(.97); }
+
+/* ── Quick links ── */
+.quick-links {
+  display: flex; gap: 20px; margin-top: 36px;
+  opacity: 0; animation: fadeUp .6s .78s ease forwards;
+}
+.quick-link {
+  font-size: 12px; font-weight: 600;
+  color: rgba(255,255,255,.35);
+  text-decoration: none;
+  transition: color .15s;
+  cursor: pointer;
+  border: none; background: none;
+  font-family: var(--font-body);
+}
+.quick-link:hover { color: var(--green); }
+
+/* ── Bottom url bar ── */
+.path-bar {
+  position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.08);
+  backdrop-filter: blur(12px);
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-size: 11px; color: rgba(255,255,255,.3);
+  font-family: 'Courier New', monospace;
+  z-index: 10;
+  white-space: nowrap; max-width: calc(100vw - 32px);
+  overflow: hidden; text-overflow: ellipsis;
+  opacity: 0; animation: fadeUp .5s .9s ease forwards;
+}
+.path-bar .path-err { color: rgba(229,57,53,.7); }
+.path-bar .path-ok  { color: rgba(46,160,86,.7); }
+
+/* ── Floating particles (CSS only) ── */
+.particle {
+  position: fixed; border-radius: 50%; pointer-events: none; z-index: 2;
+  background: var(--green); opacity: 0;
+  animation: floatUp var(--dur, 6s) var(--delay, 0s) ease-in-out infinite;
+}
+@keyframes floatUp {
+  0%   { transform: translateY(0) scale(1); opacity: 0; }
+  10%  { opacity: var(--op, 0.35); }
+  90%  { opacity: var(--op, 0.35); }
+  100% { transform: translateY(-120px) scale(0.4); opacity: 0; }
+}
+
+/* ── Keyframe ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Mobile adjustments ── */
+@media (max-width: 480px) {
+  .error-num { letter-spacing: -4px; }
+  .btn-row { flex-direction: column; align-items: center; }
+  .btn-home, .btn-back { width: 100%; max-width: 280px; justify-content: center; }
+  .quick-links { gap: 16px; }
+  .path-bar { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- 3D canvas -->
+<canvas id="bg-canvas"></canvas>
+<div class="glow-orb"></div>
+<div class="grid-overlay"></div>
+
+<!-- Floating particles -->
+<script>
+(function() {
+  const configs = [
+    { size:4,  left:'12%',  bottom:'20%', dur:'7s',  delay:'0s',   op:.3 },
+    { size:3,  left:'25%',  bottom:'15%', dur:'9s',  delay:'1.2s', op:.2 },
+    { size:5,  left:'40%',  bottom:'10%', dur:'6s',  delay:'2.4s', op:.35},
+    { size:2,  left:'60%',  bottom:'18%', dur:'8s',  delay:'.6s',  op:.2 },
+    { size:4,  left:'72%',  bottom:'12%', dur:'10s', delay:'3s',   op:.25},
+    { size:3,  left:'85%',  bottom:'22%', dur:'7.5s',delay:'1.8s', op:.3 },
+    { size:2,  left:'5%',   bottom:'35%', dur:'11s', delay:'4s',   op:.15},
+    { size:5,  left:'90%',  bottom:'30%', dur:'8s',  delay:'2s',   op:.2 },
+  ];
+  configs.forEach(c => {
+    const el = document.createElement('div');
+    el.className = 'particle';
+    el.style.cssText = `width:${c.size}px;height:${c.size}px;left:${c.left};bottom:${c.bottom};--dur:${c.dur};--delay:${c.delay};--op:${c.op}`;
+    document.body.appendChild(el);
+  });
+})();
+</script>
+
+<!-- Main content -->
+<main class="content">
+
+  <div class="logo-wrap">
+    <div class="logo-mark">A</div>
+    <div class="logo-name"><span>i</span>Alfonex</div>
+  </div>
+
+  <div class="error-tag">Page Not Found</div>
+  <div class="error-num">404</div>
+
+  <h1 class="error-title">Oops! Wrong turn.</h1>
+  <p class="error-sub">The page you're looking for doesn't exist, was moved, or you may have mistyped the URL.</p>
+
+  <div class="btn-row">
+    <a href="/" class="btn-home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Back to Home
+    </a>
+    <button class="btn-back" onclick="history.length > 1 ? history.back() : location.href='/'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15"><polyline points="15 18 9 12 15 6"/></svg>
+      Go Back
+    </button>
+  </div>
+
+  <div class="quick-links">
+    <a class="quick-link" href="/#shop">Shop</a>
+    <a class="quick-link" href="/#orders">Orders</a>
+    <a class="quick-link" href="/#account">Account</a>
+    <a class="quick-link" href="/#cart">Cart</a>
+  </div>
+
+</main>
+
+<!-- Path bar at bottom -->
+<div class="path-bar">
+  <span class="path-err">404</span>
+  &nbsp;·&nbsp;
+  <span id="path-display"></span>
+  &nbsp;→&nbsp;
+  <span class="path-ok">ialfonex.com</span>
+</div>
+
+<!-- ── Three.js 3D Scene ── -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ════════════════════════════════════════
+   3D Scene — floating Apple-esque rounded
+   rectangles + orbiting ring + particle field
+   All in Alfonex green palette
+════════════════════════════════════════ */
+(function() {
+  const canvas = document.getElementById('bg-canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x000000, 0);
+
+  const scene  = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200);
+  camera.position.set(0, 0, 14);
+
+  /* ── Lighting ── */
+  scene.add(new THREE.AmbientLight(0xffffff, 0.3));
+
+  const greenLight = new THREE.PointLight(0x2EA056, 3, 30);
+  greenLight.position.set(0, 0, 8);
+  scene.add(greenLight);
+
+  const rimLight = new THREE.DirectionalLight(0x7fffb0, 0.8);
+  rimLight.position.set(-5, 8, 3);
+  scene.add(rimLight);
+
+  const backLight = new THREE.DirectionalLight(0x1d7a40, 0.5);
+  backLight.position.set(5, -5, -5);
+  scene.add(backLight);
+
+  /* ── Materials ── */
+  const matGlass = new THREE.MeshPhongMaterial({
+    color: 0x2EA056, transparent: true, opacity: 0.08,
+    shininess: 200, specular: 0x7fff9f,
+    side: THREE.DoubleSide, wireframe: false
+  });
+  const matEdge = new THREE.MeshPhongMaterial({
+    color: 0x2EA056, transparent: true, opacity: 0.45,
+    shininess: 300, specular: 0xffffff,
+    emissive: 0x0a3318, emissiveIntensity: 0.3
+  });
+  const matRing = new THREE.MeshPhongMaterial({
+    color: 0x2EA056, transparent: true, opacity: 0.18,
+    shininess: 400, specular: 0xffffff, wireframe: false
+  });
+  const matDot = new THREE.MeshBasicMaterial({ color: 0x2EA056, transparent: true, opacity: 0.5 });
+  const matLine = new THREE.LineBasicMaterial({ color: 0x2EA056, transparent: true, opacity: 0.15 });
+
+  /* ── Helper: rounded box (simulated via BoxGeometry) ── */
+  function makeCard(w, h, d, rx) {
+    const geo = new THREE.BoxGeometry(w, h, d, 2, 2, 2);
+    return geo;
+  }
+
+  /* ── Floating cards ── */
+  const cards = [];
+  const cardDefs = [
+    { w:2.2, h:3.2, d:0.12, x:-4.5, y: 1.5, z:-3, rx:.4, ry:.3, rz:.1 },
+    { w:2.8, h:1.8, d:0.12, x: 4.2, y:-1.2, z:-2, rx:.2, ry:-.5, rz:-.15 },
+    { w:1.6, h:2.4, d:0.12, x:-2.8, y:-2.8, z:-4, rx:-.3, ry:.6, rz:.2 },
+    { w:3,   h:1.4, d:0.12, x: 3.0, y: 2.6, z:-5, rx:.5, ry:-.3, rz:.05 },
+    { w:1.4, h:1.4, d:0.12, x:-5.5, y:-1.0, z:-6, rx:-.2, ry:.7, rz:.3 },
+    { w:2.0, h:2.8, d:0.12, x: 5.8, y: 0.5, z:-4, rx:.35, ry:-.4, rz:-.1 },
+  ];
+
+  cardDefs.forEach(def => {
+    const geo  = makeCard(def.w, def.h, def.d);
+    const face = new THREE.Mesh(geo, matGlass.clone());
+    const edge = new THREE.Mesh(geo, matEdge.clone());
+    edge.scale.set(1.01, 1.01, 1.01);
+
+    const group = new THREE.Group();
+    group.add(face);
+    group.add(edge);
+    group.position.set(def.x, def.y, def.z);
+    group.rotation.set(def.rx, def.ry, def.rz);
+    group.userData = { ox: def.rx, oy: def.ry, oz: def.rz, phase: Math.random() * Math.PI * 2, speed: .3 + Math.random() * .2 };
+    scene.add(group);
+    cards.push(group);
+  });
+
+  /* ── Central orbiting ring ── */
+  const ringGeo = new THREE.TorusGeometry(4, 0.04, 8, 120);
+  const ring1   = new THREE.Mesh(ringGeo, matRing.clone());
+  ring1.rotation.x = Math.PI / 2.8;
+  scene.add(ring1);
+
+  const ring2Geo = new THREE.TorusGeometry(5.5, 0.025, 8, 160);
+  const ring2    = new THREE.Mesh(ring2Geo, matRing.clone());
+  ring2.rotation.x = Math.PI / 3.5;
+  ring2.rotation.z = Math.PI / 6;
+  scene.add(ring2);
+
+  /* ── Star field (small dots) ── */
+  const starGeo  = new THREE.BufferGeometry();
+  const starCount = 180;
+  const starPos  = new Float32Array(starCount * 3);
+  for (let i = 0; i < starCount; i++) {
+    starPos[i*3]   = (Math.random() - .5) * 60;
+    starPos[i*3+1] = (Math.random() - .5) * 40;
+    starPos[i*3+2] = (Math.random() - .5) * 30 - 8;
+  }
+  starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+  const starMat = new THREE.PointsMaterial({ color: 0x2EA056, size: .06, transparent: true, opacity: .55 });
+  scene.add(new THREE.Points(starGeo, starMat));
+
+  /* ── Orbiting small spheres on ring1 ── */
+  const orbiters = [];
+  for (let i = 0; i < 5; i++) {
+    const angle  = (i / 5) * Math.PI * 2;
+    const sphere = new THREE.Mesh(
+      new THREE.SphereGeometry(0.08, 10, 10),
+      new THREE.MeshPhongMaterial({ color: 0x2EA056, emissive: 0x1d7a40, emissiveIntensity: 0.8, transparent: true, opacity: 0.9 })
+    );
+    sphere.userData = { angle, radius: 4, speed: 0.4 + i * 0.05 };
+    scene.add(sphere);
+    orbiters.push(sphere);
+  }
+
+  /* ── Mouse parallax ── */
+  let mx = 0, my = 0;
+  document.addEventListener('mousemove', e => {
+    mx = (e.clientX / window.innerWidth  - .5) * 2;
+    my = (e.clientY / window.innerHeight - .5) * 2;
+  });
+  document.addEventListener('touchmove', e => {
+    mx = (e.touches[0].clientX / window.innerWidth  - .5) * 2;
+    my = (e.touches[0].clientY / window.innerHeight - .5) * 2;
+  }, { passive: true });
+
+  /* ── Resize ── */
+  window.addEventListener('resize', () => {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+  });
+
+  /* ── Animation loop ── */
+  let t = 0;
+  function animate() {
+    requestAnimationFrame(animate);
+    t += 0.012;
+
+    /* Camera gentle drift + mouse parallax */
+    camera.position.x += (mx * 1.2 - camera.position.x) * 0.04;
+    camera.position.y += (-my * .8 - camera.position.y) * 0.04;
+    camera.lookAt(0, 0, 0);
+
+    /* Green light pulse */
+    greenLight.intensity = 2.5 + Math.sin(t * 1.5) * 0.8;
+
+    /* Floating cards */
+    cards.forEach(c => {
+      const ph = c.userData.phase;
+      const sp = c.userData.speed;
+      c.position.y += Math.sin(t * sp + ph) * 0.004;
+      c.rotation.x  = c.userData.ox + Math.sin(t * sp * .7 + ph) * 0.06;
+      c.rotation.y  = c.userData.oy + Math.cos(t * sp * .5 + ph) * 0.08;
+    });
+
+    /* Rings rotation */
+    ring1.rotation.z += 0.003;
+    ring2.rotation.z -= 0.002;
+    ring2.rotation.y += 0.001;
+
+    /* Orbiting spheres */
+    orbiters.forEach(o => {
+      o.userData.angle += o.userData.speed * 0.012;
+      const a = o.userData.angle;
+      const r = o.userData.radius;
+      const tiltX = ring1.rotation.x;
+      o.position.x = Math.cos(a) * r;
+      o.position.y = Math.sin(a) * r * Math.cos(tiltX);
+      o.position.z = Math.sin(a) * r * Math.sin(tiltX) - 0.5;
+    });
+
+    renderer.render(scene, camera);
+  }
+
+  animate();
+})();
+
+/* ── Path display ── */
+(function() {
+  const el = document.getElementById('path-display');
+  if (el) el.textContent = location.pathname + location.search;
+})();
+</script>
+
+</body>
+</html>
