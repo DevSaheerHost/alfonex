@@ -586,6 +586,57 @@ a { text-decoration: none; color: inherit; }
 .banner-card > *:not(.banner-card-img):not(.banner-card-overlay) { position: relative; z-index: 2; }
 
 /* ────────────────────────────────────
+   ALL PRODUCTS FULL PAGE (banner → browse all)
+──────────────────────────────────── */
+#all-prods-page {
+  display: none; flex-direction: column;
+  position: absolute; inset: 0; z-index: 20;
+  background: var(--bg); overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+#all-prods-page.visible { display: flex; }
+.ap-header {
+  position: sticky; top: 0; z-index: 5;
+  background: var(--white); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px;
+  box-shadow: 0 1px 6px rgba(0,0,0,.06);
+}
+.ap-back {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: none; background: var(--surface2);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0; transition: background .15s;
+}
+.ap-back:hover { background: var(--border); }
+.ap-title { flex: 1; font-family: var(--font-head); font-size: 16px; font-weight: 800; color: var(--text); }
+.ap-count { font-size: 11px; color: var(--muted); font-weight: 600; margin-top: 1px; }
+.ap-filter-bar {
+  display: flex; gap: 8px; padding: 10px 14px;
+  overflow-x: auto; scrollbar-width: none; flex-shrink: 0;
+  background: var(--white); border-bottom: 1px solid var(--border);
+}
+.ap-filter-bar::-webkit-scrollbar { display: none; }
+.ap-filter-chip {
+  padding: 5px 14px; border-radius: 20px; white-space: nowrap;
+  border: 1.5px solid var(--border); background: var(--white);
+  font-size: 11px; font-weight: 700; cursor: pointer; flex-shrink: 0;
+  color: var(--muted); transition: all .13s;
+}
+.ap-filter-chip.active { background: var(--green); border-color: var(--green); color: #fff; }
+.ap-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 10px; padding: 12px; flex: 1;
+}
+.ap-load-more {
+  margin: 4px 14px 24px; padding: 13px;
+  background: var(--surface2); border: 1.5px solid var(--border);
+  border-radius: var(--radius); font-weight: 700; font-size: 13px;
+  cursor: pointer; color: var(--text); transition: background .15s; width: calc(100% - 28px);
+}
+.ap-load-more:hover { background: var(--border); }
+
+/* ────────────────────────────────────
    MAIN PRODUCT GRID (all products)
 ──────────────────────────────────── */
 #product-grid {
@@ -1830,7 +1881,31 @@ a { text-decoration: none; color: inherit; }
 <!-- cur-bar removed — currency picker moved to Account > Settings -->
 
 <!-- ════════════ SHOP PAGE ════════════ -->
-<div class="page active" id="page-shop">
+<div class="page active" id="page-shop" style="position:relative">
+
+  <!-- ── ALL PRODUCTS FULL PAGE (shown when banner action = browse all / category) ── -->
+  <div id="all-prods-page">
+    <div class="ap-header">
+      <button class="ap-back" onclick="closeAllProdsPage()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div>
+        <div class="ap-title" id="ap-title">All Products</div>
+        <div class="ap-count" id="ap-count"></div>
+      </div>
+    </div>
+    <div class="ap-filter-bar">
+      <button class="ap-filter-chip active" data-f="all"        onclick="apSetFilter(this)">All</button>
+      <button class="ap-filter-chip"        data-f="newest"     onclick="apSetFilter(this)">🆕 Newest</button>
+      <button class="ap-filter-chip"        data-f="price-asc"  onclick="apSetFilter(this)">Price ↑</button>
+      <button class="ap-filter-chip"        data-f="price-desc" onclick="apSetFilter(this)">Price ↓</button>
+      <button class="ap-filter-chip"        data-f="instock"    onclick="apSetFilter(this)">In Stock</button>
+    </div>
+    <div class="ap-grid" id="ap-grid"></div>
+    <button class="ap-load-more" id="ap-load-more" style="display:none" onclick="apLoadMore()">
+      <i class="fa-solid fa-chevron-down"></i> Load more
+    </button>
+  </div>
 
   <!-- ── Category filter bar (sticky, shown by navTo) ── -->
   <div id="cat-bar"></div>
@@ -2765,6 +2840,8 @@ function navTo(pg, opts = {}) {
   if (!pageEl) return;
   pageEl.classList.add('active');
   APP.activeSection = pg;
+  /* Close all-products overlay if navigating away from shop */
+  if (pg !== 'shop') closeAllProdsPage();
   const isShop = pg === 'shop';
   /* cur-bar removed */
   document.getElementById('cat-bar').style.display = isShop ? 'flex' : 'none';
@@ -3226,6 +3303,82 @@ const HERO_GRADIENTS = [
   'linear-gradient(135deg,#373b44,#4286f4)',
 ];
 
+/* ═══════════════════════════════════════════════
+   ALL PRODUCTS PAGE
+   Shown when a banner action = "browse all" or any category.
+   Slides in over the home feed — no page navigation needed.
+═══════════════════════════════════════════════ */
+const AP_PAGE_SIZE = 20;
+let _apPage = 1;
+let _apFilter = 'all';
+let _apEntries = [];   /* current filtered+sorted list */
+let _apTitle = 'All Products';
+
+function openAllProdsPage(title, entries) {
+  _apTitle   = title || 'All Products';
+  _apPage    = 1;
+  _apFilter  = 'all';
+  _apEntries = entries || Object.entries(APP.prods).filter(([,p]) => !p.isHidden);
+
+  /* Reset filter chips */
+  document.querySelectorAll('.ap-filter-chip').forEach(c => c.classList.toggle('active', c.dataset.f === 'all'));
+
+  document.getElementById('ap-title').textContent = _apTitle;
+  _apRender();
+  document.getElementById('all-prods-page').classList.add('visible');
+  /* Prevent home-feed from scrolling behind */
+  document.getElementById('home-feed').style.overflow = 'hidden';
+}
+
+function closeAllProdsPage() {
+  document.getElementById('all-prods-page').classList.remove('visible');
+  document.getElementById('home-feed').style.overflow = '';
+}
+
+function apSetFilter(btn) {
+  document.querySelectorAll('.ap-filter-chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  _apFilter = btn.dataset.f;
+  _apPage   = 1;
+  _apRender();
+}
+
+function apLoadMore() {
+  _apPage++;
+  _apRenderPage(true);
+}
+
+function _apRender() {
+  _apRenderPage(false);
+}
+
+function _apRenderPage(append) {
+  const sorted  = applySortFilter(_apEntries, _apFilter);
+  const total   = sorted.length;
+  const start   = (_apPage - 1) * AP_PAGE_SIZE;
+  const slice   = sorted.slice(0, start + AP_PAGE_SIZE);
+  const hasMore = total > start + AP_PAGE_SIZE;
+
+  document.getElementById('ap-count').textContent = total + ' product' + (total === 1 ? '' : 's');
+
+  const grid = document.getElementById('ap-grid');
+  if (!append) {
+    grid.innerHTML = slice.map(([id, p], i) => pCardHTML(id, p, i)).join('');
+    grid.scrollIntoView && grid.scrollIntoView({ block: 'start', behavior: 'instant' });
+    /* Scroll the all-prods-page itself to top */
+    document.getElementById('all-prods-page').scrollTop = 0;
+  } else {
+    const prev = (_apPage - 1) * AP_PAGE_SIZE;
+    grid.insertAdjacentHTML('beforeend',
+      sorted.slice(prev, prev + AP_PAGE_SIZE).map(([id, p], i) => pCardHTML(id, p, prev + i)).join('')
+    );
+  }
+
+  const btn = document.getElementById('ap-load-more');
+  btn.style.display = hasMore ? 'block' : 'none';
+  if (hasMore) btn.innerHTML = `<i class="fa-solid fa-chevron-down"></i> Load more (${total - start - AP_PAGE_SIZE} more)`;
+}
+
 function renderProds() { renderHome(); }
 
 function renderHome() {
@@ -3311,13 +3464,14 @@ function buildHeroCarousel(heroProduct, allEntries) {
       if (b.actionType === 'product' && b.productId) {
         onclick = `openProductInline('${b.productId}')`;
       } else if (b.actionType === 'category' && b.category) {
-        onclick = `filterByName('${b.category.replace(/'/g,"\\'")}')`;
+        onclick = `openAllProdsPage('${b.category.charAt(0).toUpperCase()+b.category.slice(1)}', Object.entries(APP.prods).filter(([,p])=>matchesCat(p,'${b.category.replace(/'/g,"\\'")}')))`;
       } else if (b.actionType === 'new_arrivals') {
-        onclick = `filterByName('new')`;
+        onclick = `openAllProdsPage('New Arrivals', Object.entries(APP.prods).filter(([,p])=>p.isNewArrival&&!p.isHidden))`;
       } else if (b.actionType === 'featured') {
-        onclick = `filterByName('featured')`;
+        onclick = `openAllProdsPage('Featured Products', Object.entries(APP.prods).filter(([,p])=>p.isFeatured&&!p.isHidden))`;
       } else {
-        onclick = `filterCat('all')`;
+        /* Browse all — open full product list page */
+        onclick = `openAllProdsPage('All Products')`;
       }
 
       /* Resolve image — explicit > product image > nothing */
