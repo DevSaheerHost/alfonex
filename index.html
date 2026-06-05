@@ -3500,7 +3500,7 @@ function pCardHTML(id, p, idx) {
   const forcedOOS = p.isOOS || p.isComingSoon;
   const oos      = forcedOOS || (qty !== null && qty === 0);
   const delay    = `animation-delay:${Math.min(idx*0.04,0.4)}s`;
-  const wished   = getWishlist().includes(id);
+  const wished   = isWishlisted(id);
 
   const _hSVG_out  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
   const _hSVG_fill = `<svg viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" stroke-width="2" width="18" height="18"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
@@ -4554,22 +4554,51 @@ function runOrderTracker(orderId, status) {
 ═══════════════════════════════════ */
 
 function doLogout() { auth.signOut().then(() => { toast('Logged out','👋'); navTo('shop'); }); }
-function getWishlist() { return JSON.parse(localStorage.getItem('ia_wishlist') || '[]'); }
+/* ═══════════════════════════════════════════════
+   WISHLIST — stores objects {id, selections, variantLabel, savedPrice}
+   Backward-compat: old entries were plain strings (just id)
+═══════════════════════════════════════════════ */
+
+/* Normalise stored list — always returns array of {id, selections, variantLabel} */
+function getWishlist() {
+  const raw = JSON.parse(localStorage.getItem('ia_wishlist') || '[]');
+  return raw.map(e => typeof e === 'string' ? { id: e, selections: {}, variantLabel: '' } : e);
+}
 function saveWishlist(list) { localStorage.setItem('ia_wishlist', JSON.stringify(list)); }
 
+/* Check if a product (with optional specific selections) is wishlisted */
+function isWishlisted(id) {
+  return getWishlist().some(e => e.id === id);
+}
+
+/* Toggle wishlist — captures current POV selections if on product page */
 function toggleWishlist(id) {
   const list = getWishlist();
-  const idx  = list.indexOf(id);
-  if (idx === -1) { list.push(id); toast('Added to Wishlist', '❤️'); }
-  else            { list.splice(idx, 1); toast('Removed from Wishlist', '🤍'); }
+  const idx  = list.findIndex(e => e.id === id);
+  if (idx === -1) {
+    /* Capture variant selections from POV if this product is open */
+    const selections   = (_POV?.key === id && _POV?.selections) ? { ..._POV.selections } : {};
+    const variantLabel = (_POV?.key === id) ? buildVariantLabel(selections) : '';
+    const savedPrice   = (_POV?.key === id && _POV?._effectivePrice) ? _POV._effectivePrice : null;
+    list.push({ id, selections, variantLabel, savedPrice });
+    toast('Added to Wishlist', '❤️');
+  } else {
+    list.splice(idx, 1);
+    toast('Removed from Wishlist', '🤍');
+  }
   saveWishlist(list);
   updateWishlistCount();
   syncHeartBtns(id);
 }
 
+/* Build a human-readable label from selections object e.g. "Silver / 512GB" */
+function buildVariantLabel(selections) {
+  if (!selections || !Object.keys(selections).length) return '';
+  return Object.values(selections).filter(Boolean).join(' / ');
+}
+
 function syncHeartBtns(id) {
-  const wished = getWishlist().includes(id);
-  /* Grid card button */
+  const wished = isWishlisted(id);
   const _svgOut  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
   const _svgFill = `<svg viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" stroke-width="2" width="18" height="18"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
   const btn = document.getElementById('wbtn-' + id);
@@ -4578,7 +4607,6 @@ function syncHeartBtns(id) {
     btn.title = wished ? 'Remove from Wishlist' : 'Add to Wishlist';
     btn.classList.toggle('wishlisted', wished);
   }
-  /* Product overlay header button */
   const povBtn = document.getElementById('pov-wish-btn');
   if (povBtn && _POV?.key === id) {
     povBtn.innerHTML = wished ? _svgFill : _svgOut;
@@ -4593,15 +4621,16 @@ function povToggleWish() {
 }
 
 function updateWishlistCount() {
-  const n   = getWishlist().length;
-  const el  = document.getElementById('wishlist-count-tile');
+  const n  = getWishlist().length;
+  const el = document.getElementById('wishlist-count-tile');
   if (el) el.textContent = n ? n + ' saved items' : '0 saved items';
 }
 
 function renderWishlist() {
   const el   = document.getElementById('wishlist-body');
   const list = getWishlist();
-  const items = list.map(id => [id, APP.prods[id]]).filter(([,p]) => p);
+  const items = list.map(e => ({ ...e, p: APP.prods[e.id] })).filter(e => e.p);
+
   if (!items.length) {
     el.innerHTML = `<div class="sub-empty">
       <div class="e-icon"><i class="fa-regular fa-heart"></i></div>
@@ -4611,18 +4640,77 @@ function renderWishlist() {
     </div>`;
     return;
   }
-  el.innerHTML = `<div class="wishlist-grid">${items.map(([id, p]) => {
-    const price = getProdPrice(p);
-    const priceTxt = price ? SYM[APP.cur] + price.toLocaleString() : '—';
-    const oos = Number(p.stock||0) === 0;
+
+  /* Store selections in a safe lookup map — avoids JSON-in-onclick attribute issues */
+  window._wishSelMap = {};
+  items.forEach(({ id, selections }) => { window._wishSelMap[id] = selections || {}; });
+
+  el.innerHTML = `<div class="wishlist-grid">${items.map(({ id, p, variantLabel, savedPrice }) => {
+    const price    = savedPrice || getProdPrice(p);
+    const priceTxt = price ? SYM[APP.cur] + Number(price).toLocaleString() : '—';
+    const oos      = p.isOOS || p.isComingSoon || Number(p.stock||0) === 0;
+
+    const varChips = variantLabel
+      ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin:4px 0">
+          ${variantLabel.split(' / ').map(v =>
+            `<span style="font-size:9px;font-weight:700;background:var(--surface2);border:1px solid var(--border);padding:2px 7px;border-radius:20px;color:var(--text)">${escHtml(v)}</span>`
+          ).join('')}
+         </div>`
+      : '';
+
     return `<div class="wish-card">
-      <button class="wish-rm" onclick="toggleWishlist('${id}');renderWishlist()" title="Remove from Wishlist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-      ${p.imageUrl ? `<img src="${p.imageUrl}" style="width:100%;aspect-ratio:1/1;object-fit:contain;background:#f5f5f7;padding:8px;border-radius:8px;margin-bottom:6px" alt="" onclick="openProductInline('${id}')">` : ''}
-      <div class="wish-name" onclick="openProductInline('${id}')" style="cursor:pointer">${escHtml(p.title||'—')}</div>
+      <button class="wish-rm" onclick="removeFromWishlist('${id}');renderWishlist()" title="Remove from Wishlist">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      ${p.imageUrl ? `<img src="${p.imageUrl}" style="width:100%;aspect-ratio:1/1;object-fit:contain;background:#f5f5f7;padding:8px;border-radius:8px;margin-bottom:6px;cursor:pointer" alt="" onclick="wishOpen('${id}')">` : ''}
+      <div class="wish-name" onclick="wishOpen('${id}')" style="cursor:pointer">${escHtml(p.title||'—')}</div>
+      ${varChips}
       <div class="wish-price">${priceTxt}</div>
-      <button class="wish-add" onclick="addToCart('${id}')" ${oos?'disabled':''}>${oos?'<i class="fa-solid fa-ban"></i> Out of Stock':'＋ Add to Cart'}</button>
+      <button class="wish-add" onclick="wishAddToCart('${id}')" ${oos?'disabled':''}>${oos?'<i class="fa-solid fa-ban"></i> Out of Stock':'＋ Add to Cart'}</button>
     </div>`;
   }).join('')}</div>`;
+}
+
+/* Remove by product id */
+function removeFromWishlist(id) {
+  const list = getWishlist().filter(e => e.id !== id);
+  saveWishlist(list);
+  updateWishlistCount();
+  syncHeartBtns(id);
+}
+
+/* Safe open — reads selections from _wishSelMap (set in renderWishlist) */
+function wishOpen(id) {
+  const selections = (window._wishSelMap || {})[id] || {};
+  openProductInline(id);
+  if (!Object.keys(selections).length) return;
+  setTimeout(() => {
+    Object.entries(selections).forEach(([typeName, label]) => {
+      const chip = [...document.querySelectorAll('.pov-chip')]
+        .find(c => c.dataset.type === typeName && c.dataset.label === label);
+      if (chip && !chip.disabled) chip.click();
+    });
+  }, 150);
+}
+
+/* Safe add to cart — reads selections from _wishSelMap */
+function wishAddToCart(id) {
+  const p = APP.prods[id];
+  if (!p) return;
+  const selections   = (window._wishSelMap || {})[id] || {};
+  const variantLabel = buildVariantLabel(selections);
+  let effectivePrice = getProdPrice(p);
+  if (p.variants && Object.keys(selections).length) {
+    const _usdBase  = Number(p.price) || 1;
+    const _curBase  = getProdPrice(p);
+    const _curRatio = _usdBase > 0 ? _curBase / _usdBase : 1;
+    p.variants.forEach(type => {
+      const val = (type.values||[]).find(v => v.label === selections[type.name]);
+      if (val?.price != null) effectivePrice = Math.round(Number(val.price) * _curRatio);
+    });
+  }
+  addToCart(id, p, { ...selections, price: effectivePrice, variantLabel });
+  toast('Added to cart', '✓');
 }
 
 /* ═══════════════════════════════════
@@ -4926,7 +5014,7 @@ function openProductInline(pushKey, opts = {}) {
   /* Sync wishlist heart in header */
   const _povWishBtn = document.getElementById('pov-wish-btn');
   if (_povWishBtn) {
-    const _w = getWishlist().includes(pushKey);
+    const _w = isWishlisted(pushKey);
     _povWishBtn.innerHTML = _w
       ? `<svg viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" stroke-width="2" width="20" height="20"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`
       : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
