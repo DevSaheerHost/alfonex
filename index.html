@@ -2992,6 +2992,7 @@ function renderSearchResults(q) {
   if (!queryTokens.length) { renderSearchHome(); return; }
 
   const scored = Object.entries(APP.prods)
+    .filter(([, p]) => !p.isHidden)   /* never show hidden products */
     .map(([id, p]) => ({ id, p, score: _scoreProduct(p, queryTokens) }))
     .filter(x => x.score > 0)
     .sort((a, b) => b.score - a.score)
@@ -3000,6 +3001,7 @@ function renderSearchResults(q) {
   if (!scored.length) {
     /* "Did you mean?" — pick 3 closest titles by fuzzy token score */
     const suggestions = Object.values(APP.prods)
+      .filter(p => !p.isHidden)
       .map(p => {
         const s = queryTokens.reduce((acc, qt) => {
           const best = _tokenise(p.title||'').reduce((m, ct) => Math.min(m, _editDist(ct, qt)), 99);
@@ -3147,7 +3149,14 @@ const CAT_DEFS = [
 ];
 
 function matchesCat(p, catId) {
-  if (catId === 'all') return true;
+  if (p.isHidden) return false;   /* never show hidden */
+  if (catId === 'all')      return true;
+  if (catId === 'featured') return !!p.isFeatured;
+  if (catId === 'new')      return !!p.isNewArrival;
+  if (catId === 'sale')     return !!p.isOnSale;
+  /* ① Direct category field match — admin sets p.category = 'watch', catId = 'watch' */
+  if (p.category && p.category.toLowerCase() === catId.toLowerCase()) return true;
+  /* ② Keyword match against title + description */
   const def = CAT_DEFS.find(c => c.id === catId);
   if (!def || !def.keywords.length) return false;
   const haystack = ((p.title||'') + ' ' + (p.description||'')).toLowerCase();
@@ -3226,18 +3235,30 @@ function renderHome() {
   if (APP.activeCat !== 'all') { renderFilteredGrid(feed, allEntries); return; }
   _gridPage = 1;
   APP._keywordFilter = null;
-  const byNewest = [...allEntries].sort((a,b) => (b[1].createdAt||0)-(a[1].createdAt||0));
-  const inStock  = allEntries.filter(([,p]) => Number(p.stock||0) > 0);
-  const heroProduct = byNewest.find(([,p]) => p.imageUrl) || byNewest[0];
+  const visible  = allEntries.filter(([,p]) => !p.isHidden);
+  const byNewest = [...visible].sort((a,b) => (b[1].createdAt||0)-(a[1].createdAt||0));
+  /* Featured: prioritise isFeatured flag, fall back to newest */
+  const featured = visible.filter(([,p]) => p.isFeatured).length >= 3
+    ? visible.filter(([,p]) => p.isFeatured)
+    : byNewest.slice(0, 10);
+  /* New Arrivals: prioritise isNewArrival flag, fall back to newest */
+  const newArrivals = visible.filter(([,p]) => p.isNewArrival).length >= 2
+    ? visible.filter(([,p]) => p.isNewArrival)
+    : byNewest.slice(0, 8);
+  /* Hot Deals: isOnSale flag, fall back to in-stock shuffle */
+  const onSale = visible.filter(([,p]) => p.isOnSale);
+  const inStock = visible.filter(([,p]) => !p.isComingSoon && !p.isOOS && Number(p.stock||0) > 0);
+  const deals   = onSale.length >= 2 ? onSale : inStock.sort(()=>0.5-Math.random()).slice(0,8);
+  const heroProduct = byNewest.find(([,p]) => p.imageUrl && !p.isHidden) || byNewest[0];
   feed.innerHTML = [
-    buildHeroCarousel(heroProduct, allEntries),
+    buildHeroCarousel(heroProduct, visible),
     buildPromoStrip(),
     buildCatQuick(),
-    buildHSection('🔥 Featured Products', byNewest.slice(0,10), 'feat'),
-    buildBannerPair(allEntries),
-    buildHSection('🏷️ Hot Deals', inStock.sort(()=>0.5-Math.random()).slice(0,8), 'deal'),
-    buildHSection('✨ New Arrivals', byNewest.slice(0,8), 'new'),
-    buildAllProductsSection(allEntries),
+    buildHSection('🔥 Featured Products', featured.slice(0,10), 'feat'),
+    buildBannerPair(visible),
+    buildHSection('🏷️ Hot Deals', deals.slice(0,8), 'deal'),
+    buildHSection('✨ New Arrivals', newArrivals.slice(0,8), 'new'),
+    buildAllProductsSection(visible),
   ].join('');
   initHeroCarousel();
 }
@@ -3431,8 +3452,8 @@ function buildFilterBar() {
 }
 
 function applySortFilter(entries, filter) {
-  let e = [...entries];
-  if (filter==='instock') e=e.filter(([,p])=>Number(p.stock||0)>0);
+  let e = [...entries].filter(([,p]) => !p.isHidden);  /* never show hidden */
+  if (filter==='instock') e=e.filter(([,p])=>!p.isComingSoon && !p.isOOS && Number(p.stock||0)>0);
   if (filter==='newest')  e.sort((a,b)=>(b[1].createdAt||0)-(a[1].createdAt||0));
   if (filter==='price-asc')  e.sort((a,b)=>getProdPrice(a[1])-getProdPrice(b[1]));
   if (filter==='price-desc') e.sort((a,b)=>getProdPrice(b[1])-getProdPrice(a[1]));
@@ -3470,27 +3491,55 @@ function loadMoreProds() {
 }
 
 function pCardHTML(id, p, idx) {
-  const price = getProdPrice(p);
+  /* ── Hidden products never render ── */
+  if (p.isHidden) return '';
+
+  const price    = getProdPrice(p);
   const priceTxt = price ? SYM[APP.cur]+price.toLocaleString() : '—';
-  const qty = p.stock!=null ? Number(p.stock) : null;
-  const oos = qty!==null && qty===0;
-  const delay = `animation-delay:${Math.min(idx*0.04,0.4)}s`;
-  const wished = getWishlist().includes(id);
+  const qty      = p.stock != null ? Number(p.stock) : null;
+  const forcedOOS = p.isOOS || p.isComingSoon;
+  const oos      = forcedOOS || (qty !== null && qty === 0);
+  const delay    = `animation-delay:${Math.min(idx*0.04,0.4)}s`;
+  const wished   = getWishlist().includes(id);
+
   const _hSVG_out  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
   const _hSVG_fill = `<svg viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" stroke-width="2" width="18" height="18"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
+
+  /* ── Status badge overlay on image ── */
+  const badgeHTML = p.isComingSoon ? `<div style="position:absolute;top:8px;left:8px;background:#7c3aed;color:#fff;font-size:9px;font-weight:800;letter-spacing:.5px;padding:3px 8px;border-radius:20px;text-transform:uppercase;z-index:2">⏳ Coming Soon</div>`
+    : p.isNewArrival ? `<div style="position:absolute;top:8px;left:8px;background:var(--green);color:#fff;font-size:9px;font-weight:800;letter-spacing:.5px;padding:3px 8px;border-radius:20px;text-transform:uppercase;z-index:2">🆕 New</div>`
+    : p.isOnSale ? `<div style="position:absolute;top:8px;left:8px;background:#db2777;color:#fff;font-size:9px;font-weight:800;letter-spacing:.5px;padding:3px 8px;border-radius:20px;text-transform:uppercase;z-index:2">🏷️ Sale</div>`
+    : p.isLowStock ? `<div style="position:absolute;top:8px;left:8px;background:#d97706;color:#fff;font-size:9px;font-weight:800;letter-spacing:.5px;padding:3px 8px;border-radius:20px;text-transform:uppercase;z-index:2">⚠️ Low Stock</div>`
+    : '';
+
+  /* ── Stock/status footer text ── */
+  const stockTxt = p.isComingSoon
+    ? '<span style="color:#7c3aed;font-weight:700">Coming Soon</span>'
+    : p.isOOS || (qty !== null && qty === 0)
+      ? '<span style="color:var(--red);font-weight:700">Out of stock</span>'
+      : p.isLowStock
+        ? `<span style="color:#d97706;font-weight:700">⚠️ Only ${qty} left</span>`
+        : qty !== null
+          ? `<span style="color:#22c55e">●</span> In stock`
+          : '';
+
+  /* ── Add to cart button ── */
+  const btnHTML = p.isComingSoon
+    ? `<button class="add-btn" disabled style="background:#7c3aed;opacity:.8;color:#fff"><i class="fa-solid fa-clock"></i> Coming Soon</button>`
+    : oos
+      ? `<button class="add-btn" disabled><i class="fa-solid fa-ban"></i> Out of Stock</button>`
+      : `<button class="add-btn" onclick="event.stopPropagation();addToCart('${id}')"><i class="fa-solid fa-plus"></i> Add to Cart</button>`;
+
   return `<div class="p-card" style="${delay};position:relative" onclick="openProductInline('${id}')">
+    ${badgeHTML}
     <button class="wish-btn${wished?' wishlisted':''}" id="wbtn-${id}" onclick="event.stopPropagation();toggleWishlist('${id}');syncHeartBtns('${id}')" title="${wished?'Remove from Wishlist':'Add to Wishlist'}">${wished?_hSVG_fill:_hSVG_out}</button>
-    ${p.imageUrl?`<img class="p-card-img" src="${p.imageUrl}" alt="${(p.title||'').replace(/"/g,'&quot;')}" loading="lazy">`:'<div class="p-card-img" style="display:flex;align-items:center;justify-content:center;font-size:40px;background:#f5f5f7">📦</div>'}
+    ${p.imageUrl?`<img class="p-card-img" src="${p.imageUrl}" alt="${(p.title||'').replace(/"/g,'&quot;')}" loading="lazy" style="${p.isComingSoon?'filter:grayscale(.4)':''}">`:'<div class="p-card-img" style="display:flex;align-items:center;justify-content:center;font-size:40px;background:#f5f5f7">📦</div>'}
     <div class="p-card-body">
       <div class="p-card-model">${p.title||'—'}</div>
-      <div class="p-card-price">${priceTxt}</div>
-      ${qty!==null?`<div class="p-card-qty">${oos?'<span style="color:var(--red);font-weight:700">Out of stock</span>':'<span style="color:#22c55e">●</span> In stock: '+qty}</div>`:''}
+      <div class="p-card-price">${p.isComingSoon ? '<span style="color:#7c3aed">Coming Soon</span>' : priceTxt}</div>
+      ${stockTxt ? `<div class="p-card-qty">${stockTxt}</div>` : ''}
     </div>
-    <div class="p-card-footer">
-      <button class="add-btn" onclick="event.stopPropagation();addToCart('${id}')" ${oos?'disabled':''}>
-        ${oos?'<i class="fa-solid fa-ban"></i> Out of Stock':'<i class="fa-solid fa-plus"></i> Add to Cart'}
-      </button>
-    </div></div>`;
+    <div class="p-card-footer">${btnHTML}</div></div>`;
 }
 
 let _heroIdx=0,_heroTimer=null,_heroTotal=0;
@@ -4806,8 +4855,8 @@ function openProductInline(pushKey, opts = {}) {
   const currentPage = document.querySelector('.page.active');
   _POV.prevPage = currentPage ? currentPage.id.replace('page-','') : 'shop';
 
-  const stock = Number(p.stock||0);
-  const sc    = povStockClass(stock);
+  const stock = p.isOOS ? 0 : Number(p.stock||0);
+  const sc    = p.isComingSoon ? 'out' : p.isOOS ? 'out' : povStockClass(stock);
   const hasV  = p.variants && p.variants.length > 0;
 
   /* Build variant sections */
@@ -4886,7 +4935,7 @@ function openProductInline(pushKey, opts = {}) {
   document.getElementById('prod-ov-content').innerHTML = `
     <div class="prod-ov-img-wrap" id="pov-img-wrap">
       ${carouselHTML}
-      <span class="prod-ov-img-badge ${sc}" id="pov-badge">${sc==='in'?'In Stock':sc==='low'?'Only '+stock+' left':'Out of Stock'}</span>
+      <span class="prod-ov-img-badge ${sc}" id="pov-badge">${p.isComingSoon?'Coming Soon':sc==='in'?'In Stock':sc==='low'?'Only '+stock+' left':'Out of Stock'}</span>
     </div>
     ${thumbStripHTML}
     <div class="prod-ov-body">
@@ -4930,12 +4979,19 @@ function _povRefreshBar() {
   if (!btn) return;
 
   btn.className = 'pov-atc-btn';
-  if (sc === 'out') {
-    btn.disabled = true; lbl.textContent = 'Out of Stock'; ico.className = 'fa-solid fa-ban';
+  const _povP = _POV?.product;
+  if (_povP?.isComingSoon) {
+    btn.disabled = true; btn.style.background = '#7c3aed';
+    lbl.textContent = 'Coming Soon'; ico.className = 'fa-solid fa-clock';
+  } else if (sc === 'out') {
+    btn.disabled = true; btn.style.background = '';
+    lbl.textContent = 'Out of Stock'; ico.className = 'fa-solid fa-ban';
   } else if (!allSel) {
-    btn.disabled = true; lbl.textContent = 'Select options'; ico.className = 'fa-solid fa-hand-pointer';
+    btn.disabled = true; btn.style.background = '';
+    lbl.textContent = 'Select options'; ico.className = 'fa-solid fa-hand-pointer';
   } else {
-    btn.disabled = false; lbl.textContent = 'Add to Cart'; ico.className = 'fa-solid fa-bag-shopping';
+    btn.disabled = false; btn.style.background = '';
+    lbl.textContent = 'Add to Cart'; ico.className = 'fa-solid fa-bag-shopping';
   }
 }
 
