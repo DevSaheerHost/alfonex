@@ -62,23 +62,87 @@ button { font-family: var(--font-body); }
 a { text-decoration: none; color: inherit; }
 
 /* ─── LOADER ─── */
+/* ── CART PRELOADER ── */
 #loader {
   position: fixed; inset: 0;
   background: var(--white);
   display: flex; align-items: center; justify-content: center;
-  flex-direction: column; gap: 14px;
+  flex-direction: column; gap: 0;
   z-index: 9999; transition: opacity 0.4s;
 }
-.spin-ring {
-  width: 42px; height: 42px;
-  border: 3px solid var(--green-light);
-  border-top-color: var(--green);
-  border-radius: 50%;
-  animation: spin 0.75s linear infinite;
+[data-theme="dark"] #loader { background: #111; }
+
+.preloader { text-align: center; max-width: 20em; width: 100%; }
+.preloader__text {
+  position: relative; height: 1.5em;
+  color: var(--green); font-weight: 700;
+  font-size: 13px; margin-top: 8px;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
-.loader-logo { font-family: var(--font-head); font-size: 20px; font-weight: 800; color: var(--green); }
-.loader-sub   { font-size: 12px; color: var(--muted); }
+.preloader__msg {
+  animation: preloaderMsg 0.3s 1.4s linear forwards;
+  position: absolute; width: 100%;
+}
+.preloader__msg--last {
+  animation-direction: reverse;
+  animation-delay: 1.6s;
+  visibility: hidden;
+  font-weight: 400;
+}
+@keyframes preloaderMsg {
+  from { opacity:1; visibility:visible; }
+  99.9% { opacity:0; visibility:visible; }
+  to { opacity:0; visibility:hidden; }
+}
+/* Cart SVG animation */
+.Lcart {
+  display: block; margin: 0 auto;
+  width: 72px; height: 72px;
+}
+.cart__lines,
+.cart__top,
+.cart__wheel1,
+.cart__wheel2,
+.cart__wheel-stroke {
+  animation: cartLines 2s ease-in-out infinite;
+}
+.cart__lines { stroke: var(--green); }
+.cart__top { animation-name: cartTop; }
+.cart__wheel1 {
+  animation-name: cartWheel1;
+  transform: rotate(-0.25turn);
+  transform-origin: 43px 111px;
+}
+.cart__wheel2 {
+  animation-name: cartWheel2;
+  transform: rotate(0.25turn);
+  transform-origin: 102px 111px;
+}
+.cart__wheel-stroke { animation-name: cartWheelStroke; }
+.cart__track { stroke: var(--green-light); }
+
+@keyframes cartLines {
+  from, to { opacity: 0; }
+  8%, 92%  { opacity: 1; }
+}
+@keyframes cartTop {
+  from { stroke-dashoffset: -338; }
+  50%  { stroke-dashoffset: 0; }
+  to   { stroke-dashoffset: 338; }
+}
+@keyframes cartWheel1 {
+  from { transform: rotate(-0.25turn); }
+  to   { transform: rotate(2.75turn); }
+}
+@keyframes cartWheel2 {
+  from { transform: rotate(0.25turn); }
+  to   { transform: rotate(3.25turn); }
+}
+@keyframes cartWheelStroke {
+  from, to { stroke-dashoffset: 81.68; }
+  50%      { stroke-dashoffset: 40.84; }
+}
+.loader-logo { font-family: var(--font-head); font-size: 18px; font-weight: 800; color: var(--green); margin-top: 12px; }
+.loader-sub   { font-size: 11px; color: var(--muted); margin-top: 3px; }
 
 /* ─── TOAST ─── */
 #toast {
@@ -1612,6 +1676,8 @@ a { text-decoration: none; color: inherit; }
   --shadow-sm:  0 1px 3px rgba(0,0,0,0.4);
 }
 [data-theme="dark"] #loader          { background: #111111; }
+[data-theme="dark"] .cart__track      { stroke: rgba(46,160,86,.15); }
+[data-theme="dark"] .preloader__text  { color: #4ade80; }
 [data-theme="dark"] #toast           { background: #f0f0f0; color: #111; }
 [data-theme="dark"] #search-input    { color: var(--text); }
 [data-theme="dark"] #search-input:focus { background: #222; }
@@ -1806,9 +1872,35 @@ a { text-decoration: none; color: inherit; }
 
 <!-- ════ LOADER ════ -->
 <div id="loader">
-  <div class="spin-ring"></div>
-  <img id="loader-logo-img" class="alfonex-logo" src="./assets/logo/light_nobg.png" alt="Alfonex" style="height:36px;" id="loader-logo-img2">
-  <div class="loader-sub">Loading products…</div>
+  <div class="preloader">
+    <svg class="Lcart" role="img" aria-label="Loading" viewBox="0 0 128 128"
+      xmlns="http://www.w3.org/2000/svg">
+      <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="8">
+        <g class="cart__track">
+          <polyline points="4,4 21,4 26,22 124,22 112,64 35,64 39,80 106,80"/>
+          <circle cx="43" cy="111" r="13"/>
+          <circle cx="102" cy="111" r="13"/>
+        </g>
+        <g class="cart__lines" stroke="currentColor">
+          <polyline class="cart__top" points="4,4 21,4 26,22 124,22 112,64 35,64 39,80 106,80"
+            stroke-dasharray="338 338" stroke-dashoffset="-338"/>
+          <g class="cart__wheel1" transform="rotate(-90,43,111)">
+            <circle class="cart__wheel-stroke" cx="43" cy="111" r="13"
+              stroke-dasharray="81.68 81.68" stroke-dashoffset="81.68"/>
+          </g>
+          <g class="cart__wheel2" transform="rotate(90,102,111)">
+            <circle class="cart__wheel-stroke" cx="102" cy="111" r="13"
+              stroke-dasharray="81.68 81.68" stroke-dashoffset="81.68"/>
+          </g>
+        </g>
+      </g>
+    </svg>
+    <img id="loader-logo-img" class="alfonex-logo" src="./assets/logo/light_nobg.png" alt="Alfonex" style="height:28px;margin-top:14px;display:block;margin-left:auto;margin-right:auto">
+    <div class="preloader__text">
+      <p class="preloader__msg">Loading…</p>
+      <p class="preloader__msg preloader__msg--last">Almost there</p>
+    </div>
+  </div>
 </div>
 
 <!-- ════ TOAST ════ -->
