@@ -2962,7 +2962,7 @@ function navTo(pg, opts = {}) {
   if (!opts._fromPopstate) {
     const hash = pg === 'shop' ? '' : pg;
     const keyParam = opts.key ? `?key=${encodeURIComponent(opts.key)}` : '';
-    history.pushState({ pg, key: opts.key||null }, '', hash ? `#${hash}${keyParam}` : '#');
+    history.pushState({ pg, key: opts.key||null, cat: APP.activeCat||'all' }, '', hash ? `#${hash}${keyParam}` : '#');
   }
   window.scrollTo(0, 0);
 }
@@ -2975,18 +2975,50 @@ window.addEventListener('popstate', e => {
     return;
   }
   const state = e.state;
-  if (!state) { navTo('shop', {_fromPopstate:true}); return; }
+  /* No state = root / home */
+  if (!state) {
+    filterCat('all', true);
+    navTo('shop', {_fromPopstate:true});
+    return;
+  }
   if (state.page === 'all-prods') { closeAllProdsPage(true); return; }
-  if (state.pg === 'product' && state.key) openProductInline(state.key, {_fromPopstate:true});
-  else navTo(state.pg || 'shop', {_fromPopstate:true});
+  /* Product detail */
+  if (state.pg === 'product' && state.key) {
+    /* Restore category context silently */
+    if (state.cat) { APP.activeCat = state.cat; }
+    openProductInline(state.key, {_fromPopstate:true});
+    return;
+  }
+  /* Shop with category filter */
+  if (state.pg === 'shop') {
+    navTo('shop', {_fromPopstate:true});
+    if (state.cat) filterCat(state.cat, true);
+    else filterCat('all', true);
+    return;
+  }
+  /* Search with query */
+  if (state.pg === 'search') {
+    navTo('search', {_fromPopstate:true});
+    if (state.q) runSearch(state.q, true);
+    return;
+  }
+  /* All other pages */
+  navTo(state.pg || 'shop', {_fromPopstate:true});
 });
 
 // Deep-link routing on first load
 (function routeFromHash() {
   const hash   = window.location.hash.replace('#','').split('?')[0];
   const params = new URLSearchParams(window.location.hash.includes('?') ? window.location.hash.split('?')[1] : '');
-  if (hash === 'product' && params.get('key')) APP._pendingRoute = { pg:'product', key:params.get('key') };
-  else if (hash && document.getElementById('page-'+hash)) APP._pendingRoute = { pg:hash };
+  if (hash === 'product' && params.get('key')) {
+    APP._pendingRoute = { pg:'product', key:params.get('key') };
+  } else if (hash === 'shop' && params.get('cat')) {
+    APP._pendingRoute = { pg:'shop', cat: params.get('cat') };
+  } else if (hash === 'search' && params.get('q')) {
+    APP._pendingRoute = { pg:'search', q: params.get('q') };
+  } else if (hash && document.getElementById('page-'+hash)) {
+    APP._pendingRoute = { pg:hash };
+  }
 })();
 
 /* ═══════════════════════════════════
@@ -3060,10 +3092,13 @@ function removeHistory(e, q) {
   renderSearchHome();
 }
 
-function runSearch(q) {
+function runSearch(q, fromPopstate = false) {
   document.getElementById('search-input').value = q;
   document.getElementById('search-clear').style.display = 'flex';
   addSearchHistory(q);
+  if (!fromPopstate) {
+    history.pushState({ pg:'search', q }, '', `#search?q=${encodeURIComponent(q)}`);
+  }
   renderSearchResults(q);
 }
 
@@ -3330,16 +3365,42 @@ const CAT_DEFS = [
   { id:'accessories',label:'Accessories', icon:'fa-plug',                    keywords:['charger','cable','adapter','lightning','usbc','magsafe','stand','mount','keyboard','mouse','trackpad','hub','dock','pencil','stylus','band','strap','screen guard','tempered'] },
 ];
 
+/* Category aliases — clicking 'airpod' also matches 'airpods' etc. */
+const CAT_ALIASES = {
+  airpod:  ['airpods','airpod','earpod','earphone','earphones'],
+  airpods: ['airpods','airpod','earpod','earphone','earphones'],
+  mac:     ['mac','macbook','imac','mac mini','mac pro','mac studio'],
+  macbook: ['mac','macbook','imac','mac mini','mac pro','mac studio'],
+  case:    ['case','cases'],
+  cases:   ['case','cases'],
+  charger: ['charger','chargers'],
+  chargers:['charger','chargers'],
+  watch:   ['watch','wearable','iwatch'],
+  wearable:['watch','wearable','iwatch'],
+};
+
 function matchesCat(p, catId) {
-  if (p.isHidden) return false;   /* never show hidden */
+  if (p.isHidden) return false;
   if (catId === 'all')      return true;
   if (catId === 'featured') return !!p.isFeatured;
   if (catId === 'new')      return !!p.isNewArrival;
   if (catId === 'sale')     return !!p.isOnSale;
-  /* ① Direct category field match — admin sets p.category = 'watch', catId = 'watch' */
-  if (p.category && p.category.toLowerCase() === catId.toLowerCase()) return true;
-  /* ② Keyword match against title + description */
-  const def = CAT_DEFS.find(c => c.id === catId);
+
+  const pCat = (p.category||'').toLowerCase().trim();
+  const cId  = catId.toLowerCase();
+
+  /* If this product has a category set in admin, ONLY match by category field.
+     Never fall through to keyword search — that causes false matches. */
+  if (pCat) {
+    /* Exact match */
+    if (pCat === cId) return true;
+    /* Alias match (airpod ↔ airpods etc.) */
+    const aliases = CAT_ALIASES[cId] || [];
+    return aliases.includes(pCat);
+  }
+
+  /* Legacy products with NO category field — keyword fallback only for those */
+  const def = CAT_DEFS.find(c => c.id === cId);
   if (!def || !def.keywords.length) return false;
   const haystack = ((p.title||'') + ' ' + (p.description||'')).toLowerCase();
   return def.keywords.some(kw => haystack.includes(kw));
@@ -3352,8 +3413,8 @@ function filterByName(name) {
   filterCat(cat ? cat.id : 'all');
 }
 
-function filterCat(catId) {
-  APP.activeCat    = catId;
+function filterCat(catId, fromPopstate = false) {
+  APP.activeCat      = catId;
   APP._keywordFilter = null;
   document.querySelectorAll('.cat-pill').forEach(p =>
     p.classList.toggle('active', p.dataset.cat === catId)
@@ -3364,6 +3425,11 @@ function filterCat(catId) {
     const cl = document.getElementById('search-clear');
     if (cl) cl.style.display = 'none';
   }
+  /* Push URL so back button restores category */
+  if (!fromPopstate) {
+    const url = catId === 'all' ? '#' : `#shop?cat=${encodeURIComponent(catId)}`;
+    history.pushState({ pg:'shop', cat: catId }, '', url);
+  }
   renderProds();
 }
 
@@ -3372,11 +3438,72 @@ function filterCat(catId) {
 ═══════════════════════════════════ */
 function buildCatBar() {
   const bar = document.getElementById('cat-bar');
-  bar.innerHTML = CAT_DEFS.map(c => `
-    <div class="cat-pill${APP.activeCat===c.id?' active':''}" data-cat="${c.id}"
-      onclick="filterCat('${c.id}')">
-      <i class="fa-solid ${c.icon}" style="font-size:10px;margin-right:4px"></i>${c.label}
-    </div>`).join('');
+  if (!bar) return;
+
+  /* ── Collect all unique category values from live products ── */
+  const dbCats = new Set();
+  Object.values(APP.prods || {}).forEach(p => {
+    if (!p.isHidden && p.category) dbCats.add(p.category.toLowerCase().trim());
+  });
+
+  /* ── Map each DB category to a display definition ──
+     Check CAT_DEFS first for a nice icon/label,
+     otherwise auto-generate one. */
+  const CAT_META = {
+    iphone:      { label:'iPhone',      icon:'fa-mobile-screen-button' },
+    macbook:     { label:'MacBook',     icon:'fa-laptop' },
+    mac:         { label:'Mac',         icon:'fa-laptop' },
+    ipad:        { label:'iPad',        icon:'fa-tablet-screen-button' },
+    airpods:     { label:'AirPods',     icon:'fa-headphones' },
+    airpod:      { label:'AirPods',     icon:'fa-headphones' },
+    watch:       { label:'Watch',       icon:'fa-clock' },
+    accessories: { label:'Accessories', icon:'fa-plug' },
+    cases:       { label:'Cases',       icon:'fa-shield-halved' },
+    case:        { label:'Cases',       icon:'fa-shield-halved' },
+    chargers:    { label:'Chargers',    icon:'fa-bolt' },
+    charger:     { label:'Chargers',    icon:'fa-bolt' },
+    cables:      { label:'Cables',      icon:'fa-usb' },
+    wearable:    { label:'Wearable',    icon:'fa-clock' },
+    laptop:      { label:'Laptop',      icon:'fa-laptop' },
+    tablet:      { label:'Tablet',      icon:'fa-tablet-screen-button' },
+    earphones:   { label:'Earphones',   icon:'fa-headphones' },
+    speaker:     { label:'Speaker',     icon:'fa-volume-high' },
+    gaming:      { label:'Gaming',      icon:'fa-gamepad' },
+  };
+
+  /* Sort: put well-known Apple categories first */
+  const ORDER = ['iphone','mac','macbook','ipad','airpods','airpod','watch','wearable','accessories','cases','case','chargers','charger'];
+  const sorted = [...dbCats].sort((a,b) => {
+    const ai = ORDER.indexOf(a), bi = ORDER.indexOf(b);
+    if (ai>=0 && bi>=0) return ai-bi;
+    if (ai>=0) return -1;
+    if (bi>=0) return 1;
+    return a.localeCompare(b);
+  });
+
+  /* ── Deduplicate visual labels (e.g. both 'airpod' and 'airpods' → show once) ── */
+  const seenLabels = new Set();
+  const pills = [];
+  sorted.forEach(catId => {
+    const meta  = CAT_META[catId] || { label: catId.charAt(0).toUpperCase()+catId.slice(1), icon:'fa-tag' };
+    const label = meta.label;
+    if (seenLabels.has(label)) return; /* skip duplicate labels */
+    seenLabels.add(label);
+    pills.push({ catId, label, icon: meta.icon });
+  });
+
+  /* ── Render: All pill first, then one per category ── */
+  bar.innerHTML =
+    /* "All" pill always first */
+    `<div class="cat-pill${APP.activeCat==='all'?' active':''}" data-cat="all" onclick="filterCat('all')">
+      <i class="fa-solid fa-border-all" style="font-size:10px;margin-right:4px"></i>All
+    </div>` +
+    pills.map(({ catId, label, icon }) =>
+      `<div class="cat-pill${APP.activeCat===catId?' active':''}" data-cat="${catId}"
+        onclick="filterCat('${catId}')">
+        <i class="fa-solid ${icon}" style="font-size:10px;margin-right:4px"></i>${label}
+      </div>`
+    ).join('');
 }
 
 
@@ -4435,15 +4562,27 @@ function placeOrder() {
    RENDER ORDERS
 ═══════════════════════════════════ */
 /* Shared steps definition */
+/* Steps match admin ORDER_STATUSES exactly:
+   Pending → Packed → Dispatched → Shipped → In Transit → Delivered */
 const ALL_STEPS = [
-  { key:'pending',    label:'Order Placed', icon:'<i class="fa-solid fa-clipboard-list"></i>' },
-  { key:'accepted',   label:'Accepted',     icon:'<i class="fa-solid fa-circle-check"></i>' },
-  { key:'packed',     label:'Packed',       icon:'<i class="fa-solid fa-box"></i>' },
-  { key:'dispatched', label:'Dispatched',   icon:'<i class="fa-solid fa-truck"></i>' },
-  { key:'transit',    label:'In Transit',   icon:'<i class="fa-solid fa-plane"></i>' },
-  { key:'arrived',    label:'Arrived',      icon:'<i class="fa-solid fa-plane-arrival"></i>' },
-  { key:'delivered',  label:'Delivered',    icon:'<i class="fa-solid fa-location-dot"></i>' },
+  { key:'pending',    label:'Order Placed', icon:'<i class="fa-solid fa-clipboard-list"></i>',    color:'#f59e0b', tsField:null },
+  { key:'packed',     label:'Packed',       icon:'<i class="fa-solid fa-box"></i>',               color:'#3b82f6', tsField:'packed_at' },
+  { key:'dispatched', label:'Dispatched',   icon:'<i class="fa-solid fa-truck-fast"></i>',        color:'#8b5cf6', tsField:'dispatched_at' },
+  { key:'shipped',    label:'Shipped',      icon:'<i class="fa-solid fa-truck"></i>',             color:'#06b6d4', tsField:'shipped_at' },
+  { key:'in transit', label:'In Transit',   icon:'<i class="fa-solid fa-plane"></i>',             color:'#6366f1', tsField:'transit_at' },
+  { key:'delivered',  label:'Delivered',    icon:'<i class="fa-solid fa-circle-check"></i>',      color:'#16a34a', tsField:'delivered_at' },
 ];
+
+/* Map admin status string → step index */
+function statusToStepIdx(status) {
+  const s = (status||'pending').toLowerCase();
+  const map = {
+    'pending':0, 'packed':1, 'dispatched':2,
+    'shipped':3, 'in transit':4, 'in-transit':4, 'transit':4,
+    'delivered':5, 'completed':5
+  };
+  return map[s] ?? 0;
+}
 
 /* Cache for open order */
 APP._ordersCache = {};
@@ -4475,13 +4614,14 @@ function renderOrders() {
         return it.variantLabel ? `${name} (${it.variantLabel}) ×${it.qty}` : `${name} ×${it.qty}`;
       }).join(', ');
       const sym    = {USD:'$',AED:'AED ',INR:'₹'}[(o.currency||'USD').toUpperCase()]||'$';
-      const status = (o.status||'Pending').toLowerCase();
-      const sc     = status==='delivered'||status==='completed' ? 's-confirmed'
-                   : status==='dispatched'||status==='transit'||status==='arrived'||status==='flying' ? 's-shipped'
-                   : status==='accepted'||status==='packed' ? 's-confirmed' : 's-pending';
-      const step   = ALL_STEPS.findIndex(s=>s.key===status);
-      const pct    = Math.round(((step<0?0:step)/(ALL_STEPS.length-1))*100);
-      const curStep= ALL_STEPS[step<0?0:step];
+      const status = (o.status||'Pending');
+      const statusL = status.toLowerCase();
+      const sc     = statusL==='delivered'||statusL==='completed' ? 's-confirmed'
+                   : statusL==='dispatched'||statusL==='in transit'||statusL==='shipped' ? 's-shipped'
+                   : statusL==='packed' ? 's-confirmed' : 's-pending';
+      const stepIdx = statusToStepIdx(status);
+      const pct     = Math.round((stepIdx / (ALL_STEPS.length-1)) * 100);
+      const curStep = ALL_STEPS[stepIdx];
       // address: support both old (region/state) and new (customerCountry/customerState) field names
       const addr   = [o.customerCountry||o.region, o.customerState||o.state].filter(Boolean).join(' · ');
 
@@ -4524,58 +4664,55 @@ function openOrderDetail(id) {
 }
 
 function buildTimeline(o) {
-  const curStatus = (o.status||'pending').toLowerCase();
-  let steps = [];
+  const curIdx = statusToStepIdx(o.status || 'pending');
 
-  if (o.statusHistory) {
-    steps = Object.values(o.statusHistory)
-      .sort((a,b)=>new Date(a.timestamp)-new Date(b.timestamp))
-      .map(h=>({
-        label: h.label||h.status,
-        time:  new Date(h.timestamp).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',hour12:true}),
-        status:(h.status||'').toLowerCase(),
-        done:  true
-      }));
-    const doneSet   = new Set(steps.map(s=>s.status));
-    const curIdx    = ALL_STEPS.findIndex(s=>s.key===curStatus);
-    ALL_STEPS.forEach((step,i)=>{
-      if (!doneSet.has(step.key) && i>curIdx) {
-        steps.push({label:`${step.icon} ${step.label}`,time:'Upcoming',status:step.key,done:false});
-      }
+  function fmtTS(ts) {
+    if (!ts) return '';
+    return new Date(ts).toLocaleString('en-US', {
+      month:'short', day:'numeric', year:'numeric',
+      hour:'numeric', minute:'2-digit', hour12:true
     });
-  } else {
-    const curIdx = ALL_STEPS.findIndex(s=>s.key===curStatus);
-    const date   = new Date(o.timestamp||Date.now()).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-    steps = ALL_STEPS.map((step,i)=>({
-      label:`${step.icon} ${step.label}`,
-      time: i===0?date:(i<=curIdx?'Completed':'Upcoming'),
-      status:step.key,
-      done:  i<=curIdx
-    }));
   }
 
-  const lastDone = [...steps].reverse().findIndex(s=>s.done);
-  const activeIdx = steps.length - 1 - (lastDone<0?steps.length:lastDone);
+  /* Timestamps stored by admin when advancing each status */
+  const TS_MAP = {
+    0: o.createdAt || o.timestamp,       /* Order Placed   */
+    1: o.packed_at,                       /* Packed         */
+    2: o.dispatched_at,                   /* Dispatched     */
+    3: o.shipped_at,                      /* Shipped        */
+    4: o.transit_at,                      /* In Transit     */
+    5: o.delivered_at,                    /* Delivered      */
+  };
 
-  return steps.map((step,i)=>{
-    const isDone   = step.done && i<activeIdx;
-    const isActive = i===activeIdx;
-    const dotClass = isDone?'done':isActive?'active':'';
-    const connClass= isDone?'done':'';
-    const itemClass= isDone?'tl-done':isActive?'tl-active':'tl-pending';
-    return `<div class="ord-tl-item ${itemClass}" style="animation-delay:${i*0.1}s">
-        <div class="ord-tl-left">
-          <div class="ord-tl-dot ${dotClass}"></div>
-          <div class="ord-tl-connector ${connClass}"></div>
+  return ALL_STEPS.map((step, i) => {
+    const isDone    = i < curIdx;
+    const isCurrent = i === curIdx;
+    const isUpcoming= i > curIdx;
+    const ts        = TS_MAP[i];
+    const timeStr   = isCurrent && !ts
+      ? '<span style="color:' + step.color + ';font-weight:700">NOW</span>'
+      : ts ? fmtTS(ts)
+      : isUpcoming ? '<span style="color:var(--muted)">Upcoming</span>' : '';
+
+    return `<div class="ord-tl-item ${isDone?'tl-done':isCurrent?'tl-active':'tl-pending'}" style="animation-delay:${i*0.08}s">
+      <div class="ord-tl-left">
+        <div class="ord-tl-dot ${isDone?'done':isCurrent?'active':''}"
+          style="${isCurrent?`background:${step.color};border-color:${step.color};box-shadow:0 0 0 4px ${step.color}30`:''}
+                 ${isDone?`background:${step.color};border-color:${step.color}`:''}">
+          ${isDone
+            ? '<i class="fa-solid fa-check" style="font-size:10px;color:#fff"></i>'
+            : `<span style="font-size:11px;${isCurrent?'color:#fff':'color:var(--muted)'}">${step.icon}</span>`}
         </div>
-        <div class="ord-tl-content">
-          <div class="ord-tl-label">
-            ${step.label}
-            ${isActive?`<span class="ord-tl-now">NOW</span>`:''}
-          </div>
-          <div class="ord-tl-time">${step.time}</div>
+        ${i < ALL_STEPS.length-1 ? `<div class="ord-tl-connector ${isDone?'done':''}"></div>` : ''}
+      </div>
+      <div class="ord-tl-content">
+        <div class="ord-tl-label" style="${isCurrent?`color:${step.color};font-weight:800`:isDone?'color:var(--text)':'color:var(--muted)'}">
+          ${step.label}
+          ${isCurrent ? `<span class="ord-tl-now" style="background:${step.color}">NOW</span>` : ''}
         </div>
-      </div>`;
+        <div class="ord-tl-time">${timeStr}</div>
+      </div>
+    </div>`;
   }).join('');
 }
 
@@ -5114,8 +5251,17 @@ function tryHide() {
   if (APP._pendingRoute) {
     const r = APP._pendingRoute; APP._pendingRoute = null;
     setTimeout(() => {
-      if (r.pg === 'product' && r.key) openProductInline(r.key, {_fromPopstate:true});
-      else if (r.pg) navTo(r.pg, {_fromPopstate:true});
+      if (r.pg === 'product' && r.key) {
+        openProductInline(r.key, {_fromPopstate:true});
+      } else if (r.pg === 'shop' && r.cat) {
+        navTo('shop', {_fromPopstate:true});
+        filterCat(r.cat, true);
+      } else if (r.pg === 'search' && r.q) {
+        navTo('search', {_fromPopstate:true});
+        setTimeout(() => runSearch(r.q, true), 100);
+      } else if (r.pg) {
+        navTo(r.pg, {_fromPopstate:true});
+      }
     }, 50);
   }
 }
@@ -5134,6 +5280,7 @@ db.ref('banners').on('value', snap => {
 db.ref('products').on('value', snap => {
   APP.prods = snap.val() || {};
   APP._loaded.prods = true;
+  buildCatBar();   /* rebuild category bar from live product data */
   tryHide();
 });
 
