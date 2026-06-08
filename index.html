@@ -2319,6 +2319,20 @@ a { text-decoration: none; color: inherit; }
         <label class="reserve-label">WhatsApp / Phone *</label>
         <input class="reserve-input" id="reserve-phone" placeholder="+971 50 000 0000" type="tel" autocomplete="tel" inputmode="tel">
       </div>
+      <!-- Advance amount -->
+      <div class="reserve-field">
+        <label class="reserve-label" id="reserve-advance-label">Advance Amount</label>
+        <div style="position:relative">
+          <span id="reserve-sym" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:14px;font-weight:700;color:var(--muted);pointer-events:none">₹</span>
+          <input class="reserve-input" id="reserve-advance" type="number" min="0" step="1" inputmode="numeric"
+            placeholder="0 — leave blank if no advance"
+            style="padding-left:32px">
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">
+          <i class="fa-solid fa-circle-info" style="color:var(--green)"></i>
+          Optional. Enter the advance/token amount you'd like to pay to confirm your reservation.
+        </div>
+      </div>
       <div class="reserve-field">
         <label class="reserve-label">Note (optional)</label>
         <input class="reserve-input" id="reserve-note" placeholder="e.g. Preferred colour, delivery city…">
@@ -5993,9 +6007,17 @@ function openReserveModal() {
   /* Reset form */
   document.getElementById('reserve-form-state').style.display    = 'block';
   document.getElementById('reserve-success-state').style.display = 'none';
-  document.getElementById('reserve-name').value  = APP.user?.displayName || '';
-  document.getElementById('reserve-phone').value = '';
-  document.getElementById('reserve-note').value  = '';
+  document.getElementById('reserve-name').value    = APP.user?.displayName || '';
+  document.getElementById('reserve-phone').value   = '';
+  document.getElementById('reserve-advance').value = '';
+  document.getElementById('reserve-note').value    = '';
+
+  /* Set currency symbol */
+  const _sym = SYM[APP.cur] || '₹';
+  const symEl = document.getElementById('reserve-sym');
+  const lblEl = document.getElementById('reserve-advance-label');
+  if (symEl) symEl.textContent = _sym;
+  if (lblEl) lblEl.textContent = `Advance Amount (${APP.cur || 'INR'})`;
 
   /* Enable submit */
   const btn = document.getElementById('reserve-submit-btn');
@@ -6009,9 +6031,10 @@ function closeReserveModal() {
 }
 
 async function submitReservation() {
-  const name  = document.getElementById('reserve-name').value.trim();
-  const phone = document.getElementById('reserve-phone').value.trim();
-  const note  = document.getElementById('reserve-note').value.trim();
+  const name    = document.getElementById('reserve-name').value.trim();
+  const phone   = document.getElementById('reserve-phone').value.trim();
+  const note    = document.getElementById('reserve-note').value.trim();
+  const advance = parseFloat(document.getElementById('reserve-advance').value) || 0;
 
   if (!name)  { toast('Please enter your name', '⚠️'); return; }
   if (!phone) { toast('Please enter your phone number', '⚠️'); return; }
@@ -6033,10 +6056,11 @@ async function submitReservation() {
     variantLabel:  variant || '',
     price:         price || 0,
     currency:      APP.cur || 'INR',
+    advance:       advance,          /* advance/token amount paid */
     customerName:  name,
     customerPhone: phone,
     note:          note,
-    status:        'pending',   /* pending | contacted | completed | cancelled */
+    status:        'pending',
     userId:        APP.user?.uid || 'guest',
     createdAt:     Date.now(),
   };
@@ -6047,8 +6071,10 @@ async function submitReservation() {
     /* Show success */
     document.getElementById('reserve-form-state').style.display    = 'none';
     document.getElementById('reserve-success-state').style.display = 'block';
+    const sym = SYM[APP.cur] || '₹';
+    const advanceStr = advance > 0 ? ` Advance paid: ${sym}${advance.toLocaleString()}.` : '';
     document.getElementById('reserve-success-msg').textContent =
-      `Hi ${name}! Your reservation for ${p.title} has been confirmed. ` +
+      `Hi ${name}! Your reservation for ${p.title} has been confirmed.${advanceStr} ` +
       `We'll reach you on ${phone} as soon as the device is available.`;
 
   } catch(e) {
