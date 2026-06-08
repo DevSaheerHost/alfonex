@@ -2588,6 +2588,11 @@ a { text-decoration: none; color: inherit; }
         <span class="pi-label" id="theme-pi-label">Dark Mode</span>
         <span class="pi-arrow">›</span>
       </div>
+      <div class="profile-item" onclick="navTo('converter')">
+        <div class="pi-icon" style="color:var(--green)"><i class="fa-solid fa-right-left"></i></div>
+        <span class="pi-label">INR ⇄ AED Converter</span>
+        <span class="pi-arrow">›</span>
+      </div>
       <div class="profile-item" onclick="navTo('quality')">
         <div class="pi-icon"><i class="fa-solid fa-star"></i></div>
         <span class="pi-label">Quality Grades</span>
@@ -2867,6 +2872,126 @@ a { text-decoration: none; color: inherit; }
       <h2><i class="fa-solid fa-clock"></i> Working Hours</h2>
       <p>Monday – Saturday: 9:00 AM – 9:00 PM GST<br>Sunday: Closed</p>
     </div>
+  </div>
+</div>
+
+<!-- ════ INR / AED CONVERTER ════ -->
+<div class="page" id="page-converter">
+  <div class="pg-header">
+    <button class="back-btn" onclick="navTo('profile')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="15 18 9 12 15 6"/></svg> Back
+    </button>
+    <h1>Converter</h1>
+    <span style="font-size:18px;color:var(--green)"><i class="fa-solid fa-right-left"></i></span>
+  </div>
+  <div class="info-page-body" style="padding-bottom:40px">
+
+    <!-- Heading -->
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="font-family:var(--font-head);font-size:22px;font-weight:900;color:var(--text);letter-spacing:-.5px">
+        INR ⇄ AED
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">
+        Indian Rupee &amp; UAE Dirham converter
+      </div>
+    </div>
+
+    <!-- Live rate banner -->
+    <div id="conv-rate-banner" style="
+      background:linear-gradient(135deg,var(--green),#1d7a40);
+      border-radius:var(--radius);padding:16px 20px;color:#fff;
+      display:flex;align-items:center;justify-content:space-between;
+      margin-bottom:24px;gap:12px">
+      <div>
+        <div style="font-size:11px;font-weight:700;opacity:.75;letter-spacing:.5px;text-transform:uppercase">Live Rate</div>
+        <div id="conv-live-rate" style="font-family:var(--font-head);font-size:22px;font-weight:900;margin-top:2px">
+          1 AED = ₹<span id="conv-aed-to-inr">—</span>
+        </div>
+        <div id="conv-live-rate2" style="font-size:12px;opacity:.8;margin-top:2px">
+          1 INR = <span id="conv-inr-to-aed">—</span> AED
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:10px;opacity:.7;margin-bottom:4px" id="conv-updated">Updating…</div>
+        <button onclick="fetchLiveRate()" style="
+          background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);
+          color:#fff;border-radius:20px;padding:5px 14px;font-size:11px;
+          font-weight:700;cursor:pointer;font-family:var(--font-body)">
+          <i class="fa-solid fa-rotate-right"></i> Refresh
+        </button>
+      </div>
+    </div>
+
+    <!-- Converter card -->
+    <div style="background:var(--white);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;margin-bottom:20px;box-shadow:0 2px 12px rgba(0,0,0,.06)">
+
+      <!-- INR → AED -->
+      <div style="padding:18px 16px;border-bottom:1px solid var(--border)">
+        <div style="font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">
+          🇮🇳 INR → 🇦🇪 AED
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="position:relative;flex:1">
+            <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:16px;font-weight:800;color:var(--muted)">₹</span>
+            <input type="number" id="inp-inr" class="reserve-input" inputmode="decimal"
+              placeholder="0" min="0" style="padding-left:32px;font-size:18px;font-weight:800;height:52px"
+              oninput="calcINRtoAED()">
+          </div>
+          <i class="fa-solid fa-arrow-right" style="color:var(--muted);font-size:16px;flex-shrink:0"></i>
+          <div style="flex:1;background:var(--bg);border-radius:var(--radius-sm);height:52px;display:flex;align-items:center;padding:0 14px;border:1.5px solid var(--border)">
+            <span style="font-size:13px;font-weight:700;color:var(--muted);margin-right:6px">AED</span>
+            <span id="out-aed" style="font-size:18px;font-weight:900;color:var(--green);font-family:var(--font-head)">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Swap divider -->
+      <div style="display:flex;align-items:center;justify-content:center;padding:10px;background:var(--bg);border-bottom:1px solid var(--border)">
+        <button onclick="swapConverter()" style="
+          background:var(--white);border:1.5px solid var(--border);
+          border-radius:50%;width:36px;height:36px;
+          display:flex;align-items:center;justify-content:center;
+          font-size:14px;cursor:pointer;color:var(--green);
+          transition:transform .2s" id="swap-btn" title="Swap">
+          <i class="fa-solid fa-right-left"></i>
+        </button>
+      </div>
+
+      <!-- AED → INR -->
+      <div style="padding:18px 16px">
+        <div style="font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">
+          🇦🇪 AED → 🇮🇳 INR
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="position:relative;flex:1">
+            <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:800;color:var(--muted)">AED</span>
+            <input type="number" id="inp-aed" class="reserve-input" inputmode="decimal"
+              placeholder="0" min="0" style="padding-left:46px;font-size:18px;font-weight:800;height:52px"
+              oninput="calcAEDtoINR()">
+          </div>
+          <i class="fa-solid fa-arrow-right" style="color:var(--muted);font-size:16px;flex-shrink:0"></i>
+          <div style="flex:1;background:var(--bg);border-radius:var(--radius-sm);height:52px;display:flex;align-items:center;padding:0 14px;border:1.5px solid var(--border)">
+            <span style="font-size:16px;font-weight:800;color:var(--muted);margin-right:4px">₹</span>
+            <span id="out-inr" style="font-size:18px;font-weight:900;color:var(--green);font-family:var(--font-head)">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick amounts -->
+    <div style="font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Quick Convert — INR to AED</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px" id="quick-inr-grid"></div>
+
+    <div style="font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Quick Convert — AED to INR</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:24px" id="quick-aed-grid"></div>
+
+    <!-- Rate note -->
+    <div style="font-size:11px;color:var(--muted);text-align:center;line-height:1.6;padding:0 10px">
+      <i class="fa-solid fa-circle-info" style="color:var(--green)"></i>
+      Rates are fetched live from ExchangeRate-API. May vary slightly from bank/transfer rates.
+      Always confirm with your bank before large transactions.
+    </div>
+
   </div>
 </div>
 
@@ -5973,6 +6098,150 @@ function openProductOverview(pushKey) {
   const url = `./overview/index.html?key=${encodeURIComponent(pushKey)}`;
   window.open(url, 'alfonex_product');
 }
+
+/* ══════════════════════════════════════════
+   INR ⇄ AED CONVERTER
+══════════════════════════════════════════ */
+let _convRate = 22.80;  /* fallback: 1 AED = 22.80 INR (mid-market ~Jun 2026) */
+let _convLastFetch = 0;
+
+async function fetchLiveRate() {
+  try {
+    /* Free tier — no API key needed, 1500 req/month */
+    const res  = await fetch('https://api.exchangerate-api.com/v4/latest/AED');
+    const data = await res.json();
+    if (data?.rates?.INR) {
+      _convRate      = data.rates.INR;
+      _convLastFetch = Date.now();
+      updateRateBanner();
+      renderQuickGrids();
+      /* Recalculate open inputs */
+      if (document.getElementById('inp-inr')?.value) calcINRtoAED();
+      if (document.getElementById('inp-aed')?.value) calcAEDtoINR();
+    }
+  } catch(e) {
+    /* silently fall back to static rate */
+    updateRateBanner();
+  }
+}
+
+function updateRateBanner() {
+  const aedToInr = _convRate.toFixed(2);
+  const inrToAed = (1 / _convRate).toFixed(4);
+  const el1 = document.getElementById('conv-aed-to-inr');
+  const el2 = document.getElementById('conv-inr-to-aed');
+  const upd  = document.getElementById('conv-updated');
+  if (el1) el1.textContent = aedToInr;
+  if (el2) el2.textContent = inrToAed;
+  if (upd) {
+    const t = _convLastFetch ? new Date(_convLastFetch).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : 'Estimated';
+    upd.textContent = 'Updated ' + t;
+  }
+}
+
+function calcINRtoAED() {
+  const inp = parseFloat(document.getElementById('inp-inr')?.value) || 0;
+  const aed = inp / _convRate;
+  const out = document.getElementById('out-aed');
+  if (out) out.textContent = inp ? aed.toFixed(2) : '—';
+}
+
+function calcAEDtoINR() {
+  const inp = parseFloat(document.getElementById('inp-aed')?.value) || 0;
+  const inr = inp * _convRate;
+  const out = document.getElementById('out-inr');
+  if (out) out.textContent = inp ? Math.round(inr).toLocaleString() : '—';
+}
+
+function swapConverter() {
+  const inrVal = document.getElementById('inp-inr')?.value;
+  const aedVal = document.getElementById('out-aed')?.textContent;
+
+  /* Animate swap button */
+  const btn = document.getElementById('swap-btn');
+  if (btn) { btn.style.transform = 'rotate(180deg)'; setTimeout(()=>btn.style.transform='',300); }
+
+  if (inrVal && inrVal !== '0') {
+    /* Move result to AED input and recalc */
+    document.getElementById('inp-inr').value = '';
+    document.getElementById('out-aed').textContent = '—';
+    if (aedVal && aedVal !== '—') {
+      document.getElementById('inp-aed').value = parseFloat(aedVal);
+      calcAEDtoINR();
+    }
+  } else {
+    const aedInp = document.getElementById('inp-aed')?.value;
+    const inrOut = document.getElementById('out-inr')?.textContent?.replace(/,/g,'');
+    document.getElementById('inp-aed').value = '';
+    document.getElementById('out-inr').textContent = '—';
+    if (inrOut && inrOut !== '—') {
+      document.getElementById('inp-inr').value = parseFloat(inrOut);
+      calcINRtoAED();
+    }
+  }
+}
+
+function renderQuickGrids() {
+  const inrAmounts = [1000, 5000, 10000, 25000, 50000, 100000];
+  const aedAmounts = [10, 50, 100, 250, 500, 1000];
+
+  const inrGrid = document.getElementById('quick-inr-grid');
+  const aedGrid = document.getElementById('quick-aed-grid');
+
+  if (inrGrid) {
+    inrGrid.innerHTML = inrAmounts.map(amt => {
+      const aed = (amt / _convRate).toFixed(2);
+      return `<div onclick="setINR(${amt})" style="
+        background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius-sm);
+        padding:10px 8px;text-align:center;cursor:pointer;transition:all .12s"
+        onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-size:13px;font-weight:800;color:var(--text)">₹${amt >= 1000 ? (amt/1000)+'K' : amt}</div>
+        <div style="font-size:11px;color:var(--green);font-weight:700;margin-top:2px">= AED ${aed}</div>
+      </div>`;
+    }).join('');
+  }
+
+  if (aedGrid) {
+    aedGrid.innerHTML = aedAmounts.map(amt => {
+      const inr = Math.round(amt * _convRate).toLocaleString();
+      return `<div onclick="setAED(${amt})" style="
+        background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius-sm);
+        padding:10px 8px;text-align:center;cursor:pointer;transition:all .12s"
+        onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-size:13px;font-weight:800;color:var(--text)">AED ${amt}</div>
+        <div style="font-size:11px;color:var(--green);font-weight:700;margin-top:2px">= ₹${inr}</div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function setINR(amt) {
+  const el = document.getElementById('inp-inr');
+  if (el) { el.value = amt; calcINRtoAED(); }
+  /* Clear AED input */
+  const aedEl = document.getElementById('inp-aed');
+  const outINR = document.getElementById('out-inr');
+  if (aedEl) aedEl.value = '';
+  if (outINR) outINR.textContent = '—';
+}
+
+function setAED(amt) {
+  const el = document.getElementById('inp-aed');
+  if (el) { el.value = amt; calcAEDtoINR(); }
+  /* Clear INR input */
+  const inrEl = document.getElementById('inp-inr');
+  const outAED = document.getElementById('out-aed');
+  if (inrEl) inrEl.value = '';
+  if (outAED) outAED.textContent = '—';
+}
+
+/* Init on page load */
+window.addEventListener('DOMContentLoaded', () => {
+  updateRateBanner();
+  renderQuickGrids();
+  fetchLiveRate();   /* fetch live rate on load */
+});
+
 
 /* ══════════════════════════════════════════════
    DEVICE RESERVATION
