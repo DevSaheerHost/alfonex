@@ -742,13 +742,53 @@ a { text-decoration: none; color: inherit; }
 .p-card-storage { font-size: 11px; color: var(--muted); font-weight: 600; margin-top: 1px; }
 .p-card-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
 .p-card-grade {
-  display: inline-block; margin-top: 6px;
-  font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px;
+  display: inline-flex; align-items: center; gap: 4px; margin-top: 6px;
+  font-size: 10px; font-weight: 800; padding: 3px 9px; border-radius: 20px;
+  letter-spacing: .3px;
 }
-.grade-aplus { background: #dcfce7; color: #15803d; }
-.grade-a     { background: #dbeafe; color: #1d4ed8; }
-.grade-asis  { background: #fef3c7; color: #92400e; }
-.grade-other { background: var(--bg); color: var(--muted); }
+/* A1+ — Premium / Like Brand New */
+.grade-a1plus { background: #dcfce7; color: #15803d; }
+/* A2+ — No Complaints / Small Scratches */
+.grade-a2plus { background: #dbeafe; color: #1d4ed8; }
+/* A3+ — Some Scratches / Refurbished */
+.grade-a3plus { background: #fef3c7; color: #92400e; }
+/* Legacy */
+.grade-aplus  { background: #dcfce7; color: #15803d; }
+.grade-a      { background: #dbeafe; color: #1d4ed8; }
+.grade-asis   { background: #fef3c7; color: #92400e; }
+.grade-other  { background: var(--bg); color: var(--muted); }
+
+/* Grade detail card in product overlay */
+.grade-detail-card {
+  border-radius: var(--radius-sm); border: 1.5px solid var(--border);
+  overflow: hidden; margin: 14px 0;
+}
+.grade-detail-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; cursor: pointer; user-select: none;
+  transition: background .12s;
+}
+.grade-detail-header:hover { background: var(--bg); }
+.grade-detail-header-left { display: flex; align-items: center; gap: 10px; }
+.grade-detail-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 14px; border-radius: 20px;
+  font-size: 12px; font-weight: 900; letter-spacing: .3px;
+}
+.grade-detail-name { font-size: 13px; font-weight: 700; color: var(--text); }
+.grade-detail-sub  { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.grade-detail-chevron { font-size: 12px; color: var(--muted); transition: transform .2s; }
+.grade-detail-chevron.open { transform: rotate(180deg); }
+.grade-detail-body { display: none; padding: 4px 14px 14px; }
+.grade-detail-body.open { display: block; }
+.grade-bullet {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 5px 0; border-bottom: 1px solid var(--border);
+  font-size: 12px; color: var(--text2); line-height: 1.4;
+}
+.grade-bullet:last-child { border-bottom: none; }
+.grade-bullet-dot { flex-shrink: 0; margin-top: 3px; font-size: 8px; }
+.grade-tagline { font-size: 11px; font-weight: 700; color: var(--green); margin-top: 10px; text-align: center; letter-spacing: .3px; }
 .p-card-price { font-family: var(--font-head); font-size: 17px; font-weight: 800; color: var(--red); margin-top: 8px; }
 .p-card-qty   { font-size: 11px; color: var(--muted); margin-top: 4px; }
 /* Spacer pushes footer to the absolute bottom */
@@ -1747,6 +1787,9 @@ a { text-decoration: none; color: inherit; }
 [data-theme="dark"] #edit-modal .form-label  { color: #9CA3AF !important; }
 [data-theme="dark"] #edit-modal .form-input  { background: #2a2a2a !important; color: #f9fafb !important; border-color: #374151 !important; }
 [data-theme="dark"] #edit-modal .form-input::placeholder { color: #6B7280 !important; }
+[data-theme="dark"] .grade-a1plus    { background: #0d2a1a; color: #4ade80; }
+[data-theme="dark"] .grade-a2plus    { background: #1e2a4a; color: #60a5fa; }
+[data-theme="dark"] .grade-a3plus    { background: #2a1f00; color: #fbbf24; }
 [data-theme="dark"] .grade-aplus     { background: #0d2a1a; color: #4ade80; }
 [data-theme="dark"] .grade-a         { background: #1e2a4a; color: #60a5fa; }
 [data-theme="dark"] .grade-asis      { background: #2a1f00; color: #fbbf24; }
@@ -2823,33 +2866,83 @@ a { text-decoration: none; color: inherit; }
     <span style="font-size:18px;color:var(--green)"><i class="fa-solid fa-star"></i></span>
   </div>
   <div class="info-page-body">
-    <div class="info-block">
-      <h2><span style="background:rgba(34,197,94,0.15);color:var(--green);padding:2px 10px;border-radius:6px;font-size:14px">A+</span> Excellent</h2>
+
+    <!-- A1+ Grade -->
+    <div class="info-block" style="border-left:4px solid #15803d">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        <span style="background:#dcfce7;color:#15803d;padding:6px 16px;border-radius:20px;font-size:15px;font-weight:900;letter-spacing:.5px">⭐ A1+</span>
+        <div>
+          <div style="font-size:15px;font-weight:800;color:var(--text)">Premium Quality</div>
+          <div style="font-size:12px;color:var(--muted)">Like Brand New</div>
+        </div>
+      </div>
       <ul>
-        <li>Minimal to no signs of previous use</li>
-        <li>Battery health typically 85%+</li>
-        <li>All features fully functional</li>
-        <li>30-day limited warranty included</li>
+        <li>Premium Quality – Like Brand New</li>
+        <li>No Scratches and No Complaints</li>
+        <li>Like Brand New in Look &amp; Feel</li>
+        <li>Excellent Overall Condition</li>
+        <li>All Functions &amp; Features 100% Working</li>
+        <li>Fully Tested &amp; Quality Checked</li>
+        <li>Zero Compromise – Only Positive Experience</li>
       </ul>
+      <div class="info-highlight" style="background:#dcfce7;color:#15803d;border-color:#15803d30">
+        100% Trusted Quality — Zero Worries, Only Satisfaction
+      </div>
     </div>
-    <div class="info-block">
-      <h2><span style="background:rgba(59,130,246,0.15);color:#2563EB;padding:2px 10px;border-radius:6px;font-size:14px">A</span> Good</h2>
+
+    <div style="height:1px;background:var(--border);margin:4px 0"></div>
+
+    <!-- A2+ Grade -->
+    <div class="info-block" style="border-left:4px solid #1d4ed8">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        <span style="background:#dbeafe;color:#1d4ed8;padding:6px 16px;border-radius:20px;font-size:15px;font-weight:900;letter-spacing:.5px">✅ A2+</span>
+        <div>
+          <div style="font-size:15px;font-weight:800;color:var(--text)">No Complaints</div>
+          <div style="font-size:12px;color:var(--muted)">Some Small Scratches in Middle Frame</div>
+        </div>
+      </div>
       <ul>
-        <li>Light scratches or minor cosmetic wear</li>
-        <li>Battery health typically 80%+</li>
-        <li>All features fully functional</li>
-        <li>14-day limited warranty included</li>
+        <li>No Complaints, Everything Works Perfectly</li>
+        <li>Some Small Scratches in Middle Frame</li>
+        <li>Small Type, Hardly Noticeable</li>
+        <li>Clean Body &amp; Display Condition</li>
+        <li>All Functions &amp; Features Working Perfectly</li>
+        <li>Fully Tested &amp; Reliable Performance</li>
+        <li>Great Value with Top Performance</li>
       </ul>
+      <div class="info-highlight" style="background:#dbeafe;color:#1d4ed8;border-color:#1d4ed830">
+        Quality You Can Trust — Best Value, Top Performance
+      </div>
     </div>
-    <div class="info-block">
-      <h2><span style="background:rgba(217,119,6,0.15);color:var(--amber);padding:2px 10px;border-radius:6px;font-size:14px">ASIS</span> As-Is</h2>
+
+    <div style="height:1px;background:var(--border);margin:4px 0"></div>
+
+    <!-- A3+ Grade -->
+    <div class="info-block" style="border-left:4px solid #92400e">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        <span style="background:#fef3c7;color:#92400e;padding:6px 16px;border-radius:20px;font-size:15px;font-weight:900;letter-spacing:.5px">👍 A3+</span>
+        <div>
+          <div style="font-size:15px;font-weight:800;color:var(--text)">Good Condition</div>
+          <div style="font-size:12px;color:var(--muted)">Camera Dot Glass Changed · Some Refurbished</div>
+        </div>
+      </div>
       <ul>
-        <li>Visible cosmetic damage (cracks, dents)</li>
-        <li>May have functional issues (clearly stated)</li>
-        <li>Fully disclosed before purchase</li>
-        <li>No warranty — priced accordingly</li>
+        <li>Some Scratches on Middle Frame</li>
+        <li>Small Type, Normal Signs of Use</li>
+        <li>Camera Dot Glass Changed</li>
+        <li>Some Refurbished Type</li>
+        <li>All Functions Working Perfectly</li>
+        <li>Fully Tested &amp; Reliable Performance</li>
+        <li>Best Choice in This Range</li>
       </ul>
-      <div class="info-highlight">All devices are tested for core functionality regardless of grade.</div>
+      <div class="info-highlight" style="background:#fef3c7;color:#92400e;border-color:#92400e30">
+        Reliable &amp; Tested — Smart Choice, Great Performance
+      </div>
+    </div>
+
+    <div class="info-highlight" style="margin-top:8px">
+      <i class="fa-solid fa-shield-halved" style="color:var(--green)"></i>
+      All devices are fully tested &amp; quality checked before shipping — regardless of grade.
     </div>
   </div>
 </div>
@@ -3632,13 +3725,134 @@ function buildCatBar() {
 /* ═══════════════════════════════════
    GRADE BADGE CLASS
 ═══════════════════════════════════ */
+/* Grade definitions used across cards and product overlay */
+const GRADE_DEFS = {
+  'a1+': {
+    cls:     'grade-a1plus',
+    label:   'A1+',
+    name:    'Premium Quality',
+    sub:     'Like Brand New',
+    color:   '#15803d',
+    bg:      '#dcfce7',
+    icon:    '⭐',
+    tagline: '100% Trusted Quality — Zero Worries, Only Satisfaction',
+    bullets: [
+      'Premium Quality – Like Brand New',
+      'No Scratches and No Complaints',
+      'Like Brand New in Look & Feel',
+      'Excellent Overall Condition',
+      'All Functions & Features 100% Working',
+      'Fully Tested & Quality Checked',
+      'Zero Compromise – Only Positive Experience',
+    ]
+  },
+  'a2+': {
+    cls:     'grade-a2plus',
+    label:   'A2+',
+    name:    'No Complaints',
+    sub:     'Some Small Scratches in Middle Frame',
+    color:   '#1d4ed8',
+    bg:      '#dbeafe',
+    icon:    '✅',
+    tagline: 'Quality You Can Trust — Best Value, Top Performance',
+    bullets: [
+      'No Complaints, Everything Works Perfectly',
+      'Some Small Scratches in Middle Frame',
+      'Small Type, Hardly Noticeable',
+      'Clean Body & Display Condition',
+      'All Functions & Features Working Perfectly',
+      'Fully Tested & Reliable Performance',
+      'Great Value with Top Performance',
+    ]
+  },
+  'a3+': {
+    cls:     'grade-a3plus',
+    label:   'A3+',
+    name:    'Good Condition',
+    sub:     'Camera Dot Glass Changed · Some Refurbished',
+    color:   '#92400e',
+    bg:      '#fef3c7',
+    icon:    '👍',
+    tagline: 'Reliable & Tested — Smart Choice, Great Performance',
+    bullets: [
+      'Some Scratches on Middle Frame',
+      'Small Type, Normal Signs of Use',
+      'Camera Dot Glass Changed',
+      'Some Refurbished Type',
+      'All Functions Working Perfectly',
+      'Fully Tested & Reliable Performance',
+      'Best Choice in This Range',
+    ]
+  },
+};
+
+/* Legacy map for old grade strings */
+const GRADE_LEGACY = {
+  'a+':   'a1+',
+  'a':    'a2+',
+  'asis': 'a3+',
+};
+
+function normaliseGrade(g) {
+  if (!g) return null;
+  const gl = g.toLowerCase().trim();
+  if (GRADE_DEFS[gl])      return gl;
+  if (GRADE_LEGACY[gl])    return GRADE_LEGACY[gl];
+  /* partial match */
+  if (gl.includes('a1'))   return 'a1+';
+  if (gl.includes('a2'))   return 'a2+';
+  if (gl.includes('a3'))   return 'a3+';
+  if (gl.includes('a+'))   return 'a1+';
+  if (gl === 'a')          return 'a2+';
+  if (gl.includes('asis')) return 'a3+';
+  return null;
+}
+
 function gradeClass(g) {
-  if (!g) return 'grade-other';
-  const gl = g.toLowerCase();
-  if (gl.includes('a+')) return 'grade-aplus';
-  if (gl === 'a')        return 'grade-a';
-  if (gl.includes('asis')) return 'grade-asis';
-  return 'grade-other';
+  const key = normaliseGrade(g);
+  return key ? GRADE_DEFS[key].cls : 'grade-other';
+}
+
+function gradeLabel(g) {
+  const key = normaliseGrade(g);
+  return key ? GRADE_DEFS[key].label : (g || '');
+}
+
+/* Build the expandable grade detail card shown in product overlay */
+function buildGradeDetailCard(g) {
+  const key = normaliseGrade(g);
+  if (!key) return '';
+  const def = GRADE_DEFS[key];
+  return `<div class="grade-detail-card">
+    <div class="grade-detail-header" onclick="toggleGradeDetail(this)">
+      <div class="grade-detail-header-left">
+        <span class="grade-detail-badge" style="background:${def.bg};color:${def.color}">
+          ${def.icon} ${def.label}
+        </span>
+        <div>
+          <div class="grade-detail-name">${def.name}</div>
+          <div class="grade-detail-sub">${def.sub}</div>
+        </div>
+      </div>
+      <i class="fa-solid fa-chevron-down grade-detail-chevron"></i>
+    </div>
+    <div class="grade-detail-body">
+      ${def.bullets.map(b => `
+        <div class="grade-bullet">
+          <span class="grade-bullet-dot" style="color:${def.color}">●</span>
+          <span>${b}</span>
+        </div>`).join('')}
+      <div class="grade-tagline">${def.tagline}</div>
+    </div>
+  </div>`;
+}
+
+function toggleGradeDetail(header) {
+  const body    = header.nextElementSibling;
+  const chevron = header.querySelector('.grade-detail-chevron');
+  const isOpen  = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  chevron.classList.toggle('open', !isOpen);
 }
 
 /* ═══════════════════════════════════
@@ -4047,6 +4261,7 @@ function pCardHTML(id, p, idx) {
     ${p.imageUrl?`<img class="p-card-img" src="${p.imageUrl}" alt="${(p.title||'').replace(/"/g,'&quot;')}" loading="lazy" style="${p.isComingSoon?'filter:grayscale(.4)':''}">`:'<div class="p-card-img" style="display:flex;align-items:center;justify-content:center;font-size:40px;background:#f5f5f7">📦</div>'}
     <div class="p-card-body">
       <div class="p-card-model">${p.title||'—'}</div>
+      ${p.grade ? `<span class="p-card-grade ${gradeClass(p.grade)}">${gradeLabel(p.grade)}</span>` : ''}
       <div class="p-card-price">${p.isComingSoon ? '<span style="color:#7c3aed">Coming Soon</span>' : priceTxt}</div>
       ${stockTxt ? `<div class="p-card-qty">${stockTxt}</div>` : ''}
       <div class="p-card-spacer"></div>
@@ -5572,6 +5787,7 @@ function openProductInline(pushKey, opts = {}) {
         <span class="pov-stext ${sc}" id="pov-stext">${sc==='in'?'In Stock':sc==='low'?'Only '+stock+' left':'Out of Stock'}</span>
         <span class="pov-ssub" id="pov-ssub">${sc==='in'?stock+' units available':sc==='low'?'Order soon':'Check back later'}</span>
       </div>
+      ${p.grade ? buildGradeDetailCard(p.grade) : ''}
       ${p.description ? '<div class="prod-ov-desc-label">About this product</div><div class="prod-ov-desc">'+escHtml(p.description)+'</div>' : ''}
     </div>`;
 
