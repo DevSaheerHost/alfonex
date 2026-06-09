@@ -2913,7 +2913,7 @@ a { text-decoration: none; color: inherit; }
       </div>
       <div style="text-align:right">
         <div style="font-size:10px;opacity:.7;margin-bottom:4px" id="conv-updated">Updating…</div>
-        <button onclick="fetchLiveRate()" style="
+        <button id="conv-refresh-btn" onclick="fetchLiveRate()" style="
           background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);
           color:#fff;border-radius:20px;padding:5px 14px;font-size:11px;
           font-weight:700;cursor:pointer;font-family:var(--font-body)">
@@ -2930,17 +2930,17 @@ a { text-decoration: none; color: inherit; }
         <div style="font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">
           🇮🇳 INR → 🇦🇪 AED
         </div>
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="position:relative;flex:1">
-            <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:16px;font-weight:800;color:var(--muted)">₹</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="position:relative;flex:1;min-width:0">
+            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:15px;font-weight:800;color:var(--muted);pointer-events:none">₹</span>
             <input type="number" id="inp-inr" class="reserve-input" inputmode="decimal"
-              placeholder="0" min="0" style="padding-left:32px;font-size:18px;font-weight:800;height:52px"
+              placeholder="0" min="0" style="padding-left:26px;padding-right:8px;font-size:16px;font-weight:800;height:52px;width:100%"
               oninput="calcINRtoAED()">
           </div>
-          <i class="fa-solid fa-arrow-right" style="color:var(--muted);font-size:16px;flex-shrink:0"></i>
-          <div style="flex:1;background:var(--bg);border-radius:var(--radius-sm);height:52px;display:flex;align-items:center;padding:0 14px;border:1.5px solid var(--border)">
-            <span style="font-size:13px;font-weight:700;color:var(--muted);margin-right:6px">AED</span>
-            <span id="out-aed" style="font-size:18px;font-weight:900;color:var(--green);font-family:var(--font-head)">—</span>
+          <i class="fa-solid fa-arrow-right" style="color:var(--muted);font-size:14px;flex-shrink:0"></i>
+          <div style="flex:1;min-width:0;background:var(--bg);border-radius:var(--radius-sm);height:52px;display:flex;align-items:center;padding:0 10px;border:1.5px solid var(--border);overflow:hidden">
+            <span style="font-size:12px;font-weight:700;color:var(--muted);margin-right:4px;flex-shrink:0">AED</span>
+            <span id="out-aed" style="font-size:16px;font-weight:900;color:var(--green);font-family:var(--font-head);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">—</span>
           </div>
         </div>
       </div>
@@ -2962,17 +2962,17 @@ a { text-decoration: none; color: inherit; }
         <div style="font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">
           🇦🇪 AED → 🇮🇳 INR
         </div>
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="position:relative;flex:1">
-            <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:800;color:var(--muted)">AED</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="position:relative;flex:1;min-width:0">
+            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:800;color:var(--muted);pointer-events:none">AED</span>
             <input type="number" id="inp-aed" class="reserve-input" inputmode="decimal"
-              placeholder="0" min="0" style="padding-left:46px;font-size:18px;font-weight:800;height:52px"
+              placeholder="0" min="0" style="padding-left:42px;padding-right:8px;font-size:16px;font-weight:800;height:52px;width:100%"
               oninput="calcAEDtoINR()">
           </div>
-          <i class="fa-solid fa-arrow-right" style="color:var(--muted);font-size:16px;flex-shrink:0"></i>
-          <div style="flex:1;background:var(--bg);border-radius:var(--radius-sm);height:52px;display:flex;align-items:center;padding:0 14px;border:1.5px solid var(--border)">
-            <span style="font-size:16px;font-weight:800;color:var(--muted);margin-right:4px">₹</span>
-            <span id="out-inr" style="font-size:18px;font-weight:900;color:var(--green);font-family:var(--font-head)">—</span>
+          <i class="fa-solid fa-arrow-right" style="color:var(--muted);font-size:14px;flex-shrink:0"></i>
+          <div style="flex:1;min-width:0;background:var(--bg);border-radius:var(--radius-sm);height:52px;display:flex;align-items:center;padding:0 10px;border:1.5px solid var(--border);overflow:hidden">
+            <span style="font-size:15px;font-weight:800;color:var(--muted);margin-right:3px;flex-shrink:0">₹</span>
+            <span id="out-inr" style="font-size:16px;font-weight:900;color:var(--green);font-family:var(--font-head);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">—</span>
           </div>
         </div>
       </div>
@@ -6102,12 +6102,29 @@ function openProductOverview(pushKey) {
 /* ══════════════════════════════════════════
    INR ⇄ AED CONVERTER
 ══════════════════════════════════════════ */
-let _convRate = 22.80;  /* fallback: 1 AED = 22.80 INR (mid-market ~Jun 2026) */
+let _convRate = 22.80;       /* fallback: 1 AED = 22.80 INR */
 let _convLastFetch = 0;
+let _convAdminRate = null;   /* if admin set a manual rate, this holds it */
+
+/* Listen for admin-set rate in Firebase. If present, it overrides live rate. */
+db.ref('settings/exchangeRate').on('value', snap => {
+  const v = snap.val();
+  if (v !== null && v !== undefined && Number(v) > 0) {
+    _convAdminRate = Number(v);
+    _convRate = _convAdminRate;
+    updateRateBanner();
+    renderQuickGrids();
+    if (document.getElementById('inp-inr')?.value) calcINRtoAED();
+    if (document.getElementById('inp-aed')?.value) calcAEDtoINR();
+  } else {
+    _convAdminRate = null;
+  }
+});
 
 async function fetchLiveRate() {
+  /* If admin has set a manual rate, don't override it with live */
+  if (_convAdminRate !== null) { updateRateBanner(); renderQuickGrids(); return; }
   try {
-    /* Free tier — no API key needed, 1500 req/month */
     const res  = await fetch('https://api.exchangerate-api.com/v4/latest/AED');
     const data = await res.json();
     if (data?.rates?.INR) {
@@ -6115,12 +6132,10 @@ async function fetchLiveRate() {
       _convLastFetch = Date.now();
       updateRateBanner();
       renderQuickGrids();
-      /* Recalculate open inputs */
       if (document.getElementById('inp-inr')?.value) calcINRtoAED();
       if (document.getElementById('inp-aed')?.value) calcAEDtoINR();
     }
   } catch(e) {
-    /* silently fall back to static rate */
     updateRateBanner();
   }
 }
@@ -6134,9 +6149,16 @@ function updateRateBanner() {
   if (el1) el1.textContent = aedToInr;
   if (el2) el2.textContent = inrToAed;
   if (upd) {
-    const t = _convLastFetch ? new Date(_convLastFetch).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : 'Estimated';
-    upd.textContent = 'Updated ' + t;
+    if (_convAdminRate !== null) {
+      upd.textContent = 'Official Alfonex rate';
+    } else {
+      const t = _convLastFetch ? new Date(_convLastFetch).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : 'Estimated';
+      upd.textContent = 'Updated ' + t;
+    }
   }
+  /* Hide refresh button when admin controls the rate */
+  const rbtn = document.getElementById('conv-refresh-btn');
+  if (rbtn) rbtn.style.display = (_convAdminRate !== null) ? 'none' : '';
 }
 
 function calcINRtoAED() {
