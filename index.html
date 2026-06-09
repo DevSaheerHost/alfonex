@@ -3236,6 +3236,12 @@ const APP = {
   _pendingRoute: null
 };
 
+/* ── Exchange rate state (AED→INR). Declared early so getProdPrice and the
+   startup listeners can use them before the converter section loads. ── */
+let _convRate = 22.80;       /* fallback: 1 AED = 22.80 INR */
+let _convLastFetch = 0;
+let _convAdminRate = null;   /* admin-set rate overrides live, if present */
+
 /* ═══════════════════════════════════
    CURRENCY PRICE HELPER
    Picks the right stored price for the
@@ -3244,10 +3250,33 @@ const APP = {
 function getProdPrice(p) {
   if (!p) return 0;
   const cur = APP.cur;
-  if (cur === 'inr' && p.priceINR != null && Number(p.priceINR) > 0) return Number(p.priceINR);
-  if (cur === 'aed' && p.priceAED != null && Number(p.priceAED) > 0) return Number(p.priceAED);
-  if (cur === 'usd' && p.priceUSD != null && Number(p.priceUSD) > 0) return Number(p.priceUSD);
-  return Number(p.price) || 0;  /* fallback to base price */
+
+  /* INR: use explicit priceINR if admin set it; otherwise convert AED → INR live */
+  if (cur === 'inr') {
+    if (p.priceINR != null && Number(p.priceINR) > 0) return Number(p.priceINR);
+    /* No INR in DB — convert the AED base price using current rate */
+    const aed = (p.priceAED != null && Number(p.priceAED) > 0) ? Number(p.priceAED) : Number(p.price) || 0;
+    return aed > 0 ? Math.round(aed * _convRate) : 0;
+  }
+
+  /* USD: use explicit priceUSD if set; else fall back to base */
+  if (cur === 'usd') {
+    if (p.priceUSD != null && Number(p.priceUSD) > 0) return Number(p.priceUSD);
+    return Number(p.price) || 0;
+  }
+
+  /* AED (default): explicit priceAED, else base price */
+  if (p.priceAED != null && Number(p.priceAED) > 0) return Number(p.priceAED);
+  return Number(p.price) || 0;
+}
+
+/* Returns true if the price shown for this product is auto-converted (not stored) */
+function isPriceConverted(p) {
+  if (!p || APP.cur !== 'inr') return false;
+  /* Converted only when INR is NOT explicitly set but an AED/base price exists */
+  const hasINR = p.priceINR != null && Number(p.priceINR) > 0;
+  const hasAED = (p.priceAED != null && Number(p.priceAED) > 0) || (Number(p.price) > 0);
+  return !hasINR && hasAED;
 }
 
 /* ═══════════════════════════════════
@@ -5760,6 +5789,43 @@ db.ref('products').on('value', snap => {
   tryHide();
 });
 
+/* ════ EXCHANGE RATE (AED→INR) — loaded early for product price conversion ════ */
+/* _convRate / _convAdminRate are declared in the converter section below,
+   but this listener ensures the rate is fetched at startup so INR prices
+   are correct on first paint. When it arrives, re-render visible prices. */
+db.ref('settings/exchangeRate').on('value', snap => {
+  const v = snap.val();
+  if (v !== null && v !== undefined && Number(v) > 0) {
+    _convAdminRate = Number(v);
+    _convRate = Number(v);
+  } else {
+    _convAdminRate = null;
+  }
+  /* Re-render any visible product prices with the correct rate */
+  if (typeof renderProds === 'function' && APP._loaded?.prods) {
+    try { renderProds(); } catch(e){}
+  }
+  if (typeof updateRateBanner === 'function') { try { updateRateBanner(); renderQuickGrids(); } catch(e){} }
+});
+
+/* If admin set no rate, fetch live market rate once at startup for conversions */
+(async function _loadStartupRate(){
+  /* small delay so _convAdminRate listener resolves first */
+  setTimeout(async () => {
+    if (_convAdminRate !== null) return;  /* admin rate wins */
+    try {
+      const res  = await fetch('https://api.exchangerate-api.com/v4/latest/AED');
+      const data = await res.json();
+      if (data?.rates?.INR) {
+        _convRate = data.rates.INR;
+        _convLastFetch = Date.now();
+        if (typeof renderProds === 'function' && APP._loaded?.prods) { try { renderProds(); } catch(e){} }
+        if (typeof updateRateBanner === 'function') { try { updateRateBanner(); renderQuickGrids(); } catch(e){} }
+      }
+    } catch(e){}
+  }, 1200);
+})();
+
 /* Init */
 updateBadges();
 
@@ -5917,7 +5983,8 @@ function openProductInline(pushKey, opts = {}) {
       <div class="prod-ov-title">${escHtml(p.title||'—')}</div>
       <div class="prod-ov-price-row">
         <div class="prod-ov-price" id="pov-price">${SYM[APP.cur]}${getProdPrice(p).toLocaleString()}</div>
-        ${hasV ? '<div class="prod-ov-price-note" id="pov-price-note">base price</div>' : ''}
+        ${hasV ? '<div class="prod-ov-price-note" id="pov-price-note">base price</div>'
+               : (isPriceConverted(p) ? `<div class="prod-ov-price-note">≈ converted at ₹${_convRate.toFixed(2)}/AED</div>` : '')}
       </div>
       ${varHTML}
       <div class="prod-ov-divider"></div>
@@ -6101,25 +6168,12 @@ function openProductOverview(pushKey) {
 
 /* ══════════════════════════════════════════
    INR ⇄ AED CONVERTER
+   (rate state _convRate/_convLastFetch/_convAdminRate
+    is declared near the top of the script)
 ══════════════════════════════════════════ */
-let _convRate = 22.80;       /* fallback: 1 AED = 22.80 INR */
-let _convLastFetch = 0;
-let _convAdminRate = null;   /* if admin set a manual rate, this holds it */
 
-/* Listen for admin-set rate in Firebase. If present, it overrides live rate. */
-db.ref('settings/exchangeRate').on('value', snap => {
-  const v = snap.val();
-  if (v !== null && v !== undefined && Number(v) > 0) {
-    _convAdminRate = Number(v);
-    _convRate = _convAdminRate;
-    updateRateBanner();
-    renderQuickGrids();
-    if (document.getElementById('inp-inr')?.value) calcINRtoAED();
-    if (document.getElementById('inp-aed')?.value) calcAEDtoINR();
-  } else {
-    _convAdminRate = null;
-  }
-});
+/* The startup exchangeRate listener (near products listener) already keeps
+   _convRate / _convAdminRate in sync. This converter just reads them. */
 
 async function fetchLiveRate() {
   /* If admin has set a manual rate, don't override it with live */
