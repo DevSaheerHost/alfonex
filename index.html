@@ -5884,6 +5884,35 @@ db.ref('settings/exchangeRate').on('value', snap => {
 /* Init */
 updateBadges();
 
+/* ── Client Presence Heartbeat ──
+   Write to client_presence/{uid} every 30s so admin can see online clients.
+   Uses Firebase Auth uid if signed in, else a stable anonymous session id. */
+(function _initClientPresence() {
+  const _sessionId = (() => {
+    let id = sessionStorage.getItem('ia_session');
+    if (!id) { id = 'anon_' + Math.random().toString(36).slice(2,10) + '_' + Date.now(); sessionStorage.setItem('ia_session', id); }
+    return id;
+  })();
+
+  function _writeClientPresence() {
+    const uid  = auth.currentUser?.uid || _sessionId;
+    const name = auth.currentUser?.displayName || APP.user?.name || '';
+    db.ref('client_presence/' + uid).set({
+      lastSeen: Date.now(),
+      name,
+      page:     location.hash || '#home',
+      uid
+    }).catch(() => {});
+  }
+
+  /* Write immediately + every 30s */
+  _writeClientPresence();
+  setInterval(() => { if (document.visibilityState !== 'hidden') _writeClientPresence(); }, 30000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') _writeClientPresence(); });
+  /* Update page on navigation */
+  window.addEventListener('hashchange', () => setTimeout(_writeClientPresence, 500));
+})();
+
 /* ════ THEME ════ */
 const LOGO_LIGHT = './assets/logo/light_nobg.png';
 const LOGO_DARK  = './assets/logo/dark_nobg.png';
