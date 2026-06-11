@@ -29,7 +29,7 @@ export default function BottomNav() {
     href === '/' ? pathname === '/' : pathname.startsWith(href);
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white dark:border-dark-border dark:bg-dark-bg">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white dark:border-dark-border dark:bg-dark-bg lg:hidden">
       <div className="mx-auto flex max-w-2xl items-center justify-around">
         {NAV_ITEMS.map((item) => {
           const active = isActive(item.href);

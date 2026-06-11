@@ -5,6 +5,7 @@ import { CartProvider }  from '@/contexts/CartContext';
 import { AppProvider }   from '@/contexts/AppContext';
 import Header            from '@/components/layout/Header';
 import BottomNav         from '@/components/layout/BottomNav';
+import SideNav           from '@/components/layout/SideNav';
 
 export const metadata: Metadata = {
   title:       'Alfonex — Genuine Apple Devices',
@@ -46,9 +47,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <CartProvider>
               <div className="min-h-screen bg-gray-100 dark:bg-[#111]">
                 <Header />
-                <main className="pb-20">
-                  {children}
-                </main>
+                <div className="mx-auto max-w-6xl lg:flex lg:gap-6 lg:px-6 lg:pt-4">
+                  <SideNav />
+                  <main className="min-w-0 flex-1 pb-20 lg:pb-10">
+                    {children}
+                  </main>
+                </div>
                 <BottomNav />
               </div>
             </CartProvider>

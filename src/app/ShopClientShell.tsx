@@ -67,7 +67,7 @@ export default function ShopClientShell({ products, featured, banners }: Props) 
           <p className="text-sm">No products found</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
           {displayed.map((p) => (
             <ProductCard key={p.id} product={p} />
           ))}
