@@ -9,7 +9,11 @@ function toProducts(snapshot: Record<string, unknown>): Product[] {
   return Object.entries(snapshot)
     .map(([id, data]) => ({ id, ...(data as object) } as Product))
     .filter((p) => !p.isHidden)
-    .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
+    .sort((a, b) => {
+      const t = (v: string | number | undefined) =>
+        typeof v === 'number' ? v : new Date(v ?? 0).getTime();
+      return t(b.createdAt) - t(a.createdAt);
+    });
 }
 
 // ─── Reads ────────────────────────────────────────────────────────────────────

@@ -104,7 +104,11 @@ export async function getUserOrders(): Promise<Order[]> {
 
   return Object.entries(snap.val() as Record<string, object>)
     .map(([id, data]) => ({ id, ...data }) as Order)
-    .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
+    .sort((a, b) => {
+      const t = (v: string | number | undefined) =>
+        typeof v === 'number' ? v : new Date(v ?? 0).getTime();
+      return t(b.createdAt) - t(a.createdAt);
+    });
 }
 
 // ─── Get single order (owner-only) ────────────────────────────────────────────
