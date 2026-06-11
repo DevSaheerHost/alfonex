@@ -10,13 +10,50 @@ import type { Product } from '@/lib/types';
 const POPULAR = ['iPhone 15', 'MacBook Air', 'AirPods Pro', 'Apple Watch', 'iPad'];
 const HISTORY_KEY = 'ia_search_history';
 
-function searchProducts(products: Product[], q: string): Product[] {
-  if (!q.trim()) return [];
-  const term = q.toLowerCase().trim();
-  return products.filter((p) => {
-    const hay = `${p.title} ${p.description ?? ''} ${p.category ?? ''}`.toLowerCase();
-    return hay.includes(term);
-  });
+function normalizeQuery(raw: string): string {
+  let q = raw.toLowerCase().trim();
+
+  // Expand Apple shorthands — order matters (more specific first)
+  const aliases: [RegExp, string][] = [
+    [/\biphone\s*(\d)/g,  'iphone $1'],   // iphone15 → iphone 15
+    [/\bios\s*(\d+)/g,    'iphone $1'],   // ios15    → iphone 15
+    [/\bip\s*(\d)/g,      'iphone $1'],   // ip15, ip 15 → iphone 15
+    [/\bip\b/g,           'iphone'],      // standalone ip → iphone
+    [/\bmbp\b/g,          'macbook pro'],
+    [/\bmba\b/g,          'macbook air'],
+    [/\bmb\b/g,           'macbook'],
+    [/\bap\b/g,           'airpods'],
+    [/\baw\b/g,           'apple watch'],
+    [/\bipad\s*(\d)/g,    'ipad $1'],     // ipad10 → ipad 10
+  ];
+
+  for (const [pattern, replacement] of aliases) {
+    q = q.replace(pattern, replacement);
+  }
+
+  // Separate any remaining letter-digit runs: "watch8" → "watch 8"
+  q = q.replace(/([a-z])(\d)/g, '$1 $2').replace(/(\d)([a-z])/g, '$1 $2');
+
+  return q.trim();
+}
+
+function searchProducts(products: Product[], raw: string): Product[] {
+  if (!raw.trim()) return [];
+  const tokens = normalizeQuery(raw).split(/\s+/).filter((t) => t.length > 0);
+  if (!tokens.length) return [];
+
+  const scored: { p: Product; score: number }[] = [];
+
+  for (const p of products) {
+    const title = p.title.toLowerCase();
+    const hay   = `${title} ${p.description ?? ''} ${p.category ?? ''}`.toLowerCase();
+    if (!tokens.every((t) => hay.includes(t))) continue;
+    // Matches in title rank higher than description/category matches
+    const score = tokens.reduce((acc, t) => acc + (title.includes(t) ? 2 : 1), 0);
+    scored.push({ p, score });
+  }
+
+  return scored.sort((a, b) => b.score - a.score).map((s) => s.p);
 }
 
 export default function SearchPage() {
