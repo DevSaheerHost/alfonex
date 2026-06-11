@@ -48,11 +48,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Exchange the Firebase ID token for a secure HttpOnly session cookie
   const createSession = useCallback(async (fbUser: User) => {
     const idToken = await fbUser.getIdToken();
-    await fetch('/api/auth/session', {
+    const res = await fetch('/api/auth/session', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ idToken }),
     });
+    if (!res.ok) throw new Error('Session creation failed — check Firebase Admin config');
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {

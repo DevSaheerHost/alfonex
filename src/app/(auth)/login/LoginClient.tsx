@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -12,16 +12,16 @@ export default function LoginClient() {
   const [error, setError]         = useState('');
   const [isPending, startTransition] = useTransition();
   const { user, loading, login, register } = useAuth();
-  const router                   = useRouter();
   const searchParams             = useSearchParams();
   const redirectTo               = searchParams.get('redirect') ?? '/';
 
-  // Redirect as soon as auth state confirms the user is signed in
+  // Hard-navigate once auth is confirmed so the server gets fresh cookies
+  // (router.replace uses a client cache that may serve a stale redirect)
   useEffect(() => {
     if (!loading && user) {
-      router.replace(redirectTo);
+      window.location.replace(redirectTo);
     }
-  }, [user, loading, redirectTo, router]);
+  }, [user, loading, redirectTo]);
 
   // ── Login ──────────────────────────────────────────────────────────────────
   const [loginEmail, setLoginEmail]       = useState('');
