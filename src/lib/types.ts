@@ -156,6 +156,24 @@ export interface Banner {
   order: number;
 }
 
+// ─── Warranty ─────────────────────────────────────────────────────────────────
+
+export type WarrantyStatus = 'active' | 'expired' | 'unknown';
+
+export interface WarrantyDevice {
+  imei:           string;
+  model?:         string;
+  storage?:       string;
+  colour?:        string;
+  version?:       string;
+  batteryHealth?: string;
+  warrantyStatus: WarrantyStatus;
+  warrantyStart?:  string;
+  warrantyExpire?: string;
+  soldDate?:       string;
+  notes?:          string;
+}
+
 // ─── User Profile ─────────────────────────────────────────────────────────────
 
 export interface UserProfile {

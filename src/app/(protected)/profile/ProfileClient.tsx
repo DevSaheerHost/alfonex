@@ -77,9 +77,10 @@ export default function ProfileClient({ initialProfile }: Props) {
       {/* Quick links */}
       <div className="card mb-4 divide-y divide-gray-100 dark:divide-gray-800">
         {[
-          { href: '/orders',    icon: 'fa-box',          label: 'My Orders' },
-          { href: '/addresses', icon: 'fa-location-dot', label: 'Saved Addresses' },
-          { href: '/wishlist',  icon: 'fa-heart',        label: 'Wishlist' },
+          { href: '/orders',    icon: 'fa-box',           label: 'My Orders' },
+          { href: '/addresses', icon: 'fa-location-dot',  label: 'Saved Addresses' },
+          { href: '/wishlist',  icon: 'fa-heart',         label: 'Wishlist' },
+          { href: '/warranty',  icon: 'fa-shield-halved', label: 'Warranty Claims' },
         ].map((item) => (
           <Link
             key={item.href}
