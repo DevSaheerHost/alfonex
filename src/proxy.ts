@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Routes that require the user to be authenticated
 const PROTECTED_PATHS = [
   '/orders',
   '/profile',
@@ -9,10 +8,9 @@ const PROTECTED_PATHS = [
   '/checkout',
 ];
 
-// Routes only accessible when NOT authenticated
 const AUTH_PATHS = ['/login'];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const sessionCookie = request.cookies.get('__session')?.value;
   const isAuthenticated = Boolean(sessionCookie);
@@ -34,7 +32,6 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Run middleware on all routes except Next.js internals and static files
   matcher: [
     '/((?!_next/static|_next/image|favicon.ico|assets|api/auth).*)',
   ],
