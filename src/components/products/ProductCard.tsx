@@ -4,6 +4,7 @@ import Link  from 'next/link';
 import Image from 'next/image';
 import { useApp, useProductPrice } from '@/contexts/AppContext';
 import { useCart }                  from '@/contexts/CartContext';
+import { useWishlist }              from '@/contexts/WishlistContext';
 import type { Product }             from '@/lib/types';
 import { CURRENCY_SYMBOLS }         from '@/lib/types';
 
@@ -21,6 +22,8 @@ export default function ProductCard({ product }: Props) {
   const { currency } = useApp();
   const getProdPrice = useProductPrice();
   const { addToCart } = useCart();
+  const { toggle, has } = useWishlist();
+  const wished = has(product.id);
 
   const price     = getProdPrice(product);
   const symbol    = CURRENCY_SYMBOLS[currency];
@@ -65,6 +68,15 @@ export default function ProductCard({ product }: Props) {
             {product.isFeatured   && <span className="badge badge-yellow">Featured</span>}
             {isOOS                && <span className="badge badge-gray">Out of Stock</span>}
           </div>
+
+          {/* Wishlist */}
+          <button
+            onClick={(e) => { e.preventDefault(); toggle(product.id); }}
+            aria-label={wished ? 'Remove from wishlist' : 'Add to wishlist'}
+            className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 shadow-sm backdrop-blur-sm transition hover:scale-110 active:scale-95 dark:bg-gray-900/80"
+          >
+            <i className={`fa-heart text-sm ${wished ? 'fa-solid text-red-500' : 'fa-regular text-gray-400'}`} />
+          </button>
         </div>
 
         {/* Info */}

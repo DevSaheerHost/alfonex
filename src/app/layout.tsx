@@ -3,6 +3,7 @@ import './globals.css';
 import { AuthProvider }  from '@/contexts/AuthContext';
 import { CartProvider }  from '@/contexts/CartContext';
 import { AppProvider }   from '@/contexts/AppContext';
+import { WishlistProvider } from '@/contexts/WishlistContext';
 import Header            from '@/components/layout/Header';
 import BottomNav         from '@/components/layout/BottomNav';
 import SideNav           from '@/components/layout/SideNav';
@@ -45,6 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AppProvider>
           <AuthProvider>
             <CartProvider>
+            <WishlistProvider>
               <div className="min-h-screen bg-gray-100 dark:bg-[#111]">
                 <Header />
                 <div className="mx-auto max-w-6xl lg:flex lg:gap-6 lg:px-6 lg:pt-4">
@@ -55,6 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </div>
                 <BottomNav />
               </div>
+            </WishlistProvider>
             </CartProvider>
           </AuthProvider>
         </AppProvider>

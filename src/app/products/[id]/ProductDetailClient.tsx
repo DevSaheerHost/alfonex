@@ -5,6 +5,7 @@ import Link    from 'next/link';
 import { useState } from 'react';
 import { useApp, useProductPrice } from '@/contexts/AppContext';
 import { useCart }                  from '@/contexts/CartContext';
+import { useWishlist }              from '@/contexts/WishlistContext';
 import type { Product, VariantGroup } from '@/lib/types';
 import { CURRENCY_SYMBOLS }           from '@/lib/types';
 
@@ -20,6 +21,8 @@ export default function ProductDetailClient({ product }: Props) {
   const { currency }    = useApp();
   const getProdPrice    = useProductPrice();
   const { addToCart }   = useCart();
+  const { toggle, has } = useWishlist();
+  const wished          = has(product.id);
 
   const price  = getProdPrice(product);
   const symbol = CURRENCY_SYMBOLS[currency];
@@ -95,9 +98,19 @@ export default function ProductDetailClient({ product }: Props) {
               </div>
             )}
 
-            <p className="mt-3 text-2xl font-bold text-primary-600 dark:text-primary-400 lg:text-3xl">
-              {symbol}{price.toLocaleString()}
-            </p>
+            <div className="mt-3 flex items-center gap-3">
+              <p className="text-2xl font-bold text-primary-600 dark:text-primary-400 lg:text-3xl">
+                {symbol}{price.toLocaleString()}
+              </p>
+              <button
+                onClick={() => toggle(product.id)}
+                aria-label={wished ? 'Remove from wishlist' : 'Save to wishlist'}
+                className="flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium transition hover:border-red-300 hover:text-red-500 dark:border-gray-700 dark:text-gray-300"
+              >
+                <i className={`fa-heart text-sm ${wished ? 'fa-solid text-red-500' : 'fa-regular text-gray-400'}`} />
+                {wished ? 'Saved' : 'Save'}
+              </button>
+            </div>
           </div>
 
           {/* Variants */}
