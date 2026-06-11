@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition, useEffect } from 'react';
+import { useState, useTransition } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,19 +9,11 @@ type Tab = 'login' | 'register';
 
 export default function LoginClient() {
   const [tab, setTab]            = useState<Tab>('login');
-  const [error, setError]         = useState('');
+  const [error, setError]        = useState('');
   const [isPending, startTransition] = useTransition();
-  const { user, loading, login, register } = useAuth();
+  const { login, register }      = useAuth();
   const searchParams             = useSearchParams();
   const redirectTo               = searchParams.get('redirect') ?? '/';
-
-  // Hard-navigate once auth is confirmed so the server gets fresh cookies
-  // (router.replace uses a client cache that may serve a stale redirect)
-  useEffect(() => {
-    if (!loading && user) {
-      window.location.replace(redirectTo);
-    }
-  }, [user, loading, redirectTo]);
 
   // ── Login ──────────────────────────────────────────────────────────────────
   const [loginEmail, setLoginEmail]       = useState('');
@@ -32,7 +24,7 @@ export default function LoginClient() {
     startTransition(async () => {
       try {
         await login(loginEmail.trim(), loginPassword);
-        // Redirect is handled by the useEffect above once user state updates
+        window.location.replace(redirectTo);
       } catch (e: unknown) {
         setError(friendlyError(e));
       }
@@ -54,7 +46,7 @@ export default function LoginClient() {
     startTransition(async () => {
       try {
         await register(name.trim(), regEmail.trim(), pass, phone.trim());
-        // Redirect is handled by the useEffect above once user state updates
+        window.location.replace(redirectTo);
       } catch (e: unknown) {
         setError(friendlyError(e));
       }
@@ -139,6 +131,8 @@ function friendlyError(e: unknown): string {
     return 'Invalid email or password.';
   if (msg.includes('email-already-in-use'))
     return 'An account with this email already exists.';
+  if (msg.includes('Session creation failed'))
+    return 'Login failed — server session error. Please contact support.';
   if (msg.includes('network-request-failed'))
     return 'Network error. Please check your connection.';
   return msg || 'Something went wrong. Please try again.';
