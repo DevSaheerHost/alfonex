@@ -36,10 +36,11 @@ export default function Header() {
   const { totalQty }           = useCart();
   const { currency, setCurrency, theme, toggleTheme } = useApp();
   const { user }               = useAuth();
-  const { notifications, unreadCount, pushPermission, markRead, markAllRead, enablePush } = useNotifications();
+  const { notifications, unreadCount, pushPermission, pushError, markRead, markAllRead, enablePush } = useNotifications();
   const router                 = useRouter();
-  const [showCur,   setShowCur]   = useState(false);
-  const [showNotif, setShowNotif] = useState(false);
+  const [showCur,    setShowCur]    = useState(false);
+  const [showNotif,  setShowNotif]  = useState(false);
+  const [enablingPush, setEnablingPush] = useState(false);
 
   const notifRef = useRef<HTMLDivElement>(null);
 
@@ -145,16 +146,32 @@ export default function Header() {
                   </div>
 
                   {/* Enable push banner */}
-                  {pushPermission !== 'granted' && pushPermission !== 'unsupported' && pushPermission !== 'denied' && (
+                  {pushPermission !== 'granted' && pushPermission !== 'unsupported' && (
                     <div className="border-b border-gray-100 px-4 py-2.5 dark:border-gray-700">
-                      <button
-                        onClick={enablePush}
-                        className="flex w-full items-center gap-2 rounded-xl bg-primary-50 px-3 py-2 text-xs font-semibold text-primary-700 transition hover:bg-primary-100 dark:bg-primary-950/40 dark:text-primary-300"
-                      >
-                        <i className="fa fa-bell-slash text-sm" />
-                        Enable push notifications
-                        <i className="fa fa-chevron-right ml-auto text-[10px]" />
-                      </button>
+                      {pushError ? (
+                        <p className="rounded-xl bg-red-50 px-3 py-2 text-[11px] text-red-600 dark:bg-red-950/40 dark:text-red-400">
+                          <i className="fa fa-triangle-exclamation mr-1" />
+                          {pushError}
+                        </p>
+                      ) : pushPermission === 'denied' ? (
+                        <p className="text-[11px] text-gray-400">
+                          Push blocked in browser settings.
+                        </p>
+                      ) : (
+                        <button
+                          onClick={async () => {
+                            setEnablingPush(true);
+                            await enablePush();
+                            setEnablingPush(false);
+                          }}
+                          disabled={enablingPush}
+                          className="flex w-full items-center gap-2 rounded-xl bg-primary-50 px-3 py-2 text-xs font-semibold text-primary-700 transition hover:bg-primary-100 disabled:opacity-50 dark:bg-primary-950/40 dark:text-primary-300"
+                        >
+                          <i className={`fa ${enablingPush ? 'fa-spinner fa-spin' : 'fa-bell-slash'} text-sm`} />
+                          {enablingPush ? 'Enabling…' : 'Enable push notifications'}
+                          {!enablingPush && <i className="fa fa-chevron-right ml-auto text-[10px]" />}
+                        </button>
+                      )}
                     </div>
                   )}
 

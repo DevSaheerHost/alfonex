@@ -12,6 +12,7 @@ interface NotifCtx {
   notifications:  AppNotification[];
   unreadCount:    number;
   pushPermission: NotificationPermission | 'unsupported';
+  pushError:      string;
   markRead:       (id: string) => void;
   markAllRead:    () => void;
   enablePush:     () => Promise<void>;
@@ -21,6 +22,7 @@ const NotifContext = createContext<NotifCtx>({
   notifications: [],
   unreadCount: 0,
   pushPermission: 'default',
+  pushError: '',
   markRead: () => {},
   markAllRead: () => {},
   enablePush: async () => {},
@@ -30,6 +32,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   const { user } = useAuth();
   const [notifications,  setNotifications]  = useState<AppNotification[]>([]);
   const [pushPermission, setPushPermission] = useState<NotificationPermission | 'unsupported'>('default');
+  const [pushError,      setPushError]      = useState('');
 
   // Read initial permission state
   useEffect(() => {
@@ -89,21 +92,22 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
 
   const enablePush = useCallback(async () => {
     if (!user) return;
+    setPushError('');
     const { requestPushToken } = await import('@/lib/firebase/messaging');
-    const token = await requestPushToken();
-    if (!token) {
-      setPushPermission(Notification.permission as NotificationPermission);
+    const result = await requestPushToken();
+    if (!result.ok) {
+      setPushError(result.message);
+      if ('Notification' in window) setPushPermission(Notification.permission as NotificationPermission);
       return;
     }
     setPushPermission('granted');
-    // Store token in RTDB so server can send pushes
     const db = getDatabase(getApp());
-    await update(ref(db, `users/${user.uid}`), { fcmToken: token });
+    await update(ref(db, `users/${user.uid}`), { fcmToken: result.token });
   }, [user]);
 
   return (
     <NotifContext.Provider value={{
-      notifications, unreadCount, pushPermission,
+      notifications, unreadCount, pushPermission, pushError,
       markRead, markAllRead, enablePush,
     }}>
       {children}
