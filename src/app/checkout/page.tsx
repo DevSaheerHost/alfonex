@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart }   from '@/contexts/CartContext';
 import { useAuth }   from '@/contexts/AuthContext';
 import { useApp }    from '@/contexts/AppContext';
 import { placeOrder } from '@/actions/orders';
+import { getAddresses } from '@/actions/users';
 import { CURRENCY_SYMBOLS } from '@/lib/types';
-import type { CheckoutFormData, PayMethod } from '@/lib/types';
+import type { CheckoutFormData, PayMethod, Address } from '@/lib/types';
 import Link from 'next/link';
 
 const PAYMENT_METHODS: { id: PayMethod; label: string; icon: string; available: boolean }[] = [
@@ -41,6 +42,44 @@ export default function CheckoutPage() {
     payMethod: 'cod',
   });
 
+  // Saved addresses
+  const [addresses, setAddresses]       = useState<Address[]>([]);
+  const [selectedAddr, setSelectedAddr] = useState<string>('');
+
+  // Load saved addresses and pre-fill with primary
+  useEffect(() => {
+    if (!user) return;
+    getAddresses().then((list) => {
+      setAddresses(list);
+      const primary = list.find((a) => a.primary) ?? list[0];
+      if (primary) {
+        setSelectedAddr(primary.id);
+        setForm((prev) => ({
+          ...prev,
+          name:     primary.name     || prev.name,
+          phone:    primary.phone    || prev.phone,
+          country:  primary.country,
+          state:    primary.state,
+          district: primary.district,
+          place:    primary.place,
+        }));
+      }
+    }).catch(() => {});
+  }, [user]);
+
+  const applyAddress = (addr: Address) => {
+    setSelectedAddr(addr.id);
+    setForm((prev) => ({
+      ...prev,
+      name:     addr.name     || prev.name,
+      phone:    addr.phone    || prev.phone,
+      country:  addr.country,
+      state:    addr.state,
+      district: addr.district,
+      place:    addr.place,
+    }));
+  };
+
   const set = (field: keyof CheckoutFormData) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -49,7 +88,7 @@ export default function CheckoutPage() {
     if (!user) { router.push('/login?redirect=/checkout'); return; }
     const required: (keyof CheckoutFormData)[] = ['name', 'phone', 'country', 'state', 'district', 'place'];
     for (const f of required) {
-      if (!form[f]) { setError(`Please fill in ${f}`); return; }
+      if (!form[f]) { setError(`Please fill in: ${f}`); return; }
     }
     setError('');
 
@@ -88,23 +127,53 @@ export default function CheckoutPage() {
         </div>
       )}
 
+      {/* Saved address picker */}
+      {addresses.length > 0 && (
+        <div className="card mb-4 p-4">
+          <p className="mb-2.5 text-sm font-semibold dark:text-gray-100">
+            <i className="fa fa-location-dot mr-1.5 text-primary-500" /> Saved Addresses
+          </p>
+          <div className="flex flex-col gap-2">
+            {addresses.map((addr) => (
+              <button
+                key={addr.id}
+                onClick={() => applyAddress(addr)}
+                className={`flex items-start gap-3 rounded-xl border p-3 text-left text-sm transition
+                  ${selectedAddr === addr.id
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-950/30'
+                    : 'border-gray-200 hover:border-gray-300 dark:border-gray-700'}`}
+              >
+                <i className={`fa fa-circle mt-0.5 text-xs ${selectedAddr === addr.id ? 'text-primary-500' : 'text-gray-300 dark:text-gray-600'}`} />
+                <div className="min-w-0">
+                  <p className="font-semibold dark:text-gray-100">{addr.name}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {[addr.place, addr.district, addr.state, addr.country].filter(Boolean).join(', ')}
+                  </p>
+                  {addr.primary && (
+                    <span className="mt-0.5 inline-block rounded-full bg-primary-100 px-2 py-0.5 text-[10px] font-semibold text-primary-700 dark:bg-primary-900/40 dark:text-primary-400">
+                      Primary
+                    </span>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Shipping form */}
       <div className="card mb-4 p-4">
         <p className="mb-3 font-semibold dark:text-gray-100">Shipping Details</p>
         <div className="flex flex-col gap-3">
-          <input className="input" placeholder="Full Name *" value={form.name}     onChange={set('name')} />
+          <input className="input" placeholder="Full Name *"            value={form.name}     onChange={set('name')} />
           <input className="input" type="tel" placeholder="Phone / WhatsApp *" value={form.phone}    onChange={set('phone')} />
-          <input className="input" placeholder="Country *"   value={form.country}  onChange={set('country')} />
-          <input className="input" placeholder="State / Emirates *" value={form.state}    onChange={set('state')} />
-          <input className="input" placeholder="District *"  value={form.district} onChange={set('district')} />
-          <input className="input" placeholder="Town / Village / Place *" value={form.place}    onChange={set('place')} />
-          <textarea
-            className="input resize-none"
-            rows={2}
+          <input className="input" placeholder="Country *"              value={form.country}  onChange={set('country')} />
+          <input className="input" placeholder="State / Emirates *"     value={form.state}    onChange={set('state')} />
+          <input className="input" placeholder="District *"             value={form.district} onChange={set('district')} />
+          <input className="input" placeholder="Town / Village / Place *" value={form.place}  onChange={set('place')} />
+          <textarea className="input resize-none" rows={2}
             placeholder="Order notes (optional)"
-            value={form.notes}
-            onChange={set('notes')}
-          />
+            value={form.notes} onChange={set('notes')} />
         </div>
       </div>
 
@@ -157,11 +226,9 @@ export default function CheckoutPage() {
       )}
 
       <button onClick={handleSubmit} disabled={isPending} className="btn-primary w-full">
-        {isPending ? (
-          <><span className="spin inline-block">⏳</span> Placing Order…</>
-        ) : (
-          <><i className="fa fa-lock" /> Place Order</>
-        )}
+        {isPending
+          ? <><i className="fa fa-spinner fa-spin" /> Placing Order…</>
+          : <><i className="fa fa-lock" /> Place Order</>}
       </button>
     </div>
   );

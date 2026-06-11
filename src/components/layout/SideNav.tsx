@@ -10,7 +10,8 @@ const NAV = [
   { href: '/search',  icon: 'fa-search',       label: 'Search' },
   { href: '/cart',    icon: 'fa-shopping-bag', label: 'Cart', showBadge: true },
   { href: '/orders',  icon: 'fa-box',          label: 'Orders', authRequired: true },
-  { href: '/profile', icon: 'fa-circle-user',  label: 'Account' },
+  { href: '/profile',   icon: 'fa-circle-user',  label: 'Account' },
+  { href: '/converter', icon: 'fa-coins',         label: 'Converter' },
 ];
 
 export default function SideNav() {
