@@ -65,7 +65,8 @@ export default function BannerSlider({ banners }: { banners: Banner[] }) {
         onTouchEnd={onTouchEnd}
       >
         <div
-          className={`relative min-h-[168px] bg-gradient-to-br ${banner.gradient || 'from-primary-500 to-primary-700'}`}
+          className="relative min-h-[168px]"
+          style={{ background: banner.gradient || 'linear-gradient(135deg,#16a34a,#15803d)' }}
         >
           {/* Background image */}
           {banner.imageUrl && (
