@@ -19,14 +19,22 @@ function toProducts(snapshot: Record<string, unknown>): Product[] {
 // ─── Reads ────────────────────────────────────────────────────────────────────
 
 export async function getProducts(): Promise<Product[]> {
-  const snap = await adminRtdb().ref('products').get();
-  if (!snap.exists()) return [];
-  return toProducts(snap.val());
+  try {
+    const snap = await adminRtdb().ref('products').get();
+    if (!snap.exists()) return [];
+    return toProducts(snap.val());
+  } catch {
+    return [];
+  }
 }
 
 export async function getFeaturedProducts(): Promise<Product[]> {
-  const all = await getProducts();
-  return all.filter((p) => p.isFeatured).slice(0, 12);
+  try {
+    const all = await getProducts();
+    return all.filter((p) => p.isFeatured).slice(0, 12);
+  } catch {
+    return [];
+  }
 }
 
 export async function getProduct(id: string): Promise<Product | null> {
