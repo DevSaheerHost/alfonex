@@ -1,8 +1,9 @@
 import 'server-only';
 import { initializeApp, getApps, cert, type App } from 'firebase-admin/app';
-import { getAuth, type Auth } from 'firebase-admin/auth';
+import { getAuth,      type Auth }     from 'firebase-admin/auth';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
-import { getDatabase, type Database } from 'firebase-admin/database';
+import { getDatabase,  type Database } from 'firebase-admin/database';
+import { getMessaging, type Messaging } from 'firebase-admin/messaging';
 
 function getAdminApp(): App {
   if (getApps().length) return getApps()[0];
@@ -17,9 +18,10 @@ function getAdminApp(): App {
   });
 }
 
-let _adminAuth: Auth | null = null;
-let _adminDb:   Firestore | null = null;
-let _adminRtdb: Database  | null = null;
+let _adminAuth:      Auth      | null = null;
+let _adminDb:        Firestore | null = null;
+let _adminRtdb:      Database  | null = null;
+let _adminMessaging: Messaging | null = null;
 
 export function adminAuth(): Auth {
   if (!_adminAuth) _adminAuth = getAuth(getAdminApp());
@@ -36,4 +38,10 @@ export function adminDb(): Firestore {
 export function adminRtdb(): Database {
   if (!_adminRtdb) _adminRtdb = getDatabase(getAdminApp());
   return _adminRtdb;
+}
+
+// Cloud Messaging — for sending push notifications
+export function adminMessaging(): Messaging {
+  if (!_adminMessaging) _adminMessaging = getMessaging(getAdminApp());
+  return _adminMessaging;
 }

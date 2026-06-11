@@ -1,7 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import { adminAuth, adminRtdb } from '@/lib/firebase/admin';
+import { adminAuth, adminRtdb, adminMessaging } from '@/lib/firebase/admin';
 import { decrementProductStock } from './products';
 import type { Order, CheckoutFormData, CartItem, Currency } from '@/lib/types';
 
@@ -87,15 +87,39 @@ export async function placeOrder(
     ),
   );
 
-  // Write in-app notification for the customer
+  // Write in-app notification (RTDB bell)
   await adminRtdb().ref(`notifications/${user.uid}`).push({
     title: 'Order Placed!',
-    body: `Your order has been placed. We'll process it shortly.`,
-    type: 'order_placed',
+    body:  "Your order has been placed. We'll process it shortly.",
+    type:  'order_placed',
     orderId: orderRef.key,
-    read: false,
+    read:  false,
     createdAt: Date.now(),
   });
+
+  // Send background push if user has an FCM token
+  try {
+    const tokenSnap = await adminRtdb().ref(`users/${user.uid}/fcmToken`).get();
+    if (tokenSnap.exists()) {
+      await adminMessaging().send({
+        token: tokenSnap.val() as string,
+        notification: {
+          title: 'Order Placed!',
+          body:  "Your order has been placed. We'll process it shortly.",
+        },
+        data:    { orderId: orderRef.key! },
+        webpush: {
+          fcmOptions: { link: `/orders/${orderRef.key}` },
+          notification: {
+            icon:  '/assets/meta/icon/logo.png',
+            badge: '/assets/meta/icon/logo.png',
+          },
+        },
+      });
+    }
+  } catch {
+    // Push failure must not fail the order
+  }
 
   return { orderId: orderRef.key! };
 }

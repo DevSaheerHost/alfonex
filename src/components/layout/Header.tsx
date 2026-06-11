@@ -36,7 +36,7 @@ export default function Header() {
   const { totalQty }           = useCart();
   const { currency, setCurrency, theme, toggleTheme } = useApp();
   const { user }               = useAuth();
-  const { notifications, unreadCount, markRead, markAllRead } = useNotifications();
+  const { notifications, unreadCount, pushPermission, markRead, markAllRead, enablePush } = useNotifications();
   const router                 = useRouter();
   const [showCur,   setShowCur]   = useState(false);
   const [showNotif, setShowNotif] = useState(false);
@@ -143,6 +143,20 @@ export default function Header() {
                       </button>
                     )}
                   </div>
+
+                  {/* Enable push banner */}
+                  {pushPermission !== 'granted' && pushPermission !== 'unsupported' && pushPermission !== 'denied' && (
+                    <div className="border-b border-gray-100 px-4 py-2.5 dark:border-gray-700">
+                      <button
+                        onClick={enablePush}
+                        className="flex w-full items-center gap-2 rounded-xl bg-primary-50 px-3 py-2 text-xs font-semibold text-primary-700 transition hover:bg-primary-100 dark:bg-primary-950/40 dark:text-primary-300"
+                      >
+                        <i className="fa fa-bell-slash text-sm" />
+                        Enable push notifications
+                        <i className="fa fa-chevron-right ml-auto text-[10px]" />
+                      </button>
+                    </div>
+                  )}
 
                   {/* List */}
                   <div className="max-h-80 overflow-y-auto">
