@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from 'react';
 import ProductCard from '@/components/products/ProductCard';
-import type { Product } from '@/lib/types';
+import BannerSlider from '@/components/home/BannerSlider';
+import type { Product, Banner } from '@/lib/types';
 
 type Filter = 'all' | 'featured' | 'new' | 'sale';
 
@@ -16,9 +17,10 @@ const FILTERS: { id: Filter; label: string }[] = [
 interface Props {
   products: Product[];
   featured: Product[];
+  banners:  Banner[];
 }
 
-export default function ShopClientShell({ products, featured }: Props) {
+export default function ShopClientShell({ products, featured, banners }: Props) {
   const [filter, setFilter] = useState<Filter>('all');
 
   const displayed = useMemo(() => {
@@ -32,11 +34,15 @@ export default function ShopClientShell({ products, featured }: Props) {
   return (
     <div className="page-wrapper">
 
-      {/* Hero strip */}
-      <div className="mb-5 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 p-5 text-white">
-        <p className="font-heading text-xl font-bold">Genuine Apple Devices</p>
-        <p className="mt-1 text-sm text-white/80">iPhones · MacBooks · AirPods · Watches</p>
-      </div>
+      {/* Banner slider (falls back to static hero when no banners in DB) */}
+      {banners.length > 0 ? (
+        <BannerSlider banners={banners} />
+      ) : (
+        <div className="mb-5 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 p-5 text-white">
+          <p className="font-heading text-xl font-bold">Genuine Apple Devices</p>
+          <p className="mt-1 text-sm text-white/80">iPhones · MacBooks · AirPods · Watches</p>
+        </div>
+      )}
 
       {/* Filter pills */}
       <div className="mb-4 flex gap-2 overflow-x-auto pb-1 scrollbar-none">
