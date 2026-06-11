@@ -88,8 +88,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+const AUTH_DEFAULT: AuthCtx = {
+  user:     null,
+  loading:  true,
+  login:    async () => {},
+  register: async () => {},
+  logout:   async () => {},
+};
+
 export function useAuth(): AuthCtx {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
-  return ctx;
+  return useContext(AuthContext) ?? AUTH_DEFAULT;
 }

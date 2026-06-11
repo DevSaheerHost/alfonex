@@ -1,6 +1,5 @@
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
-import { getFirestore, type Firestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey:            process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
@@ -17,14 +16,11 @@ function getFirebaseApp(): FirebaseApp {
 }
 
 let _auth: Auth | null = null;
-let _db: Firestore | null = null;
 
 export function clientAuth(): Auth {
   if (!_auth) _auth = getAuth(getFirebaseApp());
   return _auth;
 }
 
-export function clientDb(): Firestore {
-  if (!_db) _db = getFirestore(getFirebaseApp());
-  return _db;
-}
+// Re-export getApp so pages can access the client app for RTDB subscriptions
+export { getApp };

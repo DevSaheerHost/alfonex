@@ -1,6 +1,7 @@
 'use client';
 
 export default function GlobalError({
+  error,
   reset,
 }: {
   error: Error & { digest?: string };
@@ -25,6 +26,14 @@ export default function GlobalError({
           <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#111' }}>
             Something went wrong
           </h2>
+          {error.message && (
+            <p style={{ color: '#666', fontSize: '12px', maxWidth: '320px', wordBreak: 'break-word' }}>
+              {error.message}
+            </p>
+          )}
+          {error.digest && (
+            <p style={{ color: '#999', fontSize: '11px' }}>digest: {error.digest}</p>
+          )}
           <button
             onClick={reset}
             style={{

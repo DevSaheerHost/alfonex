@@ -108,8 +108,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+const CART_DEFAULT: CartCtx = {
+  items: [], totalQty: 0, subtotal: 0,
+  addToCart: () => {}, removeFromCart: () => {}, setQty: () => {}, clearCart: () => {},
+};
+
 export function useCart(): CartCtx {
-  const ctx = useContext(CartContext);
-  if (!ctx) throw new Error('useCart must be used inside CartProvider');
-  return ctx;
+  return useContext(CartContext) ?? CART_DEFAULT;
 }
