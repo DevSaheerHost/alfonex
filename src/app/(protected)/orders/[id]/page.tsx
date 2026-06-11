@@ -3,6 +3,12 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Order, OrderStatus } from '@/lib/types';
 
+const GRADE_LABELS: Record<string, { label: string; color: string }> = {
+  'a1+': { label: 'Excellent', color: 'bg-green-100 text-green-700' },
+  'a2+': { label: 'Very Good', color: 'bg-blue-100 text-blue-700' },
+  'a3+': { label: 'Good',      color: 'bg-yellow-100 text-yellow-700' },
+};
+
 const STEPS: OrderStatus[] = [
   'Pending', 'Packed', 'Dispatched', 'Shipped', 'In Transit', 'Delivered',
 ];
@@ -92,24 +98,32 @@ export default async function OrderDetailPage({ params }: Props) {
       <div className="card mb-4 p-4">
         <p className="mb-3 font-semibold dark:text-gray-100">Items</p>
         <div className="flex flex-col gap-3">
-          {order.items.map((item, i) => (
-            <div key={i} className="flex items-center justify-between gap-2">
-              <div className="flex-1 overflow-hidden">
-                <p className="truncate text-sm font-medium dark:text-gray-100">{item.title}</p>
-                {item.variantLabel && (
-                  <p className="text-xs text-gray-400">{item.variantLabel}</p>
-                )}
+          {order.items.map((item, i) => {
+            const grade = item.grade ? GRADE_LABELS[item.grade] : null;
+            return (
+              <div key={i} className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium dark:text-gray-100">{item.title}</p>
+                  <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                    {item.variantLabel && (
+                      <span className="text-xs text-gray-400">{item.variantLabel}</span>
+                    )}
+                    {grade && (
+                      <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${grade.color}`}>
+                        {grade.label}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex-shrink-0 text-right">
+                  <p className="text-sm font-semibold dark:text-gray-100">× {item.qty}</p>
+                  <p className="text-xs text-gray-400">
+                    {order.currency.toUpperCase()} {item.lineTotal.toLocaleString()}
+                  </p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-sm font-semibold dark:text-gray-100">
-                  × {item.qty}
-                </p>
-                <p className="text-xs text-gray-400">
-                  {order.currency.toUpperCase()} {item.lineTotal.toLocaleString()}
-                </p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -135,20 +149,42 @@ export default async function OrderDetailPage({ params }: Props) {
 
       {/* Shipping info */}
       <div className="card p-4">
-        <p className="mb-3 font-semibold dark:text-gray-100">Shipping Address</p>
+        <p className="mb-3 font-semibold dark:text-gray-100">Shipping</p>
+
         <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300">
           {order.customerName}<br />
           {order.customerPhone}<br />
           {[order.customerPlace, order.customerDistrict, order.customerState, order.customerCountry]
             .filter(Boolean).join(', ')}
         </p>
-        {order.trackingNo && (
-          <div className="mt-3 rounded-xl bg-gray-50 p-3 dark:bg-gray-800">
-            <p className="text-xs text-gray-400">Tracking number</p>
-            <p className="font-mono text-sm font-semibold dark:text-gray-100">{order.trackingNo}</p>
-            {order.courier && <p className="text-xs text-gray-400">via {order.courier}</p>}
+
+        {/* Tracking */}
+        {order.trackingNo ? (
+          <div className="mt-3 rounded-xl bg-primary-50 p-3 dark:bg-primary-950/30">
+            <p className="mb-0.5 text-[10px] font-bold uppercase tracking-widest text-primary-500">Tracking</p>
+            <p className="font-mono text-sm font-bold text-primary-700 dark:text-primary-300">{order.trackingNo}</p>
+            {order.courier && (
+              <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">via {order.courier}</p>
+            )}
           </div>
+        ) : (
+          order.status === 'Pending' || order.status === 'Packed' ? (
+            <div className="mt-3 flex items-center gap-2 rounded-xl bg-gray-50 px-3 py-2.5 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+              <i className="fa fa-clock text-gray-400" />
+              Tracking number will be provided once dispatched
+            </div>
+          ) : null
         )}
+
+        {/* Pay method */}
+        <div className="mt-3 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+          <i className="fa fa-money-bill-wave" />
+          Payment: <span className="font-semibold capitalize text-gray-700 dark:text-gray-200">{order.payMethod.replace('_', ' ')}</span>
+          <span className={`ml-1 rounded-full px-2 py-0.5 text-[10px] font-bold
+            ${order.paymentStatus === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+            {order.paymentStatus}
+          </span>
+        </div>
       </div>
     </div>
   );

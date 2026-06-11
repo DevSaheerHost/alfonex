@@ -58,6 +58,7 @@ export default function ProductDetailClient({ product }: Props) {
       imageUrl:     product.imageUrl,
       qty:          1,
       variantLabel: variantLabel || '',
+      grade:        product.grade,
     });
   };
 

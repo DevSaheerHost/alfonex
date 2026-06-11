@@ -47,6 +47,7 @@ export async function placeOrder(
     unitPrice:    i.price,
     costPrice:    i.costPrice ?? 0,
     lineTotal:    i.price * i.qty,
+    grade:        i.grade ?? '',
   }));
 
   const now = new Date().toISOString();
@@ -85,6 +86,16 @@ export async function placeOrder(
       decrementProductStock(item.productId, item.qty, item.variantLabel),
     ),
   );
+
+  // Write in-app notification for the customer
+  await adminRtdb().ref(`notifications/${user.uid}`).push({
+    title: 'Order Placed!',
+    body: `Your order has been placed. We'll process it shortly.`,
+    type: 'order_placed',
+    orderId: orderRef.key,
+    read: false,
+    createdAt: Date.now(),
+  });
 
   return { orderId: orderRef.key! };
 }

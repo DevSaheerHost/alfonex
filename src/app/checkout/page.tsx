@@ -19,6 +19,25 @@ const PAYMENT_METHODS: { id: PayMethod; label: string; icon: string; available: 
 
 const SHIPPING_RATES = { usd: 50, aed: 120, inr: 3000 } as const;
 
+const GRADE_LABELS: Record<string, { label: string; color: string }> = {
+  'a1+': { label: 'Excellent',  color: 'bg-green-100 text-green-700' },
+  'a2+': { label: 'Very Good',  color: 'bg-blue-100 text-blue-700' },
+  'a3+': { label: 'Good',       color: 'bg-yellow-100 text-yellow-700' },
+};
+
+function estimatedDelivery(country: string): string {
+  const c = country.toLowerCase().trim();
+  if (!c) return '';
+  if (c.includes('uae') || c.includes('emirates') || c === 'ae') return '1–2 business days';
+  if (c.includes('india') || c === 'in') return '7–12 business days';
+  if (c.includes('saudi') || c.includes('ksa') || c === 'sa') return '3–5 business days';
+  if (c.includes('qatar') || c === 'qa') return '2–4 business days';
+  if (c.includes('bahrain') || c === 'bh') return '2–4 business days';
+  if (c.includes('kuwait') || c === 'kw') return '2–4 business days';
+  if (c.includes('oman') || c === 'om') return '2–4 business days';
+  return '7–21 business days';
+}
+
 export default function CheckoutPage() {
   const { items, subtotal, clearCart, totalQty } = useCart();
   const { user }     = useAuth();
@@ -203,9 +222,38 @@ export default function CheckoutPage() {
       {/* Summary */}
       <div className="card mb-4 p-4">
         <p className="mb-3 font-semibold dark:text-gray-100">Order Summary</p>
-        <div className="flex flex-col gap-2 text-sm">
+
+        {/* Items list with grade */}
+        <div className="mb-3 flex flex-col gap-2">
+          {items.map((item) => {
+            const grade = item.grade ? GRADE_LABELS[item.grade] : null;
+            return (
+              <div key={item.id} className="flex items-start justify-between gap-2 text-sm">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium dark:text-gray-100">{item.name}</p>
+                  <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                    {item.variantLabel && (
+                      <span className="text-xs text-gray-400">{item.variantLabel}</span>
+                    )}
+                    {grade && (
+                      <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${grade.color}`}>
+                        {grade.label}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex-shrink-0 text-right">
+                  <p className="font-semibold dark:text-gray-100">{symbol}{(item.price * item.qty).toLocaleString()}</p>
+                  {item.qty > 1 && <p className="text-xs text-gray-400">× {item.qty}</p>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="flex flex-col gap-2 border-t border-gray-100 pt-3 text-sm dark:border-gray-700">
           <div className="flex justify-between text-gray-600 dark:text-gray-300">
-            <span>{totalQty} item{totalQty !== 1 ? 's' : ''}</span>
+            <span>Subtotal</span>
             <span>{symbol}{subtotal.toLocaleString()}</span>
           </div>
           <div className="flex justify-between text-gray-600 dark:text-gray-300">
@@ -217,6 +265,16 @@ export default function CheckoutPage() {
             <span>{symbol}{total.toLocaleString()}</span>
           </div>
         </div>
+
+        {/* Estimated delivery */}
+        {estimatedDelivery(form.country) && (
+          <div className="mt-3 flex items-center gap-2 rounded-xl bg-green-50 px-3 py-2.5 text-xs dark:bg-green-950/30">
+            <i className="fa fa-truck text-green-600 dark:text-green-400" />
+            <span className="text-green-700 dark:text-green-300">
+              Estimated delivery: <strong>{estimatedDelivery(form.country)}</strong>
+            </span>
+          </div>
+        )}
       </div>
 
       {error && (

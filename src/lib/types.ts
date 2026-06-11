@@ -56,6 +56,7 @@ export interface CartItem {
   imageUrl: string;
   qty: number;
   variantLabel: string;
+  grade?: ProductGrade;
 }
 
 // ─── Order ────────────────────────────────────────────────────────────────────
@@ -85,6 +86,7 @@ export interface OrderItem {
   unitPrice: number;
   costPrice: number;
   lineTotal: number;
+  grade?: string;
 }
 
 export interface Order {
@@ -200,6 +202,18 @@ export interface UserProfile {
   email: string;
   whatsapp: string;
   createdAt: string;
+}
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+export interface AppNotification {
+  id: string;
+  title: string;
+  body: string;
+  type: 'order_placed' | 'order_status' | 'general';
+  orderId?: string;
+  read: boolean;
+  createdAt: number;
 }
 
 // ─── Checkout ─────────────────────────────────────────────────────────────────
