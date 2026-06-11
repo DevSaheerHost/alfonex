@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useApp, useProductPrice } from '@/contexts/AppContext';
 import { useCart }                  from '@/contexts/CartContext';
 import { useWishlist }              from '@/contexts/WishlistContext';
+import ReserveModal                 from '@/components/products/ReserveModal';
 import type { Product, VariantGroup } from '@/lib/types';
 import { CURRENCY_SYMBOLS }           from '@/lib/types';
 
@@ -23,6 +24,7 @@ export default function ProductDetailClient({ product }: Props) {
   const { addToCart }   = useCart();
   const { toggle, has } = useWishlist();
   const wished          = has(product.id);
+  const [reserveOpen, setReserveOpen] = useState(false);
 
   const price  = getProdPrice(product);
   const symbol = CURRENCY_SYMBOLS[currency];
@@ -149,29 +151,46 @@ export default function ProductDetailClient({ product }: Props) {
             </div>
           )}
 
-          {/* Add to cart — sticky on mobile, static on desktop */}
+          {/* Add to cart + Reserve — sticky on mobile, static on desktop */}
           <div className="sticky bottom-20 bg-gray-100 pb-2 pt-2 dark:bg-[#111] lg:static lg:bg-transparent lg:pb-0 lg:pt-0 lg:dark:bg-transparent">
             {isOOS ? (
               <div className="rounded-2xl bg-gray-200 py-4 text-center text-sm font-semibold text-gray-500 dark:bg-gray-800 dark:text-gray-400">
                 Out of Stock
               </div>
             ) : (
-              <button
-                onClick={handleAddToCart}
-                disabled={!canAddToCart}
-                className="btn-primary w-full lg:w-auto lg:px-10"
-              >
-                <i className="fa fa-shopping-bag" />
-                {canAddToCart
-                  ? 'Add to Cart'
-                  : product.variants?.length
-                  ? 'Select options above'
-                  : 'Add to Cart'}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleAddToCart}
+                  disabled={!canAddToCart}
+                  className="btn-primary flex-1 lg:flex-none lg:px-10"
+                >
+                  <i className="fa fa-shopping-bag" />
+                  {canAddToCart
+                    ? 'Add to Cart'
+                    : product.variants?.length
+                    ? 'Select options'
+                    : 'Add to Cart'}
+                </button>
+                <button
+                  onClick={() => setReserveOpen(true)}
+                  className="flex items-center gap-2 rounded-xl border-2 border-primary-500 px-4 py-3 text-sm font-semibold text-primary-600 transition hover:bg-primary-50 active:scale-95 dark:hover:bg-primary-900/20"
+                >
+                  <i className="fa fa-bookmark" />
+                  <span className="hidden sm:inline">Reserve</span>
+                </button>
+              </div>
             )}
           </div>
         </div>
       </div>
+
+      <ReserveModal
+        product={product}
+        price={price}
+        variantLabel={variantLabel}
+        open={reserveOpen}
+        onClose={() => setReserveOpen(false)}
+      />
     </div>
   );
 }

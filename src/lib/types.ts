@@ -156,6 +156,24 @@ export interface Banner {
   order: number;
 }
 
+// ─── Reservation ──────────────────────────────────────────────────────────────
+
+export interface Reservation {
+  productId:     string;
+  productTitle:  string;
+  productImage:  string;
+  variantLabel:  string;
+  price:         number;
+  currency:      string;
+  advance:       number;
+  customerName:  string;
+  customerPhone: string;
+  note:          string;
+  status:        'pending' | 'confirmed' | 'cancelled';
+  userId:        string;
+  createdAt:     number;
+}
+
 // ─── Warranty ─────────────────────────────────────────────────────────────────
 
 export type WarrantyStatus = 'active' | 'expired' | 'unknown';
