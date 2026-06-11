@@ -32,11 +32,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const auth = clientAuth();
-    return onAuthStateChanged(auth, async (fbUser) => {
-      setUser(fbUser);
+    try {
+      const auth = clientAuth();
+      // onAuthStateChanged 3rd arg is an error handler — catches invalid-api-key etc.
+      return onAuthStateChanged(
+        auth,
+        (fbUser) => { setUser(fbUser); setLoading(false); },
+        ()       => { setLoading(false); },
+      );
+    } catch {
       setLoading(false);
-    });
+    }
   }, []);
 
   // Exchange the Firebase ID token for a secure HttpOnly session cookie
