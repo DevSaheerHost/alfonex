@@ -1,10 +1,9 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import { adminAuth, adminDb } from '@/lib/firebase/admin';
+import { adminAuth, adminRtdb } from '@/lib/firebase/admin';
 import { decrementProductStock } from './products';
 import type { Order, CheckoutFormData, CartItem, Currency } from '@/lib/types';
-import { FieldValue } from 'firebase-admin/firestore';
 
 // ─── Auth helper ──────────────────────────────────────────────────────────────
 
@@ -12,9 +11,7 @@ async function verifySession() {
   const cookieStore = await cookies();
   const session = cookieStore.get('__session')?.value;
   if (!session) throw new Error('Unauthenticated');
-
-  const decoded = await adminAuth().verifySessionCookie(session, true);
-  return decoded;
+  return adminAuth().verifySessionCookie(session, true);
 }
 
 // ─── Shipping rates ───────────────────────────────────────────────────────────
@@ -36,12 +33,11 @@ export async function placeOrder(
 
   if (!cart.length) throw new Error('Cart is empty');
 
-  const totalQty   = cart.reduce((s, i) => s + i.qty, 0);
-  const shipping   = SHIPPING_RATES[currency];
-  const subtotal   = cart.reduce((s, i) => s + i.price * i.qty, 0);
-  const total      = subtotal + shipping;
-  const cost       = cart.reduce((s, i) => s + (i.costPrice ?? 0) * i.qty, 0);
-  const profit     = total - cost - shipping;
+  const shipping = SHIPPING_RATES[currency];
+  const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  const total    = subtotal + shipping;
+  const cost     = cart.reduce((s, i) => s + (i.costPrice ?? 0) * i.qty, 0);
+  const profit   = total - cost - shipping;
 
   const items = cart.map((i) => ({
     productId:    i.productId,
@@ -54,8 +50,8 @@ export async function placeOrder(
   }));
 
   const now = new Date().toISOString();
+  const orderRef = adminRtdb().ref('orders').push();
 
-  const orderRef = adminDb().collection('orders').doc();
   await orderRef.set({
     customerName:     form.name,
     customerPhone:    form.phone,
@@ -83,14 +79,14 @@ export async function placeOrder(
     createdBy:     user.uid,
   });
 
-  // Decrement stock for each line item in parallel
+  // Decrement stock for each line item
   await Promise.all(
     cart.map((item) =>
       decrementProductStock(item.productId, item.qty, item.variantLabel),
     ),
   );
 
-  return { orderId: orderRef.id };
+  return { orderId: orderRef.key! };
 }
 
 // ─── Get user orders ──────────────────────────────────────────────────────────
@@ -98,13 +94,17 @@ export async function placeOrder(
 export async function getUserOrders(): Promise<Order[]> {
   const user = await verifySession();
 
-  const snap = await adminDb()
-    .collection('orders')
-    .where('userId', '==', user.uid)
-    .orderBy('createdAt', 'desc')
+  const snap = await adminRtdb()
+    .ref('orders')
+    .orderByChild('userId')
+    .equalTo(user.uid)
     .get();
 
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Order);
+  if (!snap.exists()) return [];
+
+  return Object.entries(snap.val() as Record<string, object>)
+    .map(([id, data]) => ({ id, ...data }) as Order)
+    .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
 }
 
 // ─── Get single order (owner-only) ────────────────────────────────────────────
@@ -112,10 +112,10 @@ export async function getUserOrders(): Promise<Order[]> {
 export async function getOrder(orderId: string): Promise<Order> {
   const user = await verifySession();
 
-  const doc = await adminDb().collection('orders').doc(orderId).get();
-  if (!doc.exists) throw new Error('Order not found');
+  const snap = await adminRtdb().ref(`orders/${orderId}`).get();
+  if (!snap.exists()) throw new Error('Order not found');
 
-  const order = { id: doc.id, ...doc.data() } as Order;
+  const order = { id: orderId, ...snap.val() } as Order;
   if (order.userId !== user.uid) throw new Error('Forbidden');
 
   return order;

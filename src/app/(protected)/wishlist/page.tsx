@@ -5,13 +5,13 @@ import Image  from 'next/image';
 import Link   from 'next/link';
 import { useApp, useProductPrice } from '@/contexts/AppContext';
 import { useCart }                  from '@/contexts/CartContext';
-import { clientDb }                 from '@/lib/firebase/client';
-import { doc, getDoc }              from 'firebase/firestore';
+import { clientAuth }               from '@/lib/firebase/client';
+import { getDatabase, ref, get }    from 'firebase/database';
+import { getApp }                   from 'firebase/app';
 import type { Product }             from '@/lib/types';
 import { CURRENCY_SYMBOLS }         from '@/lib/types';
 
 const WL_KEY = 'ia_wishlist';
-
 interface WishlistItem { productId: string; variantLabel?: string }
 
 export default function WishlistPage() {
@@ -31,10 +31,12 @@ export default function WishlistPage() {
 
   useEffect(() => {
     if (!items.length) return;
+    clientAuth(); // ensure Firebase app is init
+    const db = getDatabase(getApp());
     Promise.all(
       items.map((i) =>
-        getDoc(doc(clientDb(), 'products', i.productId)).then((d) =>
-          d.exists() ? ({ id: d.id, ...d.data() } as Product) : null,
+        get(ref(db, `products/${i.productId}`)).then((snap) =>
+          snap.exists() ? ({ id: snap.key, ...snap.val() } as Product) : null,
         ),
       ),
     ).then((ps) => setProducts(ps.filter(Boolean) as Product[]));

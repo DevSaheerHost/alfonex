@@ -1,77 +1,59 @@
 'use server';
 
-import { adminDb } from '@/lib/firebase/admin';
+import { adminRtdb } from '@/lib/firebase/admin';
 import type { Product } from '@/lib/types';
-import { FieldValue } from 'firebase-admin/firestore';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function toProduct(id: string, data: FirebaseFirestore.DocumentData): Product {
-  return { id, ...data } as Product;
+function toProducts(snapshot: Record<string, unknown>): Product[] {
+  return Object.entries(snapshot)
+    .map(([id, data]) => ({ id, ...(data as object) } as Product))
+    .filter((p) => !p.isHidden)
+    .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
 }
 
 // ─── Reads ────────────────────────────────────────────────────────────────────
 
 export async function getProducts(): Promise<Product[]> {
-  const snap = await adminDb()
-    .collection('products')
-    .where('isHidden', '==', false)
-    .orderBy('createdAt', 'desc')
-    .get();
-
-  return snap.docs.map((d) => toProduct(d.id, d.data()));
+  const snap = await adminRtdb().ref('products').get();
+  if (!snap.exists()) return [];
+  return toProducts(snap.val());
 }
 
 export async function getFeaturedProducts(): Promise<Product[]> {
-  const snap = await adminDb()
-    .collection('products')
-    .where('isHidden', '==', false)
-    .where('isFeatured', '==', true)
-    .limit(12)
-    .get();
-
-  return snap.docs.map((d) => toProduct(d.id, d.data()));
+  const all = await getProducts();
+  return all.filter((p) => p.isFeatured).slice(0, 12);
 }
 
 export async function getProduct(id: string): Promise<Product | null> {
-  const doc = await adminDb().collection('products').doc(id).get();
-  if (!doc.exists) return null;
-  return toProduct(doc.id, doc.data()!);
+  const snap = await adminRtdb().ref(`products/${id}`).get();
+  if (!snap.exists()) return null;
+  return { id, ...snap.val() } as Product;
 }
 
-// ─── Writes (admin-gated in production via Firebase Security Rules) ───────────
+// ─── Stock decrement (inside a transaction) ───────────────────────────────────
 
 export async function decrementProductStock(
   productId: string,
   qty: number,
   variantLabel?: string,
 ): Promise<void> {
-  const ref = adminDb().collection('products').doc(productId);
+  const ref = adminRtdb().ref(`products/${productId}`);
 
-  await adminDb().runTransaction(async (tx) => {
-    const doc = await tx.get(ref);
-    if (!doc.exists) throw new Error(`Product ${productId} not found`);
-
-    const data = doc.data()!;
-    const newStock = (data.stock as number) - qty;
+  await ref.transaction((product: Product | null) => {
+    if (!product) return; // abort
+    const newStock = (product.stock ?? 0) - qty;
     if (newStock < 0) throw new Error('Insufficient stock');
+    product.stock = newStock;
 
-    const updates: Record<string, unknown> = {
-      stock: FieldValue.increment(-qty),
-    };
-
-    // Decrement variant-level stock too
-    if (variantLabel && Array.isArray(data.variants)) {
-      const variants = structuredClone(data.variants) as Product['variants'];
-      for (const group of variants) {
-        const hit = group.values.find(
-          (v) => variantLabel.includes(`${group.name}: ${v.label}`),
+    if (variantLabel && Array.isArray(product.variants)) {
+      for (const group of product.variants) {
+        const hit = group.values.find((v) =>
+          variantLabel.includes(`${group.name}: ${v.label}`),
         );
         if (hit) hit.stock = Math.max(0, hit.stock - qty);
       }
-      updates.variants = variants;
     }
-
-    tx.update(ref, updates);
+    return product;
   });
 }

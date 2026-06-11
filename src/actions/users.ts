@@ -1,7 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import { adminAuth, adminDb } from '@/lib/firebase/admin';
+import { adminAuth, adminRtdb } from '@/lib/firebase/admin';
 import type { UserProfile, Address } from '@/lib/types';
 
 // ─── Auth helper ──────────────────────────────────────────────────────────────
@@ -17,25 +17,19 @@ async function verifySession() {
 
 export async function getMyProfile(): Promise<UserProfile | null> {
   const user = await verifySession();
-
-  const doc = await adminDb().collection('users').doc(user.uid).get();
-  if (!doc.exists) return null;
-  return { uid: doc.id, ...doc.data() } as UserProfile;
+  const snap = await adminRtdb().ref(`users/${user.uid}`).get();
+  if (!snap.exists()) return null;
+  return { uid: user.uid, ...snap.val() } as UserProfile;
 }
 
 export async function upsertProfile(
   data: Partial<Pick<UserProfile, 'name' | 'whatsapp'>>,
 ): Promise<void> {
   const user = await verifySession();
-
-  await adminDb()
-    .collection('users')
-    .doc(user.uid)
-    .set(
-      { ...data, updatedAt: new Date().toISOString() },
-      { merge: true },
-    );
-
+  await adminRtdb().ref(`users/${user.uid}`).update({
+    ...data,
+    updatedAt: new Date().toISOString(),
+  });
   if (data.name) {
     await adminAuth().updateUser(user.uid, { displayName: data.name });
   }
@@ -45,53 +39,36 @@ export async function upsertProfile(
 
 export async function getAddresses(): Promise<Address[]> {
   const user = await verifySession();
+  const snap = await adminRtdb().ref(`addresses/${user.uid}`).get();
+  if (!snap.exists()) return [];
 
-  const snap = await adminDb()
-    .collection('users')
-    .doc(user.uid)
-    .collection('addresses')
-    .get();
-
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Address);
+  return Object.entries(snap.val() as Record<string, object>).map(
+    ([id, data]) => ({ id, ...data }) as Address,
+  );
 }
 
 export async function saveAddress(
   address: Omit<Address, 'id'>,
 ): Promise<{ id: string }> {
   const user = await verifySession();
-
-  const ref = adminDb()
-    .collection('users')
-    .doc(user.uid)
-    .collection('addresses')
-    .doc();
-
+  const ref  = adminRtdb().ref(`addresses/${user.uid}`).push();
   await ref.set(address);
-  return { id: ref.id };
+  return { id: ref.key! };
 }
 
 export async function deleteAddress(addressId: string): Promise<void> {
   const user = await verifySession();
-
-  await adminDb()
-    .collection('users')
-    .doc(user.uid)
-    .collection('addresses')
-    .doc(addressId)
-    .delete();
+  await adminRtdb().ref(`addresses/${user.uid}/${addressId}`).remove();
 }
 
 export async function setPrimaryAddress(addressId: string): Promise<void> {
-  const user = await verifySession();
-  const col = adminDb()
-    .collection('users')
-    .doc(user.uid)
-    .collection('addresses');
+  const user    = await verifySession();
+  const snap    = await adminRtdb().ref(`addresses/${user.uid}`).get();
+  if (!snap.exists()) return;
 
-  const batch = adminDb().batch();
-  const snap = await col.get();
-  snap.docs.forEach((d) =>
-    batch.update(d.ref, { primary: d.id === addressId }),
-  );
-  await batch.commit();
+  const updates: Record<string, boolean> = {};
+  Object.keys(snap.val()).forEach((id) => {
+    updates[`addresses/${user.uid}/${id}/primary`] = id === addressId;
+  });
+  await adminRtdb().ref().update(updates);
 }
