@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import Image from 'next/image';
 import Link  from 'next/link';
 import type { Banner } from '@/lib/types';
 
@@ -68,14 +67,13 @@ export default function BannerSlider({ banners }: { banners: Banner[] }) {
           className="relative min-h-[168px]"
           style={{ background: banner.gradient || 'linear-gradient(135deg,#16a34a,#15803d)' }}
         >
-          {/* Background image */}
+          {/* Background image — plain img so any external URL works */}
           {banner.imageUrl && (
-            <Image
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
               src={banner.imageUrl}
-              alt={banner.title}
-              fill
-              className="object-cover opacity-30"
-              sizes="(max-width: 640px) 100vw, 640px"
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover opacity-30"
             />
           )}
 
