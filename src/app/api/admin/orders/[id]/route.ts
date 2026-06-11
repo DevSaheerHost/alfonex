@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminRtdb, adminMessaging } from '@/lib/firebase/admin';
+import { adminAuth, adminRtdb, adminMessaging } from '@/lib/firebase/admin';
 
 // Messages sent for each status transition
 const STATUS_MESSAGES: Record<string, { title: string; body: string }> = {
@@ -51,11 +51,20 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  // Verify admin secret
-  const auth   = req.headers.get('authorization') ?? '';
-  const secret = process.env.ADMIN_SECRET;
-  if (!secret || auth !== `Bearer ${secret}`) {
+  // Verify caller is a logged-in admin (Firebase ID token)
+  const authHeader = req.headers.get('authorization') ?? '';
+  const idToken    = authHeader.replace('Bearer ', '').trim();
+  if (!idToken) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  try {
+    const decoded   = await adminAuth().verifyIdToken(idToken);
+    const adminSnap = await adminRtdb().ref(`admins/${decoded.uid}`).get();
+    if (!adminSnap.exists()) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+  } catch {
+    return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
   }
 
   const { id } = await params;
