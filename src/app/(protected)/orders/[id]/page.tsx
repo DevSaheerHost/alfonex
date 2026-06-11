@@ -1,0 +1,155 @@
+import { getOrder } from '@/actions/orders';
+import { notFound } from 'next/navigation';
+import Link from 'next/link';
+import type { Order, OrderStatus } from '@/lib/types';
+
+const STEPS: OrderStatus[] = [
+  'Pending', 'Packed', 'Dispatched', 'Shipped', 'In Transit', 'Delivered',
+];
+
+const STEP_ICONS: Record<OrderStatus, string> = {
+  Pending:      'fa-clock',
+  Packed:       'fa-box',
+  Dispatched:   'fa-truck',
+  Shipped:      'fa-truck-fast',
+  'In Transit': 'fa-plane',
+  Delivered:    'fa-circle-check',
+};
+
+interface Props {
+  params: Promise<{ id: string }>;
+}
+
+export default async function OrderDetailPage({ params }: Props) {
+  const { id } = await params;
+  let order: Order;
+
+  try {
+    order = await getOrder(id);
+  } catch {
+    notFound();
+  }
+
+  const stepIndex = STEPS.indexOf(order.status);
+
+  return (
+    <div className="page-wrapper">
+      {/* Back */}
+      <Link href="/orders" className="mb-4 flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary-600">
+        <i className="fa fa-arrow-left" />
+        Back to Orders
+      </Link>
+
+      {/* Header */}
+      <div className="card mb-4 p-4">
+        <p className="font-mono text-xs text-gray-400">Order #{order.id}</p>
+        <div className="mt-1 flex items-center justify-between">
+          <p className="text-sm text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</p>
+          <span className="badge badge-green">{order.paymentStatus}</span>
+        </div>
+      </div>
+
+      {/* Timeline */}
+      <div className="card mb-4 p-4">
+        <p className="mb-4 font-semibold dark:text-gray-100">Tracking</p>
+        <div className="flex items-center">
+          {STEPS.map((step, i) => {
+            const done    = i <= stepIndex;
+            const current = i === stepIndex;
+            return (
+              <div key={step} className="flex flex-1 flex-col items-center">
+                <div className={`relative flex h-8 w-8 items-center justify-center rounded-full text-xs
+                  ${done ? 'bg-primary-500 text-white' : 'bg-gray-100 text-gray-400 dark:bg-gray-800'}`}>
+                  <i className={`fa ${STEP_ICONS[step]}`} />
+                  {current && (
+                    <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-primary-400 ring-2 ring-white" />
+                  )}
+                </div>
+                <p className={`mt-1 text-center text-[9px] ${done ? 'font-semibold text-primary-600 dark:text-primary-400' : 'text-gray-400'}`}>
+                  {step}
+                </p>
+                {i < STEPS.length - 1 && (
+                  <div className="absolute" />
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Connecting line */}
+        <div className="relative -mt-12 mb-8 flex">
+          {STEPS.slice(0, -1).map((_, i) => (
+            <div
+              key={i}
+              className={`flex-1 h-0.5 self-center translate-y-[-12px]
+                ${i < stepIndex ? 'bg-primary-500' : 'bg-gray-200 dark:bg-gray-700'}`}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Items */}
+      <div className="card mb-4 p-4">
+        <p className="mb-3 font-semibold dark:text-gray-100">Items</p>
+        <div className="flex flex-col gap-3">
+          {order.items.map((item, i) => (
+            <div key={i} className="flex items-center justify-between gap-2">
+              <div className="flex-1 overflow-hidden">
+                <p className="truncate text-sm font-medium dark:text-gray-100">{item.title}</p>
+                {item.variantLabel && (
+                  <p className="text-xs text-gray-400">{item.variantLabel}</p>
+                )}
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-semibold dark:text-gray-100">
+                  × {item.qty}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {order.currency.toUpperCase()} {item.lineTotal.toLocaleString()}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Summary */}
+      <div className="card mb-4 p-4">
+        <p className="mb-3 font-semibold dark:text-gray-100">Summary</p>
+        <div className="flex flex-col gap-2 text-sm">
+          {[
+            ['Subtotal',  order.total - order.shipping],
+            ['Shipping',  order.shipping],
+          ].map(([label, val]) => (
+            <div key={label as string} className="flex justify-between text-gray-600 dark:text-gray-300">
+              <span>{label}</span>
+              <span>{order.currency.toUpperCase()} {(val as number).toLocaleString()}</span>
+            </div>
+          ))}
+          <div className="flex justify-between border-t border-gray-100 pt-2 font-bold dark:border-gray-700 dark:text-gray-100">
+            <span>Total</span>
+            <span>{order.currency.toUpperCase()} {order.total.toLocaleString()}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Shipping info */}
+      <div className="card p-4">
+        <p className="mb-3 font-semibold dark:text-gray-100">Shipping Address</p>
+        <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+          {order.customerName}<br />
+          {order.customerPhone}<br />
+          {[order.customerPlace, order.customerDistrict, order.customerState, order.customerCountry]
+            .filter(Boolean).join(', ')}
+        </p>
+        {order.trackingNo && (
+          <div className="mt-3 rounded-xl bg-gray-50 p-3 dark:bg-gray-800">
+            <p className="text-xs text-gray-400">Tracking number</p>
+            <p className="font-mono text-sm font-semibold dark:text-gray-100">{order.trackingNo}</p>
+            {order.courier && <p className="text-xs text-gray-400">via {order.courier}</p>}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

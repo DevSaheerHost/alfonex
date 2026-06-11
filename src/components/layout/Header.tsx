@@ -1,0 +1,112 @@
+'use client';
+
+import Link  from 'next/link';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { useCart }   from '@/contexts/CartContext';
+import { useApp }    from '@/contexts/AppContext';
+import { useAuth }   from '@/contexts/AuthContext';
+import { useState }  from 'react';
+
+const CURRENCY_OPTIONS = [
+  { value: 'usd', label: 'USD $' },
+  { value: 'aed', label: 'AED' },
+  { value: 'inr', label: 'INR ₹' },
+] as const;
+
+export default function Header() {
+  const { totalQty }           = useCart();
+  const { currency, setCurrency, theme, toggleTheme } = useApp();
+  const { user }               = useAuth();
+  const router                 = useRouter();
+  const [showCur, setShowCur]  = useState(false);
+
+  return (
+    <header className="sticky top-0 z-40 border-b border-gray-200 bg-white/90 backdrop-blur-md dark:border-dark-border dark:bg-dark-bg/90">
+      <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-4 py-3">
+
+        {/* Logo */}
+        <Link href="/" className="flex-shrink-0">
+          <Image
+            src={theme === 'dark' ? '/assets/logo/dark_nobg.png' : '/assets/logo/light_nobg.png'}
+            alt="Alfonex"
+            width={110}
+            height={36}
+            priority
+            className="h-8 w-auto"
+          />
+        </Link>
+
+        {/* Right controls */}
+        <div className="flex items-center gap-1">
+
+          {/* Currency picker */}
+          <div className="relative">
+            <button
+              onClick={() => setShowCur((s) => !s)}
+              className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+            >
+              {currency.toUpperCase()}
+              <i className="fa fa-chevron-down text-[10px]" />
+            </button>
+            {showCur && (
+              <div className="absolute right-0 top-full mt-1 min-w-[90px] rounded-xl border border-gray-100 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-dark-surface">
+                {CURRENCY_OPTIONS.map((o) => (
+                  <button
+                    key={o.value}
+                    onClick={() => { setCurrency(o.value); setShowCur(false); }}
+                    className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-50 dark:hover:bg-gray-800
+                      ${currency === o.value ? 'font-bold text-primary-600' : 'text-gray-700 dark:text-gray-300'}`}
+                  >
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Search */}
+          <Link
+            href="/search"
+            aria-label="Search"
+            className="rounded-full p-2 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+          >
+            <i className="fa fa-search text-[15px]" />
+          </Link>
+
+          {/* Cart */}
+          <Link
+            href="/cart"
+            aria-label="Cart"
+            className="relative rounded-full p-2 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+          >
+            <i className="fa fa-shopping-bag text-[15px]" />
+            {totalQty > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary-500 text-[10px] font-bold text-white">
+                {totalQty > 9 ? '9+' : totalQty}
+              </span>
+            )}
+          </Link>
+
+          {/* User / Login */}
+          <Link
+            href={user ? '/profile' : '/login'}
+            aria-label={user ? 'Profile' : 'Login'}
+            className="rounded-full p-2 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+          >
+            <i className={`fa ${user ? 'fa-circle-user' : 'fa-user'} text-[15px]`} />
+          </Link>
+
+          {/* Theme toggle */}
+          <button
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+            className="rounded-full p-2 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+          >
+            <i className={`fa ${theme === 'dark' ? 'fa-sun' : 'fa-moon'} text-[15px]`} />
+          </button>
+        </div>
+      </div>
+    </header>
+  );
+}
