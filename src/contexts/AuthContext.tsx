@@ -60,6 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       clientAuth(), email, password,
     );
     await createSession(fbUser);
+    setUser(fbUser);
   }, [createSession]);
 
   const register = useCallback(async (
@@ -70,8 +71,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
     await updateProfile(fbUser, { displayName: name });
 
-    // Persist extra fields to Firestore via an API route (avoids Server Action
-    // dependency in this client-side context)
     await fetch('/api/auth/register-profile', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -79,6 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     await createSession(fbUser);
+    setUser(fbUser);
   }, [createSession]);
 
   const logout = useCallback(async () => {

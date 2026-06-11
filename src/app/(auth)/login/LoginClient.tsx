@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,10 +11,17 @@ export default function LoginClient() {
   const [tab, setTab]            = useState<Tab>('login');
   const [error, setError]         = useState('');
   const [isPending, startTransition] = useTransition();
-  const { login, register }      = useAuth();
+  const { user, loading, login, register } = useAuth();
   const router                   = useRouter();
   const searchParams             = useSearchParams();
   const redirectTo               = searchParams.get('redirect') ?? '/';
+
+  // Redirect as soon as auth state confirms the user is signed in
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace(redirectTo);
+    }
+  }, [user, loading, redirectTo, router]);
 
   // ── Login ──────────────────────────────────────────────────────────────────
   const [loginEmail, setLoginEmail]       = useState('');
@@ -25,7 +32,7 @@ export default function LoginClient() {
     startTransition(async () => {
       try {
         await login(loginEmail.trim(), loginPassword);
-        router.replace(redirectTo);
+        // Redirect is handled by the useEffect above once user state updates
       } catch (e: unknown) {
         setError(friendlyError(e));
       }
@@ -47,7 +54,7 @@ export default function LoginClient() {
     startTransition(async () => {
       try {
         await register(name.trim(), regEmail.trim(), pass, phone.trim());
-        router.replace(redirectTo);
+        // Redirect is handled by the useEffect above once user state updates
       } catch (e: unknown) {
         setError(friendlyError(e));
       }
