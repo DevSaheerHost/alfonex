@@ -43,6 +43,7 @@ export interface Product {
   isOOS: boolean;
   isHidden: boolean;
   createdAt: string;
+  purchaseCount?: number;
 }
 
 // ─── Cart ─────────────────────────────────────────────────────────────────────

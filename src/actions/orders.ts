@@ -103,12 +103,49 @@ export async function placeOrder(
     createdBy:     user.uid,
   });
 
-  // Decrement stock for each line item
+  // Decrement stock + increment purchase count for each line item
   await Promise.all(
     cart.map((item) =>
       decrementProductStock(item.productId, item.qty, item.variantLabel),
     ),
   );
+  // Increment purchaseCount (non-fatal)
+  try {
+    await Promise.all(
+      cart.map((item) =>
+        adminRtdb().ref(`products/${item.productId}/purchaseCount`).transaction(
+          (count: number | null) => (count ?? 0) + item.qty,
+        ),
+      ),
+    );
+  } catch { /* never block the order */ }
+
+  // Auto-save shipping address if not already saved
+  try {
+    const addrSnap = await adminRtdb().ref(`addresses/${user.uid}`).get();
+    type AddrVal = { country: string; state: string; district: string; place: string };
+    const existing: AddrVal[] = addrSnap.exists()
+      ? Object.values(addrSnap.val() as Record<string, AddrVal>)
+      : [];
+    const alreadySaved = existing.some(
+      (a) =>
+        a.country === form.country &&
+        a.state   === form.state   &&
+        a.district === form.district &&
+        a.place   === form.place,
+    );
+    if (!alreadySaved) {
+      await adminRtdb().ref(`addresses/${user.uid}`).push({
+        name:     form.name,
+        phone:    form.phone,
+        country:  form.country,
+        state:    form.state,
+        district: form.district,
+        place:    form.place,
+        primary:  existing.length === 0,
+      });
+    }
+  } catch { /* never block the order */ }
 
   // Write in-app notification (RTDB bell)
   await adminRtdb().ref(`notifications/${user.uid}`).push({
