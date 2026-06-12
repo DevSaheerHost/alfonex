@@ -83,6 +83,7 @@ export default function ProfileClient({ initialProfile }: Props) {
           { href: '/loyalty',   icon: 'fa-star',           label: 'Loyalty & Rewards' },
           { href: '/warranty',  icon: 'fa-shield-halved', label: 'Warranty Claims' },
           { href: '/converter', icon: 'fa-coins',          label: 'AED ↔ INR Converter' },
+          { href: '/about',     icon: 'fa-circle-info',    label: 'About Alfonex' },
         ].map((item) => (
           <Link
             key={item.href}

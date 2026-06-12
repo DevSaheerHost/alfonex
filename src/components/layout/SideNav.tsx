@@ -13,6 +13,7 @@ const NAV = [
   { href: '/loyalty',   icon: 'fa-star',         label: 'Rewards',   authRequired: true },
   { href: '/profile',   icon: 'fa-circle-user',  label: 'Account' },
   { href: '/converter', icon: 'fa-coins',         label: 'Converter' },
+  { href: '/about',     icon: 'fa-circle-info',  label: 'About' },
 ];
 
 export default function SideNav() {
