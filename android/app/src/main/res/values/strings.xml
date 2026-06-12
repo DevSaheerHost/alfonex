@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Alfonex</string>
+    <string name="title_activity_main">Alfonex</string>
+    <string name="package_name">com.alfonex.app</string>
+    <string name="custom_url_scheme">com.alfonex.app</string>
+</resources>
