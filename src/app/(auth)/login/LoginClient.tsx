@@ -6,13 +6,13 @@ import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { applyReferralCode } from '@/actions/loyalty';
 
-type Tab = 'login' | 'register';
+type Tab = 'login' | 'register' | 'reset';
 
 export default function LoginClient() {
   const [tab, setTab]            = useState<Tab>('login');
   const [error, setError]        = useState('');
   const [isPending, startTransition] = useTransition();
-  const { login, register }      = useAuth();
+  const { login, register, resetPassword } = useAuth();
   const searchParams             = useSearchParams();
   const redirectTo               = searchParams.get('redirect') ?? '/';
   const refCode                  = searchParams.get('ref') ?? '';
@@ -27,6 +27,23 @@ export default function LoginClient() {
       try {
         await login(loginEmail.trim(), loginPassword);
         window.location.replace(redirectTo);
+      } catch (e: unknown) {
+        setError(friendlyError(e));
+      }
+    });
+  };
+
+  // ── Forgot password ────────────────────────────────────────────────────────
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetSent,  setResetSent]  = useState(false);
+
+  const handleReset = () => {
+    setError('');
+    if (!resetEmail.trim()) { setError('Please enter your email address.'); return; }
+    startTransition(async () => {
+      try {
+        await resetPassword(resetEmail.trim());
+        setResetSent(true);
       } catch (e: unknown) {
         setError(friendlyError(e));
       }
@@ -67,18 +84,20 @@ export default function LoginClient() {
         </div>
 
         {/* Tabs */}
-        <div className="mb-6 flex rounded-xl bg-gray-100 p-1 dark:bg-gray-800">
-          {(['login', 'register'] as Tab[]).map((t) => (
-            <button
-              key={t}
-              onClick={() => { setTab(t); setError(''); }}
-              className={`flex-1 rounded-lg py-2 text-sm font-semibold capitalize transition
-                ${tab === t ? 'bg-white text-gray-900 shadow-sm dark:bg-dark-surface dark:text-gray-100' : 'text-gray-500'}`}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
+        {tab !== 'reset' && (
+          <div className="mb-6 flex rounded-xl bg-gray-100 p-1 dark:bg-gray-800">
+            {(['login', 'register'] as Tab[]).map((t) => (
+              <button
+                key={t}
+                onClick={() => { setTab(t); setError(''); }}
+                className={`flex-1 rounded-lg py-2 text-sm font-semibold capitalize transition
+                  ${tab === t ? 'bg-white text-gray-900 shadow-sm dark:bg-dark-surface dark:text-gray-100' : 'text-gray-500'}`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Error */}
         {error && (
@@ -98,6 +117,62 @@ export default function LoginClient() {
             <button onClick={handleLogin} disabled={isPending} className="btn-primary mt-1">
               {isPending ? 'Signing in…' : 'Sign In'}
             </button>
+            <button
+              type="button"
+              onClick={() => { setTab('reset'); setError(''); setResetSent(false); setResetEmail(loginEmail); }}
+              className="text-center text-xs text-primary-600 hover:underline dark:text-primary-400"
+            >
+              Forgot password?
+            </button>
+          </div>
+        )}
+
+        {/* Forgot password form */}
+        {tab === 'reset' && (
+          <div className="flex flex-col gap-3">
+            <div className="mb-1 flex items-center gap-2">
+              <button
+                onClick={() => { setTab('login'); setError(''); setResetSent(false); }}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                aria-label="Back"
+              >
+                <i className="fa fa-arrow-left text-sm" />
+              </button>
+              <p className="font-semibold dark:text-gray-100">Reset Password</p>
+            </div>
+
+            {resetSent ? (
+              <div className="rounded-xl bg-green-50 px-4 py-4 text-center dark:bg-green-950/40">
+                <i className="fa fa-circle-check mb-2 block text-2xl text-green-500" />
+                <p className="text-sm font-semibold text-green-700 dark:text-green-300">Reset link sent!</p>
+                <p className="mt-1 text-xs text-green-600 dark:text-green-400">
+                  Check your inbox at <strong>{resetEmail}</strong> and follow the link to set a new password.
+                </p>
+                <button
+                  onClick={() => { setTab('login'); setResetSent(false); }}
+                  className="mt-4 text-xs text-primary-600 hover:underline dark:text-primary-400"
+                >
+                  Back to Sign In
+                </button>
+              </div>
+            ) : (
+              <>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Enter your account email and we'll send you a link to reset your password.
+                </p>
+                <input
+                  className="input"
+                  type="email"
+                  placeholder="Email address"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleReset()}
+                />
+                <button onClick={handleReset} disabled={isPending} className="btn-primary mt-1">
+                  {isPending ? 'Sending…' : 'Send Reset Link'}
+                </button>
+              </>
+            )}
           </div>
         )}
 
@@ -134,6 +209,8 @@ function friendlyError(e: unknown): string {
     return 'Invalid email or password.';
   if (msg.includes('email-already-in-use'))
     return 'An account with this email already exists.';
+  if (msg.includes('user-not-found') && !msg.includes('wrong-password'))
+    return 'No account found with that email address.';
   if (msg.includes('Session creation failed'))
     return 'Login failed — server session error. Please contact support.';
   if (msg.includes('network-request-failed'))

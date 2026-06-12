@@ -13,16 +13,18 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   updateProfile,
+  sendPasswordResetEmail,
   type User,
 } from 'firebase/auth';
 import { clientAuth } from '@/lib/firebase/client';
 
 interface AuthCtx {
-  user:     User | null;
-  loading:  boolean;
-  login:    (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string, phone: string) => Promise<void>;
-  logout:   () => Promise<void>;
+  user:          User | null;
+  loading:       boolean;
+  login:         (email: string, password: string) => Promise<void>;
+  register:      (name: string, email: string, password: string, phone: string) => Promise<void>;
+  logout:        () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthCtx | null>(null);
@@ -88,19 +90,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   }, []);
 
+  const resetPassword = useCallback(async (email: string) => {
+    await sendPasswordResetEmail(clientAuth(), email);
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, resetPassword }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
 const AUTH_DEFAULT: AuthCtx = {
-  user:     null,
-  loading:  true,
-  login:    async () => {},
-  register: async () => {},
-  logout:   async () => {},
+  user:          null,
+  loading:       true,
+  login:         async () => {},
+  register:      async () => {},
+  logout:        async () => {},
+  resetPassword: async () => {},
 };
 
 export function useAuth(): AuthCtx {
