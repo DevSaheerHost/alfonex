@@ -31,9 +31,11 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      # ── 4. Sync Capacitor (copies web assets into android/) ──────────────────
+      # ── 4. Sync Capacitor using local binary (avoids npx version mismatch) ───
       - name: Capacitor sync
-        run: npx cap sync android
+        run: |
+          node --version
+          ./node_modules/.bin/cap sync android
 
       # ── 5. Decode keystore from GitHub Secret ─────────────────────────────────
       - name: Decode keystore
