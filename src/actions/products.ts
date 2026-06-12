@@ -1,5 +1,6 @@
 'use server';
 
+import { cache } from 'react';
 import { adminRtdb } from '@/lib/firebase/admin';
 import type { Product } from '@/lib/types';
 
@@ -18,7 +19,7 @@ function toProducts(snapshot: Record<string, unknown>): Product[] {
 
 // ─── Reads ────────────────────────────────────────────────────────────────────
 
-export async function getProducts(): Promise<Product[]> {
+export const getProducts = cache(async function getProducts(): Promise<Product[]> {
   try {
     const snap = await adminRtdb().ref('products').get();
     if (!snap.exists()) return [];
@@ -26,7 +27,7 @@ export async function getProducts(): Promise<Product[]> {
   } catch {
     return [];
   }
-}
+});
 
 export async function getFeaturedProducts(): Promise<Product[]> {
   try {
@@ -41,6 +42,52 @@ export async function getProduct(id: string): Promise<Product | null> {
   const snap = await adminRtdb().ref(`products/${id}`).get();
   if (!snap.exists()) return null;
   return { id, ...snap.val() } as Product;
+}
+
+// ─── Recommendations ──────────────────────────────────────────────────────────
+
+export async function getRecommendedProducts(userId: string | null): Promise<Product[]> {
+  if (!userId) return getFeaturedProducts();
+  try {
+    const [ordersSnap, allProducts] = await Promise.all([
+      adminRtdb().ref('orders').orderByChild('userId').equalTo(userId).get(),
+      getProducts(),
+    ]);
+
+    if (!ordersSnap.exists()) return getFeaturedProducts();
+
+    const purchasedIds = new Set<string>();
+    const categories   = new Set<string>();
+
+    for (const order of Object.values(ordersSnap.val() as Record<string, { items?: { productId: string }[] }>)) {
+      for (const item of order.items ?? []) {
+        purchasedIds.add(item.productId);
+        const prod = allProducts.find((p) => p.id === item.productId);
+        if (prod?.category) categories.add(prod.category);
+      }
+    }
+
+    if (categories.size === 0) return getFeaturedProducts();
+
+    const recs = allProducts
+      .filter((p) => !p.isOOS && !p.isHidden && categories.has(p.category) && !purchasedIds.has(p.id))
+      .slice(0, 8);
+
+    return recs.length > 0 ? recs : getFeaturedProducts();
+  } catch {
+    return getFeaturedProducts();
+  }
+}
+
+export async function getSimilarProducts(productId: string, category: string): Promise<Product[]> {
+  try {
+    const all = await getProducts();
+    return all
+      .filter((p) => p.category === category && p.id !== productId && !p.isOOS && !p.isHidden)
+      .slice(0, 6);
+  } catch {
+    return [];
+  }
 }
 
 // ─── Stock decrement (inside a transaction) ───────────────────────────────────

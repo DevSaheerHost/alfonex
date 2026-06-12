@@ -1,4 +1,4 @@
-import { getProduct } from '@/actions/products';
+import { getProduct, getSimilarProducts } from '@/actions/products';
 import { notFound }   from 'next/navigation';
 import ProductDetailClient from './ProductDetailClient';
 
@@ -11,5 +11,7 @@ export default async function ProductPage({ params }: Props) {
   const product = await getProduct(id);
   if (!product) notFound();
 
-  return <ProductDetailClient product={product} />;
+  const similar = await getSimilarProducts(id, product.category).catch(() => []);
+
+  return <ProductDetailClient product={product} similar={similar} />;
 }

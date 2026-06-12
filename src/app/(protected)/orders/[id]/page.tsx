@@ -22,6 +22,28 @@ const STEP_ICONS: Record<OrderStatus, string> = {
   Delivered:    'fa-circle-check',
 };
 
+const STEP_TS: Record<OrderStatus, keyof Order> = {
+  Pending:      'createdAt',
+  Packed:       'packed_at',
+  Dispatched:   'dispatched_at',
+  Shipped:      'shipped_at',
+  'In Transit': 'transit_at',
+  Delivered:    'delivered_at',
+};
+
+const COURIER_URLS: Record<string, string> = {
+  aramex:       'https://www.aramex.com/us/en/track/results?ShipmentNumber=',
+  dhl:          'https://www.dhl.com/en/express/tracking.html?AWB=',
+  fedex:        'https://www.fedex.com/fedextrack/?trknbr=',
+  'speed post': 'https://www.indiapost.gov.in/_layouts/15/DOP.Portal.Tracking/TrackConsignment.aspx?ConsignmentNo=',
+  ups:          'https://www.ups.com/track?tracknum=',
+};
+
+function fmtDate(val: string | undefined): string {
+  if (!val) return '';
+  return new Date(val).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
 interface Props {
   params: Promise<{ id: string }>;
 }
@@ -36,7 +58,11 @@ export default async function OrderDetailPage({ params }: Props) {
     notFound();
   }
 
-  const stepIndex = STEPS.indexOf(order.status);
+  const stepIndex   = STEPS.indexOf(order.status);
+  const courierKey  = order.courier?.toLowerCase().trim() ?? '';
+  const trackingUrl = order.trackingNo && COURIER_URLS[courierKey]
+    ? COURIER_URLS[courierKey] + order.trackingNo
+    : null;
 
   return (
     <div className="page-wrapper">
@@ -55,13 +81,24 @@ export default async function OrderDetailPage({ params }: Props) {
         </div>
       </div>
 
+      {/* Invoice download */}
+      <Link
+        href={`/orders/${order.id}/invoice`}
+        className="mb-4 flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:bg-dark-surface dark:text-gray-200 dark:hover:bg-gray-800"
+      >
+        <i className="fa fa-file-invoice text-primary-500" />
+        Download Invoice
+        <i className="fa fa-chevron-right ml-auto text-xs text-gray-400" />
+      </Link>
+
       {/* Timeline */}
       <div className="card mb-4 p-4">
         <p className="mb-4 font-semibold dark:text-gray-100">Tracking</p>
-        <div className="flex items-center">
+        <div className="flex items-start">
           {STEPS.map((step, i) => {
             const done    = i <= stepIndex;
             const current = i === stepIndex;
+            const tsVal   = done ? (order[STEP_TS[step]] as string | undefined) : undefined;
             return (
               <div key={step} className="flex flex-1 flex-col items-center">
                 <div className={`relative flex h-8 w-8 items-center justify-center rounded-full text-xs
@@ -74,8 +111,8 @@ export default async function OrderDetailPage({ params }: Props) {
                 <p className={`mt-1 text-center text-[9px] ${done ? 'font-semibold text-primary-600 dark:text-primary-400' : 'text-gray-400'}`}>
                   {step}
                 </p>
-                {i < STEPS.length - 1 && (
-                  <div className="absolute" />
+                {tsVal && (
+                  <p className="text-center text-[8px] text-primary-400">{fmtDate(tsVal)}</p>
                 )}
               </div>
             );
@@ -165,6 +202,17 @@ export default async function OrderDetailPage({ params }: Props) {
             <p className="font-mono text-sm font-bold text-primary-700 dark:text-primary-300">{order.trackingNo}</p>
             {order.courier && (
               <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">via {order.courier}</p>
+            )}
+            {trackingUrl && (
+              <a
+                href={trackingUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-primary-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-primary-600"
+              >
+                <i className="fa fa-arrow-up-right-from-square" />
+                Track Package
+              </a>
             )}
           </div>
         ) : (

@@ -80,6 +80,7 @@ export default function ProfileClient({ initialProfile }: Props) {
           { href: '/orders',    icon: 'fa-box',           label: 'My Orders' },
           { href: '/addresses', icon: 'fa-location-dot',  label: 'Saved Addresses' },
           { href: '/wishlist',  icon: 'fa-heart',         label: 'Wishlist' },
+          { href: '/loyalty',   icon: 'fa-star',           label: 'Loyalty & Rewards' },
           { href: '/warranty',  icon: 'fa-shield-halved', label: 'Warranty Claims' },
           { href: '/converter', icon: 'fa-coins',          label: 'AED ↔ INR Converter' },
         ].map((item) => (

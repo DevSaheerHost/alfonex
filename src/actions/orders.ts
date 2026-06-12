@@ -28,6 +28,7 @@ export async function placeOrder(
   form: CheckoutFormData,
   cart: CartItem[],
   currency: Currency,
+  discountPoints = 0,
 ): Promise<{ orderId: string }> {
   const user = await verifySession();
 
@@ -35,7 +36,17 @@ export async function placeOrder(
 
   const shipping = SHIPPING_RATES[currency];
   const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
-  const total    = subtotal + shipping;
+
+  // Validate and apply loyalty points redemption
+  let loyaltyDiscount = 0;
+  if (discountPoints > 0) {
+    const balSnap = await adminRtdb().ref(`users/${user.uid}/loyaltyPoints`).get();
+    const balance = (balSnap.val() as number | null) ?? 0;
+    if (balance < discountPoints) throw new Error('Insufficient loyalty points');
+    loyaltyDiscount = Math.floor(discountPoints / 100);
+  }
+
+  const total = subtotal + shipping - loyaltyDiscount;
   const cost     = cart.reduce((s, i) => s + (i.costPrice ?? 0) * i.qty, 0);
   const profit   = total - cost - shipping;
 
@@ -52,6 +63,18 @@ export async function placeOrder(
 
   const now = new Date().toISOString();
   const orderRef = adminRtdb().ref('orders').push();
+
+  // Deduct redeemed points before saving order
+  if (discountPoints > 0) {
+    await adminRtdb().ref(`users/${user.uid}/loyaltyPoints`).transaction(
+      (pts: number | null) => Math.max(0, (pts ?? 0) - discountPoints),
+    );
+    await adminRtdb().ref(`loyalty_history/${user.uid}`).push({
+      points:    -discountPoints,
+      type:      'redeemed',
+      createdAt: Date.now(),
+    });
+  }
 
   await orderRef.set({
     customerName:     form.name,
@@ -96,6 +119,42 @@ export async function placeOrder(
     read:  false,
     createdAt: Date.now(),
   });
+
+  // Award loyalty points (1 pt per 10 units of currency)
+  try {
+    const earnedPts = Math.floor(total / 10);
+    if (earnedPts > 0) {
+      await adminRtdb().ref(`users/${user.uid}/loyaltyPoints`).transaction(
+        (pts: number | null) => (pts ?? 0) + earnedPts,
+      );
+      const histRef = await adminRtdb().ref(`loyalty_history/${user.uid}`).push({
+        points:    earnedPts,
+        type:      'earned',
+        orderId:   orderRef.key,
+        createdAt: Date.now(),
+      });
+
+      // First-order referral bonus: if this is the only history entry, reward referrer
+      const histSnap = await adminRtdb().ref(`loyalty_history/${user.uid}`).get();
+      if (histSnap.exists() && Object.keys(histSnap.val()).length === 1) {
+        const referredBySnap = await adminRtdb().ref(`users/${user.uid}/referredBy`).get();
+        if (referredBySnap.exists()) {
+          const referrerId = referredBySnap.val() as string;
+          await adminRtdb().ref(`users/${referrerId}/loyaltyPoints`).transaction(
+            (pts: number | null) => (pts ?? 0) + 50,
+          );
+          await adminRtdb().ref(`loyalty_history/${referrerId}`).push({
+            points:    50,
+            type:      'referral_bonus',
+            createdAt: Date.now(),
+          });
+        }
+      }
+      void histRef; // suppress unused var
+    }
+  } catch {
+    // Points failure must never fail the order
+  }
 
   // Send background push if user has an FCM token
   try {

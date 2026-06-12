@@ -216,6 +216,16 @@ export interface AppNotification {
   createdAt: number;
 }
 
+// ─── Loyalty ──────────────────────────────────────────────────────────────────
+
+export interface LoyaltyEntry {
+  id:        string;
+  points:    number;
+  type:      'earned' | 'redeemed' | 'referral_bonus';
+  orderId?:  string;
+  createdAt: number;
+}
+
 // ─── Checkout ─────────────────────────────────────────────────────────────────
 
 export interface CheckoutFormData {

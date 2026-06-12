@@ -9,7 +9,8 @@ const NAV = [
   { href: '/',        icon: 'fa-home',         label: 'Shop' },
   { href: '/search',  icon: 'fa-search',       label: 'Search' },
   { href: '/cart',    icon: 'fa-shopping-bag', label: 'Cart', showBadge: true },
-  { href: '/orders',  icon: 'fa-box',          label: 'Orders', authRequired: true },
+  { href: '/orders',    icon: 'fa-box',          label: 'Orders',    authRequired: true },
+  { href: '/loyalty',   icon: 'fa-star',         label: 'Rewards',   authRequired: true },
   { href: '/profile',   icon: 'fa-circle-user',  label: 'Account' },
   { href: '/converter', icon: 'fa-coins',         label: 'Converter' },
 ];

@@ -7,6 +7,7 @@ import { useApp, useProductPrice } from '@/contexts/AppContext';
 import { useCart }                  from '@/contexts/CartContext';
 import { useWishlist }              from '@/contexts/WishlistContext';
 import ReserveModal                 from '@/components/products/ReserveModal';
+import ProductScrollRow             from '@/components/products/ProductScrollRow';
 import type { Product, VariantGroup } from '@/lib/types';
 import { CURRENCY_SYMBOLS }           from '@/lib/types';
 
@@ -16,9 +17,9 @@ const GRADE_INFO: Record<string, { label: string; color: string; desc: string }>
   'a3+': { label: 'Good',       color: 'text-yellow-600', desc: 'Visible wear · Fully functional' },
 };
 
-interface Props { product: Product }
+interface Props { product: Product; similar: Product[] }
 
-export default function ProductDetailClient({ product }: Props) {
+export default function ProductDetailClient({ product, similar }: Props) {
   const { currency }    = useApp();
   const getProdPrice    = useProductPrice();
   const { addToCart }   = useCart();
@@ -192,6 +193,10 @@ export default function ProductDetailClient({ product }: Props) {
         open={reserveOpen}
         onClose={() => setReserveOpen(false)}
       />
+
+      <div className="mt-6">
+        <ProductScrollRow title="Similar Products" products={similar} />
+      </div>
     </div>
   );
 }

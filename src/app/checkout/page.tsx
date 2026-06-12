@@ -7,6 +7,7 @@ import { useAuth }   from '@/contexts/AuthContext';
 import { useApp }    from '@/contexts/AppContext';
 import { placeOrder } from '@/actions/orders';
 import { getAddresses } from '@/actions/users';
+import { getMyLoyalty } from '@/actions/loyalty';
 import { CURRENCY_SYMBOLS } from '@/lib/types';
 import type { CheckoutFormData, PayMethod, Address } from '@/lib/types';
 import Link from 'next/link';
@@ -48,7 +49,19 @@ export default function CheckoutPage() {
 
   const symbol   = CURRENCY_SYMBOLS[currency];
   const shipping = SHIPPING_RATES[currency];
-  const total    = subtotal + shipping;
+
+  // Loyalty points
+  const [loyaltyBalance,   setLoyaltyBalance]   = useState(0);
+  const [redeemPoints,     setRedeemPoints]      = useState(0);
+  const [redeemInput,      setRedeemInput]       = useState('');
+
+  useEffect(() => {
+    if (!user) return;
+    getMyLoyalty().then(({ points }) => setLoyaltyBalance(points)).catch(() => {});
+  }, [user]);
+
+  const loyaltyDiscount = Math.floor(redeemPoints / 100);
+  const total           = subtotal + shipping - loyaltyDiscount;
 
   const [form, setForm] = useState<CheckoutFormData>({
     name:      user?.displayName ?? '',
@@ -113,7 +126,7 @@ export default function CheckoutPage() {
 
     startTransition(async () => {
       try {
-        const { orderId } = await placeOrder(form, items, currency);
+        const { orderId } = await placeOrder(form, items, currency, redeemPoints);
         clearCart();
         router.push(`/orders/${orderId}?placed=1`);
       } catch (e: unknown) {
@@ -219,6 +232,53 @@ export default function CheckoutPage() {
         </div>
       </div>
 
+      {/* Loyalty Points */}
+      {user && loyaltyBalance > 0 && (
+        <div className="card mb-4 p-4">
+          <div className="mb-2 flex items-center justify-between">
+            <p className="font-semibold dark:text-gray-100">
+              <i className="fa fa-star mr-1.5 text-yellow-400" />
+              Loyalty Points
+            </p>
+            <span className="rounded-full bg-primary-100 px-2.5 py-0.5 text-xs font-bold text-primary-700 dark:bg-primary-900/40 dark:text-primary-300">
+              {loyaltyBalance.toLocaleString()} pts
+            </span>
+          </div>
+          <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">100 pts = {symbol}1 off · Use multiples of 100</p>
+          <div className="flex gap-2">
+            <input
+              className="input flex-1"
+              type="number"
+              min={0}
+              step={100}
+              max={Math.min(loyaltyBalance, Math.floor(subtotal) * 100)}
+              placeholder="Points to redeem"
+              value={redeemInput}
+              onChange={(e) => {
+                const raw = parseInt(e.target.value, 10) || 0;
+                const clamped = Math.min(raw, loyaltyBalance, Math.floor(subtotal) * 100);
+                const rounded = Math.floor(clamped / 100) * 100;
+                setRedeemInput(e.target.value);
+                setRedeemPoints(rounded);
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => { setRedeemPoints(0); setRedeemInput(''); }}
+              className="rounded-xl border border-gray-200 px-3 text-xs text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+            >
+              Clear
+            </button>
+          </div>
+          {redeemPoints > 0 && (
+            <p className="mt-1.5 text-xs font-semibold text-green-600 dark:text-green-400">
+              <i className="fa fa-tag mr-1" />
+              Discount: {symbol}{loyaltyDiscount.toLocaleString()}
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Summary */}
       <div className="card mb-4 p-4">
         <p className="mb-3 font-semibold dark:text-gray-100">Order Summary</p>
@@ -260,6 +320,12 @@ export default function CheckoutPage() {
             <span>Shipping</span>
             <span>{symbol}{shipping.toLocaleString()}</span>
           </div>
+          {loyaltyDiscount > 0 && (
+            <div className="flex justify-between text-green-600 dark:text-green-400">
+              <span>Loyalty Discount</span>
+              <span>−{symbol}{loyaltyDiscount.toLocaleString()}</span>
+            </div>
+          )}
           <div className="flex justify-between border-t border-gray-100 pt-2 font-bold dark:border-gray-700 dark:text-gray-100">
             <span>Total</span>
             <span>{symbol}{total.toLocaleString()}</span>

@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import ProductCard from '@/components/products/ProductCard';
-import BannerSlider from '@/components/home/BannerSlider';
+import ProductCard      from '@/components/products/ProductCard';
+import ProductScrollRow from '@/components/products/ProductScrollRow';
+import BannerSlider     from '@/components/home/BannerSlider';
 import type { Product, Banner } from '@/lib/types';
 
 type Filter = 'all' | 'featured' | 'new' | 'sale';
@@ -15,12 +16,13 @@ const FILTERS: { id: Filter; label: string }[] = [
 ];
 
 interface Props {
-  products: Product[];
-  featured: Product[];
-  banners:  Banner[];
+  products:    Product[];
+  featured:    Product[];
+  banners:     Banner[];
+  recommended: Product[];
 }
 
-export default function ShopClientShell({ products, featured, banners }: Props) {
+export default function ShopClientShell({ products, featured, banners, recommended }: Props) {
   const [filter, setFilter] = useState<Filter>('all');
 
   const displayed = useMemo(() => {
@@ -34,7 +36,7 @@ export default function ShopClientShell({ products, featured, banners }: Props) 
   return (
     <div className="page-wrapper">
 
-      {/* Banner slider (falls back to static hero when no banners in DB) */}
+      {/* Banner slider */}
       {banners.length > 0 ? (
         <BannerSlider banners={banners} />
       ) : (
@@ -43,6 +45,9 @@ export default function ShopClientShell({ products, featured, banners }: Props) 
           <p className="mt-1 text-sm text-white/80">iPhones · MacBooks · AirPods · Watches</p>
         </div>
       )}
+
+      {/* Personalised recommendations */}
+      <ProductScrollRow title="Picked for You" products={recommended} />
 
       {/* Filter pills */}
       <div className="mb-4 flex gap-2 overflow-x-auto pb-1 scrollbar-none">

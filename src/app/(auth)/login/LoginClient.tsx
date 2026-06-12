@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
+import { applyReferralCode } from '@/actions/loyalty';
 
 type Tab = 'login' | 'register';
 
@@ -14,6 +15,7 @@ export default function LoginClient() {
   const { login, register }      = useAuth();
   const searchParams             = useSearchParams();
   const redirectTo               = searchParams.get('redirect') ?? '/';
+  const refCode                  = searchParams.get('ref') ?? '';
 
   // ── Login ──────────────────────────────────────────────────────────────────
   const [loginEmail, setLoginEmail]       = useState('');
@@ -46,6 +48,7 @@ export default function LoginClient() {
     startTransition(async () => {
       try {
         await register(name.trim(), regEmail.trim(), pass, phone.trim());
+        if (refCode) await applyReferralCode(refCode).catch(() => {});
         window.location.replace(redirectTo);
       } catch (e: unknown) {
         setError(friendlyError(e));
