@@ -70,18 +70,8 @@ export async function applyReferralCode(code: string): Promise<void> {
     const referrerId = Object.keys(usersSnap.val() as Record<string, unknown>)[0];
     if (!referrerId || referrerId === user.uid) return;
 
-    // Mark current user as referred
+    // Mark current user as referred (points awarded when they place first order)
     await adminRtdb().ref(`users/${user.uid}/referredBy`).set(referrerId);
-
-    // Award 50 pts to referrer
-    await adminRtdb().ref(`users/${referrerId}/loyaltyPoints`).transaction(
-      (pts: number | null) => (pts ?? 0) + 50,
-    );
-    await adminRtdb().ref(`loyalty_history/${referrerId}`).push({
-      points:    50,
-      type:      'referral_bonus',
-      createdAt: Date.now(),
-    });
   } catch {
     // Never block registration
   }
