@@ -18,24 +18,33 @@ export async function getMyLoyalty(): Promise<{
 }> {
   const user = await verifySession();
 
-  const [pointsSnap, historySnap, codeSnap] = await Promise.all([
+  const [pointsSnap, historySnap, codeSnap] = await Promise.allSettled([
     adminRtdb().ref(`users/${user.uid}/loyaltyPoints`).get(),
     adminRtdb().ref(`loyalty_history/${user.uid}`).orderByChild('createdAt').limitToLast(20).get(),
     adminRtdb().ref(`users/${user.uid}/referralCode`).get(),
   ]);
 
-  const points = (pointsSnap.val() as number | null) ?? 0;
+  const points = pointsSnap.status === 'fulfilled'
+    ? ((pointsSnap.value.val() as number | null) ?? 0)
+    : 0;
 
-  const history: LoyaltyEntry[] = historySnap.exists()
-    ? Object.entries(historySnap.val() as Record<string, Omit<LoyaltyEntry, 'id'>>)
-        .map(([id, data]) => ({ id, ...data } as LoyaltyEntry))
-        .sort((a, b) => b.createdAt - a.createdAt)
-    : [];
+  const history: LoyaltyEntry[] =
+    historySnap.status === 'fulfilled' && historySnap.value.exists()
+      ? Object.entries(historySnap.value.val() as Record<string, Omit<LoyaltyEntry, 'id'>>)
+          .map(([id, data]) => ({ id, ...data } as LoyaltyEntry))
+          .sort((a, b) => b.createdAt - a.createdAt)
+      : [];
 
-  let referralCode: string = (codeSnap.val() as string | null) ?? '';
+  let referralCode: string =
+    codeSnap.status === 'fulfilled'
+      ? ((codeSnap.value.val() as string | null) ?? '')
+      : '';
+
   if (!referralCode) {
     referralCode = user.uid.slice(0, 8).toUpperCase();
-    await adminRtdb().ref(`users/${user.uid}/referralCode`).set(referralCode);
+    try {
+      await adminRtdb().ref(`users/${user.uid}/referralCode`).set(referralCode);
+    } catch { /* non-fatal */ }
   }
 
   return { points, history, referralCode };
