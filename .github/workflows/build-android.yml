@@ -43,21 +43,29 @@ jobs:
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/alfonex-release.jks
 
-      # ── 6. Build signed release AAB ──────────────────────────────────────────
-      - name: Build release AAB
+      # ── 6. Build signed release AAB + APK ────────────────────────────────────
+      - name: Build release AAB + APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew bundleRelease \
+          ./gradlew bundleRelease assembleRelease \
             -PKEYSTORE_PATH=alfonex-release.jks \
             -PKEYSTORE_PASSWORD="${{ secrets.KEYSTORE_PASSWORD }}" \
             -PKEY_ALIAS="${{ secrets.KEY_ALIAS }}" \
             -PKEY_PASSWORD="${{ secrets.KEY_PASSWORD }}"
 
-      # ── 7. Upload AAB as downloadable artifact ────────────────────────────────
+      # ── 7. Upload AAB (Play Store) ────────────────────────────────────────────
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
         with:
           name: alfonex-release-${{ github.run_number }}.aab
           path: android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 30
+
+      # ── 8. Upload APK (direct install / side-load) ───────────────────────────
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: alfonex-release-${{ github.run_number }}.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 30
