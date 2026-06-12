@@ -18,6 +18,46 @@ const GRADE_INFO: Record<string, { label: string; color: string; desc: string }>
   'a3+': { label: 'Good',       color: 'text-yellow-600', desc: 'Visible wear · Fully functional' },
 };
 
+// ── Highlight parser ───────────────────────────────────────────────────────────
+// Each description line: "Label:: Value" or "Label:: Value:: Sub"
+// Returns null if no "::" found → fall back to plain text.
+interface Highlight { label: string; value: string; sub?: string; icon: string }
+
+const ICON_MAP: [RegExp, string][] = [
+  [/ram|rom|memory|storage/i,          'fa-memory'],
+  [/processor|cpu|chip|core/i,         'fa-microchip'],
+  [/rear.?camera|back.?camera/i,       'fa-camera'],
+  [/front.?camera|selfie|facetime/i,   'fa-camera-rotate'],
+  [/display|screen|oled|amoled/i,      'fa-mobile-screen'],
+  [/battery/i,                         'fa-battery-full'],
+  [/ios|android|os|software/i,         'fa-mobile'],
+  [/wifi|bluetooth|5g|4g|sim|network/i,'fa-wifi'],
+  [/weight/i,                          'fa-weight-scale'],
+  [/color|colour/i,                    'fa-palette'],
+  [/warranty/i,                        'fa-shield-halved'],
+  [/water|dust|resistant/i,            'fa-droplet'],
+  [/speaker|audio|sound/i,             'fa-volume-high'],
+  [/sensor|face.?id|touch.?id/i,       'fa-fingerprint'],
+  [/charg|fast.?charge/i,              'fa-bolt'],
+  [/dim|size|height|width|thick/i,     'fa-ruler'],
+];
+
+function iconFor(label: string) {
+  const match = ICON_MAP.find(([re]) => re.test(label));
+  return match ? match[1] : 'fa-circle-info';
+}
+
+function parseHighlights(desc: string): Highlight[] | null {
+  if (!desc.includes('::')) return null;
+  const lines = desc.split('\n').map((l) => l.trim()).filter(Boolean);
+  const parsed = lines.map((line) => {
+    const parts = line.split('::').map((p) => p.trim());
+    if (parts.length < 2) return null;
+    return { label: parts[0], value: parts[1], sub: parts[2], icon: iconFor(parts[0]) } as Highlight;
+  }).filter(Boolean) as Highlight[];
+  return parsed.length ? parsed : null;
+}
+
 // Known Apple/device color → CSS background
 const COLOR_SWATCHES: Record<string, string> = {
   'black':            '#1c1c1e',
@@ -235,15 +275,41 @@ export default function ProductDetailClient({ product, similar, reviews }: Props
             );
           })}
 
-          {/* Description */}
-          {product.description && (
-            <div className="card mb-4 p-4">
-              <p className="mb-1 text-sm font-semibold dark:text-gray-100">About this product</p>
-              <p className="whitespace-pre-line text-sm leading-relaxed text-gray-600 dark:text-gray-300">
-                {product.description}
-              </p>
-            </div>
-          )}
+          {/* Description / Highlights */}
+          {product.description && (() => {
+            const highlights = parseHighlights(product.description);
+            if (highlights) {
+              return (
+                <div className="card mb-4 p-4">
+                  <p className="mb-4 text-sm font-bold text-gray-900 dark:text-gray-100">Highlights</p>
+                  <ul className="space-y-4">
+                    {highlights.map((h, i) => (
+                      <li key={i} className="flex items-start gap-3">
+                        <span className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
+                          <i className={`fa-solid ${h.icon} text-sm text-gray-500 dark:text-gray-400`} />
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-xs text-gray-400 dark:text-gray-500">{h.label}</p>
+                          <p className="text-sm font-semibold leading-snug text-gray-900 dark:text-gray-100">{h.value}</p>
+                          {h.sub && (
+                            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{h.sub}</p>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            }
+            return (
+              <div className="card mb-4 p-4">
+                <p className="mb-1 text-sm font-semibold dark:text-gray-100">About this product</p>
+                <p className="whitespace-pre-line text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+                  {product.description}
+                </p>
+              </div>
+            );
+          })()}
 
           {/* Add to cart + Reserve — sticky on mobile, static on desktop */}
           <div className="sticky bottom-20 bg-gray-100 pb-2 pt-2 dark:bg-[#111] lg:static lg:bg-transparent lg:pb-0 lg:pt-0 lg:dark:bg-transparent">
