@@ -1,6 +1,6 @@
-import { getOrder } from '@/actions/orders';
-import { notFound } from 'next/navigation';
-import Link from 'next/link';
+import { getOrder }    from '@/actions/orders';
+import { notFound }    from 'next/navigation';
+import Link            from 'next/link';
 import type { Order, OrderStatus } from '@/lib/types';
 
 const GRADE_LABELS: Record<string, { label: string; color: string }> = {
@@ -58,7 +58,10 @@ export default async function OrderDetailPage({ params }: Props) {
     notFound();
   }
 
-  const stepIndex   = STEPS.indexOf(order.status);
+  const stepIndex     = STEPS.indexOf(order.status);
+  const deliveredAt   = order.delivered_at ? new Date(order.delivered_at).getTime() : null;
+  const canReview     = order.status === 'Delivered' &&
+    (!deliveredAt || Date.now() - deliveredAt >= 30 * 60 * 1000);
   const courierKey  = order.courier?.toLowerCase().trim() ?? '';
   const trackingUrl = order.trackingNo && COURIER_URLS[courierKey]
     ? COURIER_URLS[courierKey] + order.trackingNo
@@ -151,6 +154,15 @@ export default async function OrderDetailPage({ params }: Props) {
                       </span>
                     )}
                   </div>
+                  {canReview && (
+                    <Link
+                      href={`/orders/${order.id}/review/${item.productId}`}
+                      className="mt-1.5 inline-flex items-center gap-1 rounded-lg bg-yellow-50 px-2.5 py-1 text-[11px] font-semibold text-yellow-700 transition hover:bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400"
+                    >
+                      <i className="fa fa-star text-yellow-400" />
+                      Write a Review
+                    </Link>
+                  )}
                 </div>
                 <div className="flex-shrink-0 text-right">
                   <p className="text-sm font-semibold dark:text-gray-100">× {item.qty}</p>

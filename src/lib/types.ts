@@ -216,6 +216,21 @@ export interface AppNotification {
   createdAt: number;
 }
 
+// ─── Review ───────────────────────────────────────────────────────────────────
+
+export interface Review {
+  id:        string;
+  productId: string;
+  orderId:   string;
+  userId:    string;
+  userName:  string;
+  rating:    number;      // 1–5
+  text:      string;
+  mediaUrls: string[];    // Cloudinary URLs
+  createdAt: number;
+  verified:  boolean;     // always true — tied to a real delivered order
+}
+
 // ─── Loyalty ──────────────────────────────────────────────────────────────────
 
 export interface LoyaltyEntry {

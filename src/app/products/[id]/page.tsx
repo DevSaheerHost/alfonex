@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { getProduct, getSimilarProducts } from '@/actions/products';
-import { notFound }   from 'next/navigation';
-import ProductDetailClient from './ProductDetailClient';
+import { getProductReviews } from '@/actions/reviews';
+import { notFound }          from 'next/navigation';
+import ProductDetailClient   from './ProductDetailClient';
 
 const BASE = 'https://alfonex.com';
 
@@ -49,7 +50,10 @@ export default async function ProductPage({ params }: Props) {
   const product = await getProduct(id);
   if (!product) notFound();
 
-  const similar = await getSimilarProducts(id, product.category).catch(() => []);
+  const [similar, reviews] = await Promise.all([
+    getSimilarProducts(id, product.category).catch(() => []),
+    getProductReviews(id).catch(() => []),
+  ]);
 
   // JSON-LD Product structured data
   const jsonLd = {
@@ -84,7 +88,7 @@ export default async function ProductPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <ProductDetailClient product={product} similar={similar} />
+      <ProductDetailClient product={product} similar={similar} reviews={reviews} />
     </>
   );
 }

@@ -8,8 +8,9 @@ import { useCart }                  from '@/contexts/CartContext';
 import { useWishlist }              from '@/contexts/WishlistContext';
 import ReserveModal                 from '@/components/products/ReserveModal';
 import ProductScrollRow             from '@/components/products/ProductScrollRow';
-import type { Product, VariantGroup } from '@/lib/types';
-import { CURRENCY_SYMBOLS }           from '@/lib/types';
+import ProductReviews               from '@/components/reviews/ProductReviews';
+import type { Product, VariantGroup, Review } from '@/lib/types';
+import { CURRENCY_SYMBOLS }                   from '@/lib/types';
 
 const GRADE_INFO: Record<string, { label: string; color: string; desc: string }> = {
   'a1+': { label: 'Excellent',  color: 'text-green-600',  desc: 'Like new · Sealed or minimal use' },
@@ -17,9 +18,9 @@ const GRADE_INFO: Record<string, { label: string; color: string; desc: string }>
   'a3+': { label: 'Good',       color: 'text-yellow-600', desc: 'Visible wear · Fully functional' },
 };
 
-interface Props { product: Product; similar: Product[] }
+interface Props { product: Product; similar: Product[]; reviews: Review[] }
 
-export default function ProductDetailClient({ product, similar }: Props) {
+export default function ProductDetailClient({ product, similar, reviews }: Props) {
   const { currency }    = useApp();
   const getProdPrice    = useProductPrice();
   const { addToCart }   = useCart();
@@ -193,6 +194,8 @@ export default function ProductDetailClient({ product, similar }: Props) {
         open={reserveOpen}
         onClose={() => setReserveOpen(false)}
       />
+
+      <ProductReviews reviews={reviews} />
 
       <div className="mt-6">
         <ProductScrollRow title="Similar Products" products={similar} />
