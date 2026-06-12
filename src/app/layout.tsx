@@ -10,14 +10,39 @@ import BottomNav         from '@/components/layout/BottomNav';
 import SideNav           from '@/components/layout/SideNav';
 
 export const metadata: Metadata = {
-  title:       'Alfonex — Genuine Apple Devices',
-  description: 'Buy and sell genuine Apple devices — iPhones, MacBooks, AirPods and more. Multi-currency support: USD, AED, INR.',
-  keywords:    ['apple', 'iphone', 'macbook', 'airpods', 'apple watch', 'refurbished', 'genuine'],
+  metadataBase: new URL('https://alfonex.com'),
+  title: {
+    default:  'Alfonex — Genuine Apple Devices',
+    template: '%s — Alfonex',
+  },
+  description: 'Buy genuine Apple devices at Alfonex — iPhones, MacBooks, AirPods, Apple Watch. Available in USD, AED & INR. Ships to UAE, India, Saudi Arabia and more.',
+  keywords:    ['apple', 'iphone', 'macbook', 'airpods', 'apple watch', 'genuine apple', 'refurbished', 'UAE', 'India', 'AED', 'buy iphone'],
+  authors:     [{ name: 'Alfonex', url: 'https://alfonex.com' }],
   openGraph: {
     title:       'Alfonex — Genuine Apple Devices',
-    description: 'Buy and sell genuine Apple devices.',
+    description: 'Buy genuine Apple devices — iPhones, MacBooks, AirPods and more. Ships to UAE, India & GCC.',
     siteName:    'Alfonex',
     type:        'website',
+    url:         'https://alfonex.com',
+    images: [{
+      url:    '/assets/meta/icon/logo.png',
+      width:  512,
+      height: 512,
+      alt:    'Alfonex — Genuine Apple Devices',
+    }],
+  },
+  twitter: {
+    card:        'summary_large_image',
+    title:       'Alfonex — Genuine Apple Devices',
+    description: 'Buy genuine Apple devices — iPhones, MacBooks, AirPods and more.',
+    images:      ['/assets/meta/icon/logo.png'],
+  },
+  icons: {
+    icon:  '/assets/meta/icon/logo.png',
+    apple: '/assets/meta/icon/logo.png',
+  },
+  alternates: {
+    canonical: 'https://alfonex.com',
   },
 };
 

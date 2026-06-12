@@ -27,12 +27,28 @@ export default async function ShopPage() {
     getRecommendedProducts(uid).catch(() => []),
   ]);
 
+  const orgJsonLd = {
+    '@context':   'https://schema.org',
+    '@type':      'Organization',
+    name:         'Alfonex',
+    url:          'https://alfonex.com',
+    logo:         'https://alfonex.com/assets/meta/icon/logo.png',
+    description:  'Genuine Apple devices — iPhones, MacBooks, AirPods and Apple Watch.',
+    sameAs:       [],
+  };
+
   return (
-    <ShopClientShell
-      products={products}
-      featured={featured}
-      banners={banners}
-      recommended={recommended}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
+      />
+      <ShopClientShell
+        products={products}
+        featured={featured}
+        banners={banners}
+        recommended={recommended}
+      />
+    </>
   );
 }
