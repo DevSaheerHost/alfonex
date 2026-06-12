@@ -110,6 +110,17 @@ export default function ProductCard({ product }: Props) {
               <span className="text-[10px] text-gray-400">Choose options</span>
             )}
           </div>
+
+          {!!product.purchaseCount && product.purchaseCount > 0 && (
+            <p className="mt-1 text-[10px] text-gray-400 dark:text-gray-500">
+              <i className="fa fa-fire text-orange-400 mr-0.5" />
+              {product.purchaseCount >= 1000
+                ? `${Math.floor(product.purchaseCount / 1000)}k+ sold`
+                : product.purchaseCount >= 100
+                  ? `${Math.floor(product.purchaseCount / 100) * 100}+ sold`
+                  : `${product.purchaseCount} sold`}
+            </p>
+          )}
         </div>
       </div>
     </Link>
