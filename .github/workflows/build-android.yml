@@ -35,6 +35,7 @@ jobs:
       - name: Capacitor sync
         run: |
           node --version
+          mkdir -p android/app/src/main/assets
           ./node_modules/.bin/cap sync android
 
       # ── 5. Decode keystore from GitHub Secret ─────────────────────────────────
