@@ -18,6 +18,40 @@ const GRADE_INFO: Record<string, { label: string; color: string; desc: string }>
   'a3+': { label: 'Good',       color: 'text-yellow-600', desc: 'Visible wear · Fully functional' },
 };
 
+// Known Apple/device color → CSS background
+const COLOR_SWATCHES: Record<string, string> = {
+  'black':            '#1c1c1e',
+  'space black':      '#2c2c2e',
+  'space gray':       '#6e6e73',
+  'midnight':         '#1c2433',
+  'starlight':        '#f2e8d9',
+  'silver':           '#e8e8ed',
+  'white':            '#f5f5f7',
+  'gold':             '#f5e2b8',
+  'rose gold':        '#f0cfc3',
+  'pink':             '#fac8d0',
+  'red':              '#e0001a',
+  'product red':      '#e0001a',
+  'blue':             '#3478f6',
+  'deep blue':        '#19234d',
+  'storm blue':       '#4a6278',
+  'alpine green':     '#4e6b5e',
+  'green':            '#2d6a3f',
+  'purple':           '#7e5bef',
+  'yellow':           '#f5e642',
+  'orange':           '#f56c1e',
+  'cosmic orange':    '#e55b00',
+  'coral':            '#ff6b52',
+  'natural':          '#d4c5b0',
+  'natural titanium': '#baa98c',
+  'black titanium':   '#333336',
+  'white titanium':   '#f0efed',
+  'desert titanium':  '#c5a882',
+  'titanium':         '#8e8d92',
+};
+
+const isColorGroup = (name: string) => /colo(u?)r/i.test(name);
+
 interface Props { product: Product; similar: Product[]; reviews: Review[] }
 
 export default function ProductDetailClient({ product, similar, reviews }: Props) {
@@ -119,30 +153,87 @@ export default function ProductDetailClient({ product, similar, reviews }: Props
           </div>
 
           {/* Variants */}
-          {product.variants?.map((group: VariantGroup) => (
-            <div key={group.name} className="mb-4">
-              <p className="mb-2 text-sm font-semibold dark:text-gray-200">{group.name}</p>
-              <div className="flex flex-wrap gap-2">
-                {group.values.map((v) => {
-                  const active = selected[group.name] === v.label;
-                  const oos    = v.stock === 0;
-                  return (
-                    <button
-                      key={v.label}
-                      disabled={oos}
-                      onClick={() => setSelected((prev) => ({ ...prev, [group.name]: v.label }))}
-                      className={`rounded-xl border px-3 py-1.5 text-sm font-medium transition
-                        ${oos    ? 'cursor-not-allowed border-gray-100 text-gray-300 line-through dark:border-gray-800 dark:text-gray-700' : ''}
-                        ${active ? 'border-primary-500 bg-primary-500 text-white' : ''}
-                        ${!oos && !active ? 'border-gray-200 text-gray-700 hover:border-primary-400 dark:border-gray-700 dark:text-gray-200' : ''}`}
-                    >
-                      {v.label}
-                    </button>
-                  );
-                })}
+          {product.variants?.map((group: VariantGroup) => {
+            const currentVal = selected[group.name];
+            const colorGroup = isColorGroup(group.name);
+            return (
+              <div key={group.name} className="mb-5">
+                {/* Label row: "Color: Silver" */}
+                <p className="mb-2.5 text-sm font-semibold text-gray-800 dark:text-gray-200">
+                  {group.name}
+                  {currentVal && (
+                    <span className="ml-1 font-normal text-gray-500 dark:text-gray-400">
+                      : {currentVal}
+                    </span>
+                  )}
+                </p>
+
+                {colorGroup ? (
+                  /* ── Color swatches ── */
+                  <div className="flex flex-wrap gap-3">
+                    {group.values.map((v) => {
+                      const active = currentVal === v.label;
+                      const oos    = v.stock === 0;
+                      const bg     = COLOR_SWATCHES[v.label.toLowerCase()] ?? '#e5e7eb';
+                      const isLight = ['starlight', 'silver', 'white', 'white titanium', 'gold', 'starlight'].includes(v.label.toLowerCase());
+                      return (
+                        <button
+                          key={v.label}
+                          disabled={oos}
+                          onClick={() => setSelected((prev) => ({ ...prev, [group.name]: v.label }))}
+                          className={`flex flex-col items-center gap-1 transition ${oos ? 'cursor-not-allowed opacity-40' : 'hover:opacity-90'}`}
+                        >
+                          <span
+                            className={`flex h-11 w-11 rounded-xl border-2 transition ${
+                              active
+                                ? 'border-primary-500 ring-2 ring-primary-400 ring-offset-1 dark:ring-offset-gray-900'
+                                : `border-gray-200 dark:border-gray-700 ${!oos ? 'hover:border-primary-300' : ''}`
+                            } ${oos ? 'relative overflow-hidden' : ''}`}
+                            style={{ backgroundColor: bg, boxShadow: isLight ? 'inset 0 0 0 1px rgba(0,0,0,.08)' : undefined }}
+                          >
+                            {oos && (
+                              /* diagonal strikethrough line for OOS color swatches */
+                              <span className="absolute inset-0 flex items-center justify-center">
+                                <span className="h-px w-[130%] rotate-45 bg-gray-400 opacity-70" />
+                              </span>
+                            )}
+                          </span>
+                          <span className={`text-[10px] font-medium leading-tight ${
+                            active ? 'text-primary-600 dark:text-primary-400' : 'text-gray-500 dark:text-gray-400'
+                          } ${oos ? 'line-through' : ''}`}>
+                            {v.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  /* ── Pill buttons (Storage / RAM / etc.) ── */
+                  <div className="flex flex-wrap gap-2">
+                    {group.values.map((v) => {
+                      const active = currentVal === v.label;
+                      const oos    = v.stock === 0;
+                      return (
+                        <button
+                          key={v.label}
+                          disabled={oos}
+                          onClick={() => setSelected((prev) => ({ ...prev, [group.name]: v.label }))}
+                          className={`rounded-full border-2 px-4 py-1.5 text-sm font-semibold transition
+                            ${oos
+                              ? 'cursor-not-allowed border-gray-100 text-gray-300 line-through dark:border-gray-800 dark:text-gray-600'
+                              : active
+                                ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                                : 'border-gray-300 text-gray-700 hover:border-primary-400 dark:border-gray-600 dark:text-gray-300'}`}
+                        >
+                          {v.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {/* Description */}
           {product.description && (
