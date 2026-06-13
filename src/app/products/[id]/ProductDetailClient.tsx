@@ -48,15 +48,34 @@ function iconFor(label: string) {
   return match ? match[1] : 'fa-circle-info';
 }
 
-function parseHighlights(desc: string): Highlight[] | null {
-  if (!desc.includes('::')) return null;
-  const lines = desc.split('\n').map((l) => l.trim()).filter(Boolean);
-  const parsed = lines.map((line) => {
-    const parts = line.split('::').map((p) => p.trim());
-    if (parts.length < 2) return null;
-    return { label: parts[0], value: parts[1], sub: parts[2], icon: iconFor(parts[0]) } as Highlight;
-  }).filter(Boolean) as Highlight[];
-  return parsed.length ? parsed : null;
+// Parses description into { highlights, plainText }.
+// Separator "---" on its own line splits highlights from description.
+// Either part is optional.
+interface ParsedDescription {
+  highlights: Highlight[];
+  plainText:  string;
+}
+
+function parseDescription(desc: string): ParsedDescription {
+  const SEP = /^-{3,}$/m; // a line of 3+ dashes
+  const [highlightRaw, plainRaw] = SEP.test(desc)
+    ? desc.split(SEP).map((s) => s.trim())
+    : desc.includes('::')
+      ? [desc.trim(), '']   // only highlights
+      : ['', desc.trim()];  // only plain text
+
+  const highlights: Highlight[] = highlightRaw
+    ? highlightRaw
+        .split('\n')
+        .map((l) => l.trim())
+        .filter((l) => l.includes('::'))
+        .map((line) => {
+          const parts = line.split('::').map((p) => p.trim());
+          return { label: parts[0], value: parts[1], sub: parts[2], icon: iconFor(parts[0]) } as Highlight;
+        })
+    : [];
+
+  return { highlights, plainText: plainRaw ?? '' };
 }
 
 // Known Apple/device color → CSS background
@@ -281,39 +300,42 @@ export default function ProductDetailClient({ product, similar, reviews }: Props
             );
           })}
 
-          {/* Description / Highlights */}
+          {/* Highlights + Description — both shown when separated by "---" */}
           {product.description && (() => {
-            const highlights = parseHighlights(product.description);
-            if (highlights) {
-              return (
-                <div className="card mb-4 p-4">
-                  <p className="mb-4 text-sm font-bold text-gray-900 dark:text-gray-100">Highlights</p>
-                  <ul className="space-y-4">
-                    {highlights.map((h, i) => (
-                      <li key={i} className="flex items-start gap-3">
-                        <span className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
-                          <i className={`fa-solid ${h.icon} text-sm text-gray-500 dark:text-gray-400`} />
-                        </span>
-                        <div className="min-w-0">
-                          <p className="text-xs text-gray-400 dark:text-gray-500">{h.label}</p>
-                          <p className="text-sm font-semibold leading-snug text-gray-900 dark:text-gray-100">{h.value}</p>
-                          {h.sub && (
-                            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{h.sub}</p>
-                          )}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              );
-            }
+            const { highlights, plainText } = parseDescription(product.description);
             return (
-              <div className="card mb-4 p-4">
-                <p className="mb-1 text-sm font-semibold dark:text-gray-100">About this product</p>
-                <p className="whitespace-pre-line text-sm leading-relaxed text-gray-600 dark:text-gray-300">
-                  {product.description}
-                </p>
-              </div>
+              <>
+                {highlights.length > 0 && (
+                  <div className="card mb-4 p-4">
+                    <p className="mb-4 text-sm font-bold text-gray-900 dark:text-gray-100">Highlights</p>
+                    <ul className="space-y-4">
+                      {highlights.map((h, i) => (
+                        <li key={i} className="flex items-start gap-3">
+                          <span className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
+                            <i className={`fa-solid ${h.icon} text-sm text-gray-500 dark:text-gray-400`} />
+                          </span>
+                          <div className="min-w-0">
+                            <p className="text-xs text-gray-400 dark:text-gray-500">{h.label}</p>
+                            <p className="text-sm font-semibold leading-snug text-gray-900 dark:text-gray-100">{h.value}</p>
+                            {h.sub && (
+                              <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{h.sub}</p>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {plainText && (
+                  <div className="card mb-4 p-4">
+                    <p className="mb-1 text-sm font-semibold dark:text-gray-100">About this product</p>
+                    <p className="whitespace-pre-line text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+                      {plainText}
+                    </p>
+                  </div>
+                )}
+              </>
             );
           })()}
 
