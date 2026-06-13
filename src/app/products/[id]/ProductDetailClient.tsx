@@ -159,7 +159,7 @@ export default function ProductDetailClient({ product, similar, reviews, initial
       // Instant image swap — no navigation lag
       setDisplayImage(value.imageUrl || product.imageUrl);
       // Navigate to the variant slug URL (scroll:false keeps position stable)
-      router.push(variantHref(product, newSelected), { scroll: false });
+      router.replace(variantHref(product, newSelected), { scroll: false });
     }
   };
 
