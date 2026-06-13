@@ -3,7 +3,7 @@ import { redirect, notFound } from 'next/navigation';
 import { getProduct, getSimilarProducts } from '@/actions/products';
 import { getProductReviews }              from '@/actions/reviews';
 import ProductDetailClient                from '@/app/products/[id]/ProductDetailClient';
-import { slugify }                        from '@/lib/slug';
+import { slugify, parseVariantsFromSlug } from '@/lib/slug';
 
 const BASE = 'https://alfonex.com';
 
@@ -12,16 +12,17 @@ interface Props {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params;
+  const { slug, id } = await params;
   const product = await getProduct(id);
   if (!product) return {};
 
-  const slug        = slugify(product.title);
+  const baseSlug    = slugify(product.title);
+  const validSlug   = slug.startsWith(baseSlug) ? slug : baseSlug;
   const title       = product.title;
   const description = product.description
     ? product.description.replace(/::/g, ' ').replace(/\n/g, ' ').slice(0, 155)
     : `Buy ${product.title} at Alfonex. Genuine Apple device. Available in USD, AED & INR.`;
-  const canonical   = `${BASE}/products/${slug}/p/${id}`;
+  const canonical   = `${BASE}/products/${validSlug}/p/${id}`;
 
   return {
     title,
@@ -48,18 +49,23 @@ export default async function ProductPage({ params }: Props) {
   const product = await getProduct(id);
   if (!product) notFound();
 
-  // Canonical redirect: wrong slug → correct slug (prevents duplicate content)
-  const correctSlug = slugify(product.title);
-  if (slug !== correctSlug) {
-    redirect(`/products/${correctSlug}/p/${id}`);
+  const baseSlug = slugify(product.title);
+
+  // Redirect if the slug doesn't start with the correct product base slug.
+  // Variant suffixes (e.g. "iphone-17-pro-silver") are intentionally allowed.
+  if (!slug.startsWith(baseSlug)) {
+    redirect(`/products/${baseSlug}/p/${id}`);
   }
+
+  // Recover which variants are encoded in the slug (e.g. silver, 256gb)
+  const initialVariants = parseVariantsFromSlug(slug, product);
 
   const [similar, reviews] = await Promise.all([
     getSimilarProducts(id, product.category).catch(() => []),
     getProductReviews(id).catch(() => []),
   ]);
 
-  const canonical = `${BASE}/products/${correctSlug}/p/${id}`;
+  const canonical = `${BASE}/products/${slug}/p/${id}`;
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type':    'Product',
@@ -85,7 +91,12 @@ export default async function ProductPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <ProductDetailClient product={product} similar={similar} reviews={reviews} />
+      <ProductDetailClient
+        product={product}
+        similar={similar}
+        reviews={reviews}
+        initialVariants={initialVariants}
+      />
     </>
   );
 }

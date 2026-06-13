@@ -2,7 +2,8 @@
 
 import Image   from 'next/image';
 import Link    from 'next/link';
-import { useState, useEffect, Suspense } from 'react';
+import { useState, Suspense } from 'react';
+import { useRouter } from 'next/navigation';
 import { useApp, useProductPrice } from '@/contexts/AppContext';
 import { useCart }                  from '@/contexts/CartContext';
 import { useWishlist }              from '@/contexts/WishlistContext';
@@ -11,7 +12,8 @@ import ProductScrollRow             from '@/components/products/ProductScrollRow
 import ProductReviews               from '@/components/reviews/ProductReviews';
 import SearchTracker                from '@/components/analytics/SearchTracker';
 import type { Product, VariantGroup, VariantValue, Review } from '@/lib/types';
-import { CURRENCY_SYMBOLS }                   from '@/lib/types';
+import { CURRENCY_SYMBOLS }         from '@/lib/types';
+import { variantHref }              from '@/lib/slug';
 
 const GRADE_INFO: Record<string, { label: string; color: string; desc: string }> = {
   'a1+': { label: 'Excellent',  color: 'text-green-600',  desc: 'Like new · Sealed or minimal use' },
@@ -112,9 +114,15 @@ const COLOR_SWATCHES: Record<string, string> = {
 
 const isColorGroup = (name: string) => /colo(u?)r/i.test(name);
 
-interface Props { product: Product; similar: Product[]; reviews: Review[] }
+interface Props {
+  product:         Product;
+  similar:         Product[];
+  reviews:         Review[];
+  initialVariants: Record<string, string>;
+}
 
-export default function ProductDetailClient({ product, similar, reviews }: Props) {
+export default function ProductDetailClient({ product, similar, reviews, initialVariants }: Props) {
+  const router          = useRouter();
   const { currency }    = useApp();
   const getProdPrice    = useProductPrice();
   const { addToCart }   = useCart();
@@ -127,40 +135,31 @@ export default function ProductDetailClient({ product, similar, reviews }: Props
   const grade  = GRADE_INFO[product.grade];
   const isOOS  = product.isOOS || product.stock === 0;
 
-  // Displayed image — switches when a colour variant is selected
-  const [displayImage, setDisplayImage] = useState(product.imageUrl);
+  // Variant selection — seeded from the URL slug by the server
+  const [selected, setSelected] = useState<Record<string, string>>(initialVariants);
 
-  // Variant selection
-  const [selected, setSelected] = useState<Record<string, string>>({});
+  // Displayed image — resolved from the initially-selected colour variant, or falls back to main image
+  const [displayImage, setDisplayImage] = useState(() => {
+    for (const group of product.variants ?? []) {
+      if (!isColorGroup(group.name)) continue;
+      const match = group.values.find((v) => v.label === initialVariants[group.name]);
+      if (match?.imageUrl) return match.imageUrl;
+    }
+    return product.imageUrl;
+  });
 
-  // On first render, read ?color= from URL and pre-select that variant + image
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const colorParam = params.get('color');
-    if (!colorParam) return;
-    product.variants?.forEach((group) => {
-      if (!isColorGroup(group.name)) return;
-      const match = group.values.find(
-        (v) => v.label.toLowerCase().replace(/\s+/g, '-') === colorParam,
-      );
-      if (match) {
-        setSelected((prev) => ({ ...prev, [group.name]: match.label }));
-        if (match.imageUrl) setDisplayImage(match.imageUrl);
-      }
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Called when user picks a variant value
+  // Called when the user picks any variant value.
+  // Colour clicks also switch the hero image and navigate to the variant URL
+  // so each colour has its own SEO-indexed page.
   const handleVariantSelect = (groupName: string, value: VariantValue) => {
-    setSelected((prev) => ({ ...prev, [groupName]: value.label }));
+    const newSelected = { ...selected, [groupName]: value.label };
+    setSelected(newSelected);
+
     if (isColorGroup(groupName)) {
-      // Switch image
+      // Instant image swap — no navigation lag
       setDisplayImage(value.imageUrl || product.imageUrl);
-      // Update URL query param without navigation (keeps ?q= tracking param too)
-      const url = new URL(window.location.href);
-      url.searchParams.set('color', value.label.toLowerCase().replace(/\s+/g, '-'));
-      window.history.replaceState({}, '', url.toString());
+      // Navigate to the variant slug URL (scroll:false keeps position stable)
+      router.push(variantHref(product, newSelected), { scroll: false });
     }
   };
 

@@ -37,6 +37,7 @@ export interface Product {
   stock: number;
   grade: ProductGrade;
   variants: VariantGroup[];
+  variantSlugs?: Record<string, Record<string, string>>; // slug suffix → { GroupName: value }
   isFeatured: boolean;
   isNewArrival: boolean;
   isOnSale: boolean;
