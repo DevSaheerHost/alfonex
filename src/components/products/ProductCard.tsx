@@ -48,11 +48,11 @@ export default function ProductCard({ product }: Props) {
   };
 
   return (
-    <Link href={`/products/${product.id}`} className="group block">
-      <div className="card overflow-hidden transition-shadow hover:shadow-md">
+    <Link href={`/products/${product.id}`} className="group flex h-full flex-col">
+      <div className="card flex h-full flex-col overflow-hidden transition-shadow hover:shadow-md">
 
-        {/* Image */}
-        <div className="relative aspect-square overflow-hidden bg-gray-50 dark:bg-gray-800">
+        {/* Image — fixed square, never shrinks */}
+        <div className="relative aspect-square w-full flex-shrink-0 overflow-hidden bg-gray-50 dark:bg-gray-800">
           <Image
             src={product.imageUrl}
             alt={product.title}
@@ -79,48 +79,54 @@ export default function ProductCard({ product }: Props) {
           </button>
         </div>
 
-        {/* Info */}
-        <div className="p-3">
+        {/* Info — flex-col so price row always sits at bottom */}
+        <div className="flex flex-1 flex-col p-3">
           <p className="line-clamp-2 text-[13px] font-semibold leading-snug text-gray-800 dark:text-gray-100">
             {product.title}
           </p>
 
-          {grade && (
-            <span className={`mt-1 inline-block rounded-md px-1.5 py-0.5 text-[10px] font-semibold ${grade.color}`}>
-              {grade.label}
-            </span>
-          )}
-
-          <div className="mt-2 flex items-center justify-between gap-2">
-            <p className="text-base font-bold text-primary-600 dark:text-primary-400">
-              {symbol}{price.toLocaleString()}
-            </p>
-
-            {!isOOS && !hasVariants && (
-              <button
-                onClick={handleAddToCart}
-                aria-label="Add to cart"
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-500 text-white transition hover:bg-primary-600 active:scale-95"
-              >
-                <i className="fa fa-plus text-[11px]" />
-              </button>
-            )}
-
-            {hasVariants && !isOOS && (
-              <span className="text-[10px] text-gray-400">Choose options</span>
+          {/* Grade badge — fixed min-height so cards without a grade still align */}
+          <div className="mt-1 min-h-[20px]">
+            {grade && (
+              <span className={`inline-block rounded-md px-1.5 py-0.5 text-[10px] font-semibold ${grade.color}`}>
+                {grade.label}
+              </span>
             )}
           </div>
 
-          {!!product.purchaseCount && product.purchaseCount > 0 && (
-            <p className="mt-1 text-[10px] text-gray-400 dark:text-gray-500">
-              <i className="fa fa-fire text-orange-400 mr-0.5" />
-              {product.purchaseCount >= 1000
-                ? `${Math.floor(product.purchaseCount / 1000)}k+ sold`
-                : product.purchaseCount >= 100
-                  ? `${Math.floor(product.purchaseCount / 100) * 100}+ sold`
-                  : `${product.purchaseCount} sold`}
-            </p>
-          )}
+          {/* Push price row to bottom */}
+          <div className="mt-auto pt-2">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-base font-bold text-primary-600 dark:text-primary-400">
+                {symbol}{price.toLocaleString()}
+              </p>
+
+              {!isOOS && !hasVariants && (
+                <button
+                  onClick={handleAddToCart}
+                  aria-label="Add to cart"
+                  className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary-500 text-white transition hover:bg-primary-600 active:scale-95"
+                >
+                  <i className="fa fa-plus text-[11px]" />
+                </button>
+              )}
+
+              {hasVariants && !isOOS && (
+                <span className="text-[10px] text-gray-400">Choose options</span>
+              )}
+            </div>
+
+            {!!product.purchaseCount && product.purchaseCount > 0 && (
+              <p className="mt-1 text-[10px] text-gray-400 dark:text-gray-500">
+                <i className="fa fa-fire text-orange-400 mr-0.5" />
+                {product.purchaseCount >= 1000
+                  ? `${Math.floor(product.purchaseCount / 1000)}k+ sold`
+                  : product.purchaseCount >= 100
+                    ? `${Math.floor(product.purchaseCount / 100) * 100}+ sold`
+                    : `${product.purchaseCount} sold`}
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </Link>
