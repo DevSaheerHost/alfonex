@@ -151,16 +151,45 @@ export default function AboutPage() {
       {/* ── Contact ──────────────────────────────────────────────────────── */}
       <div className="card mb-6 p-5">
         <p className="mb-4 font-heading text-base font-bold dark:text-gray-100">Get in Touch</p>
-        <div className="space-y-3">
+
+        {/* UAE */}
+        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-400">
+          🇦🇪 UAE
+        </p>
+        <div className="mb-4 space-y-2">
           {[
-            { icon: 'fa-whatsapp fa-brands', label: 'WhatsApp',  value: 'Chat with us instantly', href: 'https://wa.me/971000000000' },
-            { icon: 'fa-envelope',           label: 'Email',     value: 'support@alfonex.com',    href: 'mailto:support@alfonex.com' },
-            { icon: 'fa-instagram fa-brands',label: 'Instagram', value: '@alfonex',               href: 'https://instagram.com/alfonex' },
+            { icon: 'fa-brands fa-whatsapp', label: 'WhatsApp UAE',  value: '+971 55 834 7102',  href: 'https://wa.me/971558347102',    color: 'text-green-500' },
+            { icon: 'fa-envelope',           label: 'Email UAE',     value: 'alfonexuae06@gmail.com', href: 'mailto:alfonexuae06@gmail.com', color: 'text-blue-500' },
+            { icon: 'fa-brands fa-instagram',label: 'Instagram UAE', value: '@alfonex_uae',        href: 'https://www.instagram.com/alfonex_uae?igsh=MTN3a2s0MDN4ZXBzMQ==', color: 'text-pink-500' },
           ].map((c) => (
             <a key={c.label} href={c.href} target="_blank" rel="noopener noreferrer"
                className="flex items-center gap-3 rounded-xl border border-gray-100 px-4 py-3 transition hover:border-primary-200 hover:bg-primary-50 dark:border-gray-800 dark:hover:border-primary-800 dark:hover:bg-primary-900/10">
               <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
-                <i className={`fa-solid ${c.icon} text-sm text-gray-500`} />
+                <i className={`${c.icon} text-base ${c.color}`} />
+              </span>
+              <div>
+                <p className="text-xs text-gray-400">{c.label}</p>
+                <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{c.value}</p>
+              </div>
+              <i className="fa fa-chevron-right ml-auto text-xs text-gray-300 dark:text-gray-600" />
+            </a>
+          ))}
+        </div>
+
+        {/* India */}
+        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-400">
+          🇮🇳 India
+        </p>
+        <div className="space-y-2">
+          {[
+            { icon: 'fa-brands fa-whatsapp', label: 'WhatsApp India',  value: '+91 85906 33430',    href: 'https://wa.me/918590633430',    color: 'text-green-500' },
+            { icon: 'fa-envelope',           label: 'Email India',     value: 'alfonexindia06@gmail.com', href: 'mailto:alfonexindia06@gmail.com', color: 'text-blue-500' },
+            { icon: 'fa-brands fa-instagram',label: 'Instagram India', value: '@alfonex_india',       href: 'https://www.instagram.com/alfonex_india?igsh=MTJiZTZyMXh2dDBlNQ==', color: 'text-pink-500' },
+          ].map((c) => (
+            <a key={c.label} href={c.href} target="_blank" rel="noopener noreferrer"
+               className="flex items-center gap-3 rounded-xl border border-gray-100 px-4 py-3 transition hover:border-primary-200 hover:bg-primary-50 dark:border-gray-800 dark:hover:border-primary-800 dark:hover:bg-primary-900/10">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
+                <i className={`${c.icon} text-base ${c.color}`} />
               </span>
               <div>
                 <p className="text-xs text-gray-400">{c.label}</p>
