@@ -11,6 +11,7 @@ import { getDatabase, ref, get }    from 'firebase/database';
 import { getApp }                   from 'firebase/app';
 import type { Product }             from '@/lib/types';
 import { CURRENCY_SYMBOLS }         from '@/lib/types';
+import { productHref }              from '@/lib/slug';
 
 export default function WishlistPage() {
   const { ids, toggle }         = useWishlist();
@@ -54,12 +55,12 @@ export default function WishlistPage() {
           const isOOS = p.isOOS || p.stock === 0;
           return (
             <div key={p.id} className="card flex gap-3 p-3">
-              <Link href={`/products/${p.id}`} className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-gray-50 dark:bg-gray-800">
+              <Link href={productHref(p)} className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-gray-50 dark:bg-gray-800">
                 <Image src={p.imageUrl} alt={p.title} fill className="object-contain p-1" sizes="80px" />
               </Link>
               <div className="flex flex-1 flex-col justify-between overflow-hidden">
                 <div>
-                  <Link href={`/products/${p.id}`}>
+                  <Link href={productHref(p)}>
                     <p className="truncate text-sm font-semibold dark:text-gray-100">{p.title}</p>
                   </Link>
                   <p className="mt-0.5 text-sm font-bold text-primary-600">{symbol}{price.toLocaleString()}</p>

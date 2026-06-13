@@ -7,6 +7,7 @@ import { useCart }                  from '@/contexts/CartContext';
 import { useWishlist }              from '@/contexts/WishlistContext';
 import type { Product }             from '@/lib/types';
 import { CURRENCY_SYMBOLS }         from '@/lib/types';
+import { productHref }              from '@/lib/slug';
 
 const GRADE_LABELS: Record<string, { label: string; color: string }> = {
   'a1+': { label: 'Excellent',  color: 'bg-green-100 text-green-700' },
@@ -48,7 +49,7 @@ export default function ProductCard({ product }: Props) {
   };
 
   return (
-    <Link href={`/products/${product.id}`} className="group flex h-full flex-col">
+    <Link href={productHref(product)} className="group flex h-full flex-col">
       <div className="card flex h-full flex-col overflow-hidden transition-shadow hover:shadow-md">
 
         {/* Image — fixed square, never shrinks */}
