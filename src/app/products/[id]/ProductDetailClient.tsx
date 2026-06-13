@@ -2,7 +2,7 @@
 
 import Image   from 'next/image';
 import Link    from 'next/link';
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useApp, useProductPrice } from '@/contexts/AppContext';
 import { useCart }                  from '@/contexts/CartContext';
 import { useWishlist }              from '@/contexts/WishlistContext';
@@ -10,7 +10,7 @@ import ReserveModal                 from '@/components/products/ReserveModal';
 import ProductScrollRow             from '@/components/products/ProductScrollRow';
 import ProductReviews               from '@/components/reviews/ProductReviews';
 import SearchTracker                from '@/components/analytics/SearchTracker';
-import type { Product, VariantGroup, Review } from '@/lib/types';
+import type { Product, VariantGroup, VariantValue, Review } from '@/lib/types';
 import { CURRENCY_SYMBOLS }                   from '@/lib/types';
 
 const GRADE_INFO: Record<string, { label: string; color: string; desc: string }> = {
@@ -127,8 +127,42 @@ export default function ProductDetailClient({ product, similar, reviews }: Props
   const grade  = GRADE_INFO[product.grade];
   const isOOS  = product.isOOS || product.stock === 0;
 
+  // Displayed image — switches when a colour variant is selected
+  const [displayImage, setDisplayImage] = useState(product.imageUrl);
+
   // Variant selection
   const [selected, setSelected] = useState<Record<string, string>>({});
+
+  // On first render, read ?color= from URL and pre-select that variant + image
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const colorParam = params.get('color');
+    if (!colorParam) return;
+    product.variants?.forEach((group) => {
+      if (!isColorGroup(group.name)) return;
+      const match = group.values.find(
+        (v) => v.label.toLowerCase().replace(/\s+/g, '-') === colorParam,
+      );
+      if (match) {
+        setSelected((prev) => ({ ...prev, [group.name]: match.label }));
+        if (match.imageUrl) setDisplayImage(match.imageUrl);
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Called when user picks a variant value
+  const handleVariantSelect = (groupName: string, value: VariantValue) => {
+    setSelected((prev) => ({ ...prev, [groupName]: value.label }));
+    if (isColorGroup(groupName)) {
+      // Switch image
+      setDisplayImage(value.imageUrl || product.imageUrl);
+      // Update URL query param without navigation (keeps ?q= tracking param too)
+      const url = new URL(window.location.href);
+      url.searchParams.set('color', value.label.toLowerCase().replace(/\s+/g, '-'));
+      window.history.replaceState({}, '', url.toString());
+    }
+  };
 
   const variantLabel = product.variants
     ?.map((g: VariantGroup) => `${g.name}: ${selected[g.name] ?? ''}`)
@@ -176,7 +210,7 @@ export default function ProductDetailClient({ product, similar, reviews }: Props
         {/* Image */}
         <div className="relative mb-4 aspect-square overflow-hidden rounded-2xl bg-gray-50 dark:bg-gray-800 lg:mb-0 lg:w-[420px] lg:flex-shrink-0">
           <Image
-            src={product.imageUrl}
+            src={displayImage}
             alt={product.title}
             fill
             className="object-contain p-4"
@@ -245,7 +279,7 @@ export default function ProductDetailClient({ product, similar, reviews }: Props
                         <button
                           key={v.label}
                           disabled={oos}
-                          onClick={() => setSelected((prev) => ({ ...prev, [group.name]: v.label }))}
+                          onClick={() => handleVariantSelect(group.name, v)}
                           className={`flex flex-col items-center gap-1 transition ${oos ? 'cursor-not-allowed opacity-40' : 'hover:opacity-90'}`}
                         >
                           <span
@@ -282,7 +316,7 @@ export default function ProductDetailClient({ product, similar, reviews }: Props
                         <button
                           key={v.label}
                           disabled={oos}
-                          onClick={() => setSelected((prev) => ({ ...prev, [group.name]: v.label }))}
+                          onClick={() => handleVariantSelect(group.name, v)}
                           className={`rounded-full border-2 px-4 py-1.5 text-sm font-semibold transition
                             ${oos
                               ? 'cursor-not-allowed border-gray-100 text-gray-300 line-through dark:border-gray-800 dark:text-gray-600'

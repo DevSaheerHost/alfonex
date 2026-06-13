@@ -11,8 +11,9 @@ export const CURRENCY_SYMBOLS: Record<Currency, string> = {
 // ─── Product ──────────────────────────────────────────────────────────────────
 
 export interface VariantValue {
-  label: string;
-  stock: number;
+  label:    string;
+  stock:    number;
+  imageUrl?: string; // per-colour product image (optional)
 }
 
 export interface VariantGroup {
