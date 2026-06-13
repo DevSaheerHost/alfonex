@@ -36,6 +36,7 @@ export interface Product {
   costPrice: number;
   stock: number;
   grade: ProductGrade;
+  modelUrl?: string;           // URL to a .glb/.gltf file for the 3D viewer (optional)
   variants: VariantGroup[];
   variantSlugs?: Record<string, Record<string, string>>; // slug suffix → { GroupName: value }
   isFeatured: boolean;

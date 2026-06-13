@@ -10,6 +10,7 @@ import { useWishlist }              from '@/contexts/WishlistContext';
 import ReserveModal                 from '@/components/products/ReserveModal';
 import ProductScrollRow             from '@/components/products/ProductScrollRow';
 import ProductReviews               from '@/components/reviews/ProductReviews';
+import Product3DViewer              from '@/components/products/Product3DViewer';
 import SearchTracker                from '@/components/analytics/SearchTracker';
 import type { Product, VariantGroup, VariantValue, Review } from '@/lib/types';
 import { CURRENCY_SYMBOLS }         from '@/lib/types';
@@ -129,6 +130,8 @@ export default function ProductDetailClient({ product, similar, reviews, initial
   const { toggle, has } = useWishlist();
   const wished          = has(product.id);
   const [reserveOpen, setReserveOpen] = useState(false);
+  // Toggle between the 2D product image and the interactive 3D viewer
+  const [view3d, setView3d] = useState(false);
 
   const price  = getProdPrice(product);
   const symbol = CURRENCY_SYMBOLS[currency];
@@ -206,18 +209,64 @@ export default function ProductDetailClient({ product, similar, reviews, initial
       {/* Desktop: side-by-side | Mobile: stacked */}
       <div className="lg:flex lg:gap-8">
 
-        {/* Image */}
-        <div className="relative mb-4 aspect-square overflow-hidden rounded-2xl bg-gray-50 dark:bg-gray-800 lg:mb-0 lg:w-[420px] lg:flex-shrink-0">
-          <Image
-            src={displayImage}
-            alt={product.title}
-            fill
-            className="object-contain p-4"
-            sizes="(max-width: 1024px) 100vw, 420px"
-            priority
-          />
-          {product.isOnSale     && <span className="badge badge-red absolute left-3 top-3">On Sale</span>}
-          {product.isNewArrival && <span className="badge badge-green absolute left-3 top-3">New Arrival</span>}
+        {/* Image / 3D viewer */}
+        <div className="mb-4 lg:mb-0 lg:w-[420px] lg:flex-shrink-0">
+          {/* 2D / 3D tab toggle — only shown when the product has a 3D model */}
+          {product.modelUrl && (
+            <div className="mb-2 flex gap-1 rounded-xl bg-gray-100 p-1 dark:bg-gray-800">
+              <button
+                onClick={() => setView3d(false)}
+                className={`flex-1 rounded-lg py-1.5 text-xs font-semibold transition ${
+                  !view3d
+                    ? 'bg-white text-gray-900 shadow-sm dark:bg-dark-surface dark:text-gray-100'
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+                }`}
+              >
+                <i className="fa fa-image mr-1" /> Photo
+              </button>
+              <button
+                onClick={() => setView3d(true)}
+                className={`flex-1 rounded-lg py-1.5 text-xs font-semibold transition ${
+                  view3d
+                    ? 'bg-white text-gray-900 shadow-sm dark:bg-dark-surface dark:text-gray-100'
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+                }`}
+              >
+                <i className="fa fa-cube mr-1" /> 3D View
+              </button>
+            </div>
+          )}
+
+          <div className="relative aspect-square overflow-hidden rounded-2xl bg-gray-50 dark:bg-gray-800">
+            {view3d && product.modelUrl ? (
+              <Product3DViewer
+                src={product.modelUrl}
+                poster={displayImage}
+                alt={product.title}
+                className="h-full w-full"
+              />
+            ) : (
+              <Image
+                src={displayImage}
+                alt={product.title}
+                fill
+                className="object-contain p-4"
+                sizes="(max-width: 1024px) 100vw, 420px"
+                priority
+              />
+            )}
+            {product.isOnSale     && <span className="badge badge-red absolute left-3 top-3">On Sale</span>}
+            {product.isNewArrival && <span className="badge badge-green absolute left-3 top-3">New Arrival</span>}
+            {/* 3D badge — visible when no 3D view is active, to prompt discovery */}
+            {product.modelUrl && !view3d && (
+              <button
+                onClick={() => setView3d(true)}
+                className="absolute bottom-3 right-3 flex items-center gap-1 rounded-full bg-black/50 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur-sm transition hover:bg-black/70"
+              >
+                <i className="fa fa-cube text-[9px]" /> 3D
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Right column */}
