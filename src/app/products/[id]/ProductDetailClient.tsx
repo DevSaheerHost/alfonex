@@ -2,13 +2,14 @@
 
 import Image   from 'next/image';
 import Link    from 'next/link';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useApp, useProductPrice } from '@/contexts/AppContext';
 import { useCart }                  from '@/contexts/CartContext';
 import { useWishlist }              from '@/contexts/WishlistContext';
 import ReserveModal                 from '@/components/products/ReserveModal';
 import ProductScrollRow             from '@/components/products/ProductScrollRow';
 import ProductReviews               from '@/components/reviews/ProductReviews';
+import SearchTracker                from '@/components/analytics/SearchTracker';
 import type { Product, VariantGroup, Review } from '@/lib/types';
 import { CURRENCY_SYMBOLS }                   from '@/lib/types';
 
@@ -140,6 +141,11 @@ export default function ProductDetailClient({ product, similar, reviews }: Props
 
   return (
     <div className="page-wrapper">
+      {/* Reads ?q= param and logs the search-to-click event to RTDB.
+          Suspense is required by Next.js for any useSearchParams caller. */}
+      <Suspense fallback={null}>
+        <SearchTracker productId={product.id} productTitle={product.title} />
+      </Suspense>
       {/* Back */}
       <Link href="/" className="mb-4 flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary-600">
         <i className="fa fa-arrow-left" /> Back

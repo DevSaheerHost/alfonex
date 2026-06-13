@@ -157,7 +157,9 @@ export default function SearchPage() {
         <div>
           <p className="mb-3 text-xs text-gray-400">{results.length} result{results.length !== 1 ? 's' : ''}</p>
           <div className="grid grid-cols-2 gap-3">
-            {results.map((p) => <ProductCard key={p.id} product={p} />)}
+            {results.map((p) => (
+              <ProductCard key={p.id} product={p} searchQuery={searchQuery} />
+            ))}
           </div>
         </div>
       )}

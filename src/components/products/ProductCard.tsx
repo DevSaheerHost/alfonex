@@ -17,9 +17,10 @@ const GRADE_LABELS: Record<string, { label: string; color: string }> = {
 
 interface Props {
   product: Product;
+  searchQuery?: string; // when set, appended as ?q= for analytics tracking
 }
 
-export default function ProductCard({ product }: Props) {
+export default function ProductCard({ product, searchQuery }: Props) {
   const { currency } = useApp();
   const getProdPrice = useProductPrice();
   const { addToCart } = useCart();
@@ -31,6 +32,11 @@ export default function ProductCard({ product }: Props) {
   const grade     = GRADE_LABELS[product.grade];
   const isOOS     = product.isOOS || product.stock === 0;
   const hasVariants = product.variants?.length > 0;
+
+  // Build the destination URL — append ?q= only when coming from a search
+  const href = searchQuery
+    ? `${productHref(product)}?q=${encodeURIComponent(searchQuery.trim())}`
+    : productHref(product);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -49,7 +55,7 @@ export default function ProductCard({ product }: Props) {
   };
 
   return (
-    <Link href={productHref(product)} className="group flex h-full flex-col">
+    <Link href={href} className="group flex h-full flex-col">
       <div className="card flex h-full flex-col overflow-hidden transition-shadow hover:shadow-md">
 
         {/* Image — fixed square, never shrinks */}
