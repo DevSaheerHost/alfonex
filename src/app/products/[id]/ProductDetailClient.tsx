@@ -105,6 +105,7 @@ const COLOR_SWATCHES: Record<string, string> = {
   // ── Blue Family ───────────────────────────────────────────────────────────
   'blue':             '#3478f6',
   'sky blue':         '#a8c8e0',
+  'mist blue':        '#b8c8d4',
   'deep blue':        '#19234d',
   'pacific blue':     '#1e5270',
   'sierra blue':      '#8aaec2',
@@ -123,6 +124,8 @@ const COLOR_SWATCHES: Record<string, string> = {
   'mint green':       '#a8d8b8',
   'alpine green':     '#4e6b5e',
   'teal green':       '#2d7a70',
+  'teal':             '#2a9d8f',
+  'sage':             '#b0c0a8',
   // ── Yellow & Warm Bright ──────────────────────────────────────────────────
   'yellow':           '#f5e642',
   'sunflower yellow': '#f5c830',
@@ -379,7 +382,7 @@ export default function ProductDetailClient({ product, similar, reviews, initial
                         'champagne gold', 'rose gold', 'sky blue', 'sierra blue',
                         'lavender', 'mint green', 'pink', 'rose pink', 'yellow',
                         'sunflower yellow', 'cosmic yellow', 'natural', 'natural titanium',
-                        'desert titanium',
+                        'desert titanium', 'sage', 'mist blue',
                       ].includes(v.label.toLowerCase());
                       return (
                         <button
