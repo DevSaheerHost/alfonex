@@ -1358,11 +1358,21 @@ tbody td{padding:12px 16px;vertical-align:middle}
         <div><div class="sec-title">Admin Management</div><div class="sec-sub">Create and revoke administrator accounts</div></div>
         <div class="sec-header-right"><button class="btn-primary" onclick="openAdminModal()"><i class="fa-solid fa-user-plus"></i> Add Admin</button></div>
       </div>
+
+      <!-- 🏆 Leaderboard -->
+      <div class="table-card" style="margin-bottom:16px">
+        <div class="table-topbar"><div class="table-topbar-title">🏆 Admin Leaderboard</div></div>
+        <div id="admin-leaderboard" style="padding:16px">
+          <div class="empty-state" style="padding:20px"><div class="empty-icon">📊</div><p>Loading stats…</p></div>
+        </div>
+      </div>
+
+      <!-- All admins table -->
       <div class="table-card">
         <div class="table-topbar"><div class="table-topbar-title" id="admin-table-label">All Admins</div></div>
         <div class="table-wrap"><table>
-          <thead><tr><th>Administrator</th><th>Role</th><th class="hide-mobile">Added</th><th>Online</th><th>Account</th><th>Actions</th></tr></thead>
-          <tbody id="admin-tbody"><tr><td colspan="4"><div class="empty-state"><div class="empty-icon">👤</div><p>No admins found.</p></div></td></tr></tbody>
+          <thead><tr><th style="width:36px;text-align:center">#</th><th>Administrator</th><th>Role</th><th>Rank</th><th class="hide-mobile">Added</th><th>Online</th><th>Account</th><th>Actions</th></tr></thead>
+          <tbody id="admin-tbody"><tr><td colspan="8"><div class="empty-state"><div class="empty-icon">👤</div><p>No admins found.</p></div></td></tr></tbody>
         </table></div>
       </div>
     </section>
@@ -3394,7 +3404,7 @@ function cldThumb(u, t='f_auto,q_auto,w_200'){ return u ? u.replace('/upload/',`
 ═══════════════════════════════════════════════ */
 const APP = {
   user:null, role:null,
-  products:{}, orders:{}, admins:{}, banners:{}, reviews:{}, loyaltyUsers:{}, loyaltyHistory:{}, searchAnalytics:{}, customers:{},
+  products:{}, orders:{}, admins:{}, admin_stats:{}, banners:{}, reviews:{}, loyaltyUsers:{}, loyaltyHistory:{}, searchAnalytics:{}, customers:{},
   deleteTarget:null,
   activeOrderId:null,
   orderFilter:'all',
@@ -3617,10 +3627,14 @@ function attachOrdersListener(){
 }
 function attachAdminsListener(){
   db.ref('admins').on('value',snap=>{
-  APP.admins=snap.val()||{};
-  renderAdminsTable();   /* presence may already be in _presence by now */
-  renderOverviewStats();
-});
+    APP.admins=snap.val()||{};
+    renderAdminsTable();
+    renderOverviewStats();
+  });
+  db.ref('admin_stats').on('value',snap=>{
+    APP.admin_stats=snap.val()||{};
+    renderAdminsTable();
+  });
 }
 
 /* ═══════════════════════════════════════════════
@@ -3870,7 +3884,7 @@ async function saveProduct(){
       // Snapshot the old product before overwriting — needed for cleanup
       const old = APP.products[editId] || {};
       await db.ref(`products/${editId}`).update(payload);
-      showToast('Product updated!','success');
+      showToast('Product updated!','success'); awardPoints(5,'Updated product');
 
       /* ── Comprehensive change log ───────────────────────────────────────────── */
       const changes = [];
@@ -3977,7 +3991,7 @@ async function saveProduct(){
     } else {
       payload.createdAt=Date.now();
       const ref = await db.ref('products').push(payload);
-      showToast('Product added!','success');
+      showToast('Product added!','success'); awardPoints(10,'Added product');
       auditLog('ADD', `Added new product: ${title}`, { detail:`Price $${price} | Stock: ${stock} | Category: ${category||'—'}`, productId:ref.key, category:'Products' });
     }
     closeProductModal();
@@ -4378,11 +4392,13 @@ async function saveBanner() {
       await db.ref('banners/'+id).update(payload);
       showToast('Banner updated!','success');
       auditLog('EDIT',`Updated banner: ${payload.title}`,{detail:`Action: ${payload.actionType} | Active: ${payload.active}`,category:'Banners'});
+      awardPoints(3,'Updated banner');
     } else {
       payload.createdAt = Date.now();
       await db.ref('banners').push(payload);
       showToast('Banner added!','success');
       auditLog('ADD',`Added banner: ${payload.title}`,{detail:`Action: ${payload.actionType} | Active: ${payload.active}`,category:'Banners'});
+      awardPoints(3,'Added banner');
     }
     closeBannerModal();
   } catch(e) {
@@ -4996,6 +5012,7 @@ async function advanceOrderStatus(){
     await db.ref(`orders/${id}`).update(update);
     showToast(`Marked as ${nextStatus}!`,'success');
     auditLog('EDIT', `Order ${shortId(id)} status: ${o.status} → ${nextStatus}`, { detail:`Customer: ${o.customerName||'—'} | Total: $${o.total||0}`, orderId:id, category:'Orders' });
+    awardPoints(5,'Advanced order status');
     // Update button for the NEXT step immediately (don't wait for listener)
     const afterIdx=curIdx+2;
     if(afterIdx<ORDER_STATUSES.length){
@@ -5203,12 +5220,18 @@ function closeDeleteModal(){ document.getElementById('modal-delete').classList.r
    ㉒ ADMIN MANAGEMENT
 ═══════════════════════════════════════════════ */
 function renderAdminsTable(){
+  renderLeaderboard();
   const tbody=document.getElementById('admin-tbody');
-  if(!tbody) return;   /* table not in DOM (e.g. non-super-admin) */
-  const E=Object.entries(APP.admins);
+  if(!tbody) return;
+  // Sort admins by points descending for rank positions
+  const E=Object.entries(APP.admins).sort(([aUid],[bUid])=>{
+    const apts=(APP.admin_stats[aUid]?.points||0);
+    const bpts=(APP.admin_stats[bUid]?.points||0);
+    return bpts-apts;
+  });
   document.getElementById('admin-table-label').textContent=`All Admins (${E.length})`;
-  if(!E.length){tbody.innerHTML=`<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">👤</div><p>No admins found.</p></div></td></tr>`;return;}
-  tbody.innerHTML=E.map(([uid,a])=>{
+  if(!E.length){tbody.innerHTML=`<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">👤</div><p>No admins found.</p></div></td></tr>`;return;}
+  tbody.innerHTML=E.map(([uid,a],rankIdx)=>{
     const self=uid===APP.user?.uid;
     const chip=a.role==='super_admin'?`<span class="role-chip super"><i class="fa-solid fa-crown"></i> Super Admin</span>`:`<span class="role-chip admin"><i class="fa-solid fa-user-shield"></i> Admin</span>`;
     const selfTag=self?`<span style="font-size:9px;font-weight:700;background:var(--green-light);color:var(--green);padding:2px 7px;border-radius:10px;margin-left:6px">You</span>`:'';
@@ -5216,6 +5239,15 @@ function renderAdminsTable(){
     const statusBadge = a.disabled
       ? `<span class="nf-badge nb-red">Disabled</span>`
       : `<span class="nf-badge nb-green">Active</span>`;
+    const pos = rankIdx+1;
+    const posHtml = pos===1 ? `<span style="font-size:18px">🥇</span>`
+                  : pos===2 ? `<span style="font-size:18px">🥈</span>`
+                  : pos===3 ? `<span style="font-size:18px">🥉</span>`
+                  : `<span style="font-size:12px;font-weight:700;color:var(--muted)">#${pos}</span>`;
+    const stats = APP.admin_stats[uid] || {};
+    const tier = getRankTier(stats.points||0);
+    const rankHtml = `<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;background:${tier.bg};color:${tier.color}">${tier.emoji} ${tier.label}</span>
+      <div style="font-size:10px;color:var(--muted);margin-top:2px">${(stats.points||0).toLocaleString()} pts</div>`;
 
     /* ── Presence ── */
     /* Try UID match first; if not found, fall back to matching by email
@@ -5242,6 +5274,7 @@ function renderAdminsTable(){
     </div>`;
 
     return `<tr>
+      <td style="text-align:center">${posHtml}</td>
       <td><div style="display:flex;align-items:center;gap:10px">
         ${avatarHtml}
         <div>
@@ -5250,6 +5283,7 @@ function renderAdminsTable(){
         </div>
       </div></td>
       <td>${chip}</td>
+      <td>${rankHtml}</td>
       <td class="hide-mobile" style="font-size:12px;color:var(--muted)">${fmtDate(a.createdAt)}</td>
       <td>${presHtml}</td>
       <td>${statusBadge}</td>
@@ -6109,11 +6143,11 @@ async function saveCustomer() {
     const payload = { name, phone, email, country, notes, updatedAt: Date.now() };
     if (_editCustKey) {
       await db.ref(`customers/${_editCustKey}`).update(payload);
-      showToast('Customer updated!', 'success');
+      showToast('Customer updated!', 'success'); awardPoints(3,'Updated customer');
     } else {
       payload.createdAt = Date.now();
       await db.ref('customers').push(payload);
-      showToast('Customer added!', 'success');
+      showToast('Customer added!', 'success'); awardPoints(3,'Added customer');
     }
     closeAddCustomerModal();
     renderCustomerTable();
@@ -8769,6 +8803,104 @@ document.addEventListener('click', (e) => {
     panel.style.display = 'none';
   }
 });
+
+/* ═══════════════════════════════════════════════
+   ADMIN RANKING SYSTEM
+═══════════════════════════════════════════════ */
+const RANK_TIERS = [
+  { min:5000, emoji:'👑', label:'Elite',       color:'#7c3aed', bg:'#ede9fe' },
+  { min:1500, emoji:'💎', label:'Expert',      color:'#0284c7', bg:'#e0f2fe' },
+  { min:500,  emoji:'🔥', label:'Active',      color:'#d97706', bg:'#fef3c7' },
+  { min:100,  emoji:'⭐', label:'Rising Star', color:'#059669', bg:'#d1fae5' },
+  { min:0,    emoji:'🌱', label:'Rookie',      color:'#6b7280', bg:'#f3f4f6' },
+];
+
+function getRankTier(pts) {
+  return RANK_TIERS.find(t => pts >= t.min) || RANK_TIERS[RANK_TIERS.length-1];
+}
+
+async function awardPoints(pts, label) {
+  const uid = APP.user?.uid;
+  if (!uid || !pts) return;
+  try {
+    await db.ref(`admin_stats/${uid}`).transaction(cur => {
+      const s = cur || {};
+      return {
+        ...s,
+        points:       (s.points       || 0) + pts,
+        totalActions: (s.totalActions || 0) + 1,
+        lastAction:   label,
+        lastActionAt: Date.now(),
+      };
+    });
+  } catch { /* never block the main action */ }
+}
+
+function renderLeaderboard() {
+  const el = document.getElementById('admin-leaderboard');
+  if (!el) return;
+  const admins = Object.entries(APP.admins);
+  if (!admins.length) {
+    el.innerHTML = `<div class="empty-state" style="padding:20px"><div class="empty-icon">📊</div><p>No admins yet</p></div>`;
+    return;
+  }
+
+  // Sort by points desc
+  const ranked = admins
+    .map(([uid, a]) => ({ uid, a, pts: APP.admin_stats[uid]?.points || 0, stats: APP.admin_stats[uid] || {} }))
+    .sort((x, y) => y.pts - x.pts);
+
+  // ── Podium (top 3) ──────────────────────────────────────────────────────
+  const MEDALS = ['🥇','🥈','🥉'];
+  const PODIUM_BG = ['linear-gradient(135deg,#fbbf24,#f59e0b)','linear-gradient(135deg,#9ca3af,#6b7280)','linear-gradient(135deg,#cd7f32,#a16207)'];
+  const PODIUM_H  = ['80px','64px','56px'];
+
+  const podiumHtml = `
+    <div style="display:flex;align-items:flex-end;justify-content:center;gap:12px;padding:16px 16px 8px">
+      ${[1,0,2].map(i => {
+        const r = ranked[i];
+        if (!r) return '<div style="flex:1"></div>';
+        const tier = getRankTier(r.pts);
+        const name = r.a.name || r.a.email?.split('@')[0] || '—';
+        return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px">
+          <div style="font-size:${i===0?'22px':'18px'}">${MEDALS[i]}</div>
+          <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--green),var(--green-dark));color:#fff;font-size:16px;font-weight:800;display:flex;align-items:center;justify-content:center">${esc((name).charAt(0).toUpperCase())}</div>
+          <div style="font-size:11px;font-weight:700;text-align:center;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(name)}</div>
+          <div style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:${tier.bg};color:${tier.color}">${tier.emoji} ${tier.label}</div>
+          <div style="font-size:12px;font-weight:800;color:var(--green)">${r.pts.toLocaleString()} pts</div>
+          <div style="width:100%;background:${PODIUM_BG[i]};border-radius:8px 8px 0 0;height:${PODIUM_H[i]};opacity:0.85"></div>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+  // ── Full ranked list ─────────────────────────────────────────────────────
+  const listHtml = `<div style="border-top:1px solid var(--border);padding:8px 0">
+    ${ranked.map((r, i) => {
+      const tier = getRankTier(r.pts);
+      const name = r.a.name || r.a.email?.split('@')[0] || '—';
+      const isSelf = r.uid === APP.user?.uid;
+      const barPct = ranked[0].pts > 0 ? Math.round((r.pts / ranked[0].pts) * 100) : 0;
+      return `<div style="display:flex;align-items:center;gap:10px;padding:8px 16px;${isSelf?'background:var(--green-light);border-radius:8px;':''}">
+        <div style="width:24px;text-align:center;font-size:${i<3?'16px':'12px'};font-weight:700;color:var(--muted);flex-shrink:0">${i<3?MEDALS[i]:`#${i+1}`}</div>
+        <div style="width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--green),var(--green-dark));color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">${esc((name).charAt(0).toUpperCase())}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px">
+            ${esc(name)}${isSelf?`<span style="font-size:9px;background:var(--green);color:#fff;padding:1px 6px;border-radius:10px">You</span>`:''}
+          </div>
+          <div style="margin-top:3px;height:4px;background:var(--surface2);border-radius:4px;overflow:hidden">
+            <div style="height:100%;width:${barPct}%;background:${tier.color};border-radius:4px;transition:width .5s"></div>
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:11px;font-weight:700;padding:2px 7px;border-radius:12px;background:${tier.bg};color:${tier.color}">${tier.emoji} ${tier.label}</div>
+          <div style="font-size:11px;font-weight:800;color:var(--green);margin-top:2px">${r.pts.toLocaleString()} pts</div>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+
+  el.innerHTML = podiumHtml + listHtml;
+}
 
 /* ═══════════════════════════════════════════════
    ANALYTICS & CHARTS
