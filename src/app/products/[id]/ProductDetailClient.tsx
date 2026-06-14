@@ -83,34 +83,57 @@ function parseDescription(desc: string): ParsedDescription {
 
 // Known Apple/device color → CSS background
 const COLOR_SWATCHES: Record<string, string> = {
+  // ── Neutral & Classic ──────────────────────────────────────────────────────
   'black':            '#1c1c1e',
   'space black':      '#2c2c2e',
   'space gray':       '#6e6e73',
+  'graphite':         '#54524f',
   'midnight':         '#1c2433',
   'starlight':        '#f2e8d9',
   'silver':           '#e8e8ed',
   'white':            '#f5f5f7',
-  'gold':             '#f5e2b8',
-  'rose gold':        '#f0cfc3',
-  'pink':             '#fac8d0',
-  'red':              '#e0001a',
-  'product red':      '#e0001a',
-  'blue':             '#3478f6',
-  'deep blue':        '#19234d',
-  'storm blue':       '#4a6278',
-  'alpine green':     '#4e6b5e',
-  'green':            '#2d6a3f',
-  'purple':           '#7e5bef',
-  'yellow':           '#f5e642',
-  'orange':           '#f56c1e',
-  'cosmic orange':    '#e55b00',
-  'coral':            '#ff6b52',
-  'natural':          '#d4c5b0',
+  'titanium':         '#8e8d92',
+  'titanium gray':    '#8a8a8f',
   'natural titanium': '#baa98c',
   'black titanium':   '#333336',
   'white titanium':   '#f0efed',
   'desert titanium':  '#c5a882',
-  'titanium':         '#8e8d92',
+  'natural':          '#d4c5b0',
+  'gold':             '#f5e2b8',
+  'rose gold':        '#f0cfc3',
+  'champagne gold':   '#f0d9a0',
+  // ── Blue Family ───────────────────────────────────────────────────────────
+  'blue':             '#3478f6',
+  'sky blue':         '#a8c8e0',
+  'deep blue':        '#19234d',
+  'pacific blue':     '#1e5270',
+  'sierra blue':      '#8aaec2',
+  'storm blue':       '#4a6278',
+  'blue titanium':    '#4a6a82',
+  'ultramarine':      '#3a4fa0',
+  // ── Purple & Pink Family ──────────────────────────────────────────────────
+  'purple':           '#7e5bef',
+  'deep purple':      '#4a2569',
+  'lavender':         '#c8b8d8',
+  'pink':             '#fac8d0',
+  'rose pink':        '#f5a8bc',
+  'coral':            '#ff6b52',
+  // ── Green Family ──────────────────────────────────────────────────────────
+  'green':            '#2d6a3f',
+  'mint green':       '#a8d8b8',
+  'alpine green':     '#4e6b5e',
+  'teal green':       '#2d7a70',
+  // ── Yellow & Warm Bright ──────────────────────────────────────────────────
+  'yellow':           '#f5e642',
+  'sunflower yellow': '#f5c830',
+  'cosmic yellow':    '#f0d000',
+  // ── Orange & Bold ─────────────────────────────────────────────────────────
+  'orange':           '#f56c1e',
+  'cosmic orange':    '#e55b00',
+  // ── Red Family ────────────────────────────────────────────────────────────
+  'red':              '#e0001a',
+  'product red':      '#e0001a',
+  '(product)red':     '#e0001a',
 };
 
 const isColorGroup = (name: string) => /colo(u?)r/i.test(name);
@@ -351,7 +374,13 @@ export default function ProductDetailClient({ product, similar, reviews, initial
                       const active = currentVal === v.label;
                       const oos    = v.stock === 0;
                       const bg     = COLOR_SWATCHES[v.label.toLowerCase()] ?? '#e5e7eb';
-                      const isLight = ['starlight', 'silver', 'white', 'white titanium', 'gold', 'starlight'].includes(v.label.toLowerCase());
+                      const isLight = [
+                        'starlight', 'silver', 'white', 'white titanium', 'gold',
+                        'champagne gold', 'rose gold', 'sky blue', 'sierra blue',
+                        'lavender', 'mint green', 'pink', 'rose pink', 'yellow',
+                        'sunflower yellow', 'cosmic yellow', 'natural', 'natural titanium',
+                        'desert titanium',
+                      ].includes(v.label.toLowerCase());
                       return (
                         <button
                           key={v.label}
