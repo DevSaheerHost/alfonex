@@ -36,6 +36,8 @@
   <!-- jsPDF + AutoTable — invoice generation, no server needed -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <!-- Chart.js — analytics & dashboard charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <style>
 /* ── DESIGN TOKENS ── */
 :root {
@@ -1124,6 +1126,7 @@ tbody td{padding:12px 16px;vertical-align:middle}
     <nav class="sb-nav">
       <div class="sb-section-label">Main</div>
       <button class="sb-link active" data-section="overview" onclick="showSection('overview')"><span class="sb-ic"><i class="fa-solid fa-gauge-high"></i></span>Overview</button>
+      <button class="sb-link" data-section="analytics" onclick="showSection('analytics')"><span class="sb-ic"><i class="fa-solid fa-chart-column"></i></span>Analytics</button>
       <button class="sb-link" data-section="warranty" onclick="showSection('warranty')"><span class="sb-ic"><i class="fa-solid fa-shield-halved"></i></span>Warranty<span class="sb-badge" id="sb-warranty-count" style="display:none;background:#f59e0b">0</span></button>
       <button class="sb-link" data-section="products" onclick="showSection('products')"><span class="sb-ic"><i class="fa-solid fa-box-open"></i></span>Products<span class="sb-badge" id="sb-prod-count">0</span></button>
       <button class="sb-link" data-section="orders" onclick="showSection('orders')"><span class="sb-ic"><i class="fa-solid fa-clipboard-list"></i></span>Orders<span class="sb-badge" id="sb-order-count">0</span></button>
@@ -1212,6 +1215,17 @@ tbody td{padding:12px 16px;vertical-align:middle}
         <div class="stat-card"><div class="stat-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div><div class="stat-value" id="stat-low">0</div><div class="stat-label">Low Stock (≤5)</div></div>
         <div class="stat-card" id="stat-admins-card" style="display:none"><div class="stat-icon purple"><i class="fa-solid fa-users"></i></div><div class="stat-value" id="stat-admins">0</div><div class="stat-label">Admin Accounts</div></div>
       </div>
+      <!-- Daily Income Chart -->
+      <div class="table-card" style="margin-bottom:16px">
+        <div class="table-topbar">
+          <div class="table-topbar-title">📈 Income — Last 30 Days</div>
+          <button class="btn-primary btn-sm" onclick="showSection('analytics')"><i class="fa-solid fa-chart-column"></i> Full Analytics</button>
+        </div>
+        <div style="padding:12px 16px 8px;position:relative;height:190px;cursor:pointer" onclick="showSection('analytics')" title="Click to view full analytics">
+          <canvas id="chart-dashboard"></canvas>
+        </div>
+      </div>
+
       <div class="table-card">
         <div class="table-topbar"><div class="table-topbar-title">Recent Products</div><button class="btn-primary btn-sm" onclick="showSection('products')"><i class="fa-solid fa-arrow-right"></i> View All</button></div>
         <div style="padding:2px 18px 16px"><ul class="mini-prod-list" id="recent-prod-list"><li style="padding:40px 0;text-align:center;color:var(--muted);font-size:13px">Loading…</li></ul></div>
@@ -2355,6 +2369,48 @@ tbody td{padding:12px 16px;vertical-align:middle}
       </div>
     </section>
 
+    <!-- ══ ANALYTICS ══ -->
+    <section id="section-analytics" class="content-section">
+      <div class="sec-header">
+        <div>
+          <div class="sec-title">📊 Analytics</div>
+          <div class="sec-sub">Revenue, orders, and business performance insights</div>
+        </div>
+      </div>
+
+      <!-- KPI cards -->
+      <div class="stats-grid" style="margin-bottom:16px">
+        <div class="stat-card"><div class="stat-icon green"><i class="fa-solid fa-arrow-trend-up"></i></div><div class="stat-value" id="analytics-revenue-month">—</div><div class="stat-label">Revenue This Month</div></div>
+        <div class="stat-card"><div class="stat-icon blue"><i class="fa-solid fa-clipboard-list"></i></div><div class="stat-value" id="analytics-orders-month">—</div><div class="stat-label">Orders This Month</div></div>
+        <div class="stat-card"><div class="stat-icon purple"><i class="fa-solid fa-coins"></i></div><div class="stat-value" id="analytics-avg-order">—</div><div class="stat-label">Avg. Order Value</div></div>
+        <div class="stat-card"><div class="stat-icon amber"><i class="fa-solid fa-hand-holding-dollar"></i></div><div class="stat-value" id="analytics-profit-month">—</div><div class="stat-label">Profit This Month</div></div>
+      </div>
+
+      <!-- Monthly Revenue & Profit -->
+      <div class="table-card" style="margin-bottom:16px">
+        <div class="table-topbar"><div class="table-topbar-title">Monthly Revenue &amp; Profit (12 months)</div></div>
+        <div style="padding:12px 16px 20px;position:relative;height:260px"><canvas id="chart-monthly"></canvas></div>
+      </div>
+
+      <!-- Daily orders + Status breakdown -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <div class="table-card">
+          <div class="table-topbar"><div class="table-topbar-title">Daily Orders (Last 30 Days)</div></div>
+          <div style="padding:12px 16px 20px;position:relative;height:220px"><canvas id="chart-daily-analytics"></canvas></div>
+        </div>
+        <div class="table-card">
+          <div class="table-topbar"><div class="table-topbar-title">Order Status Breakdown</div></div>
+          <div style="padding:12px 16px 20px;position:relative;height:220px"><canvas id="chart-status"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Revenue by currency -->
+      <div class="table-card">
+        <div class="table-topbar"><div class="table-topbar-title">Revenue by Currency</div></div>
+        <div style="padding:12px 16px 20px;position:relative;height:200px"><canvas id="chart-currency"></canvas></div>
+      </div>
+    </section>
+
   </div><!-- end #main-area -->
 </div><!-- end #view-dashboard -->
 
@@ -3373,7 +3429,8 @@ function showSection(name, fromPopstate = false){
     marketing:'Marketing Tools', labels:'Labels & Barcodes',
     invoices:'Customer Invoices', comms:'Team Communication',
     meetings:'Meeting Scheduler', pricehistory:'Price Change History', reservations:'Device Reservations', pricelist:'Price List',
-    audit:'Audit Trail', reviews:'Product Reviews', loyalty:'Loyalty & Referrals', 'search-analytics':'Search Analytics'
+    audit:'Audit Trail', reviews:'Product Reviews', loyalty:'Loyalty & Referrals', 'search-analytics':'Search Analytics',
+    analytics:'Analytics'
   };
   document.getElementById('header-page-title').innerHTML=`<span>${T[name]||name}</span>`;
   closeSidebar();
@@ -3411,6 +3468,7 @@ function showSection(name, fromPopstate = false){
     if (name==='search-analytics') { renderSearchAnalytics(); }
     if (name==='pricehistory')  { renderPriceHistory(); }
     if (name==='pricelist')     { attachDealerListener(); renderPriceList(); }
+    if (name==='analytics')     { renderAnalyticsCharts(); }
   }, 0);
 }
 let _lastSection = null;
@@ -3576,6 +3634,7 @@ function renderOverviewStats(){
   document.getElementById('sb-prod-count').textContent=P.length;
   document.getElementById('sb-order-count').textContent=O.length;
   if(APP.role==='super_admin') document.getElementById('stat-admins').textContent=Object.keys(APP.admins).length;
+  renderDashboardChart();
 }
 function renderRecentProducts(){
   const el=document.getElementById('recent-prod-list');
@@ -8709,6 +8768,201 @@ document.addEventListener('click', (e) => {
     panel.style.display = 'none';
   }
 });
+
+/* ═══════════════════════════════════════════════
+   ANALYTICS & CHARTS
+═══════════════════════════════════════════════ */
+let _dashChart = null, _monthlyChart = null, _dailyAnalChart = null, _statusChart = null, _currencyChart = null;
+
+function _ts(val) {
+  if (!val) return 0;
+  if (typeof val === 'number') return val;
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? 0 : d.getTime();
+}
+
+function _buildDaily(days) {
+  const buckets = {};
+  const now = Date.now();
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(now - i * 864e5);
+    buckets[d.toISOString().slice(0, 10)] = { revenue: 0, orders: 0, profit: 0 };
+  }
+  for (const o of Object.values(APP.orders || {})) {
+    const ts = _ts(o.createdAt);
+    if (!ts) continue;
+    const key = new Date(ts).toISOString().slice(0, 10);
+    if (buckets[key]) {
+      buckets[key].revenue += o.total || 0;
+      buckets[key].orders++;
+      buckets[key].profit += o.profit || 0;
+    }
+  }
+  return buckets;
+}
+
+function _buildMonthly(months) {
+  const buckets = {};
+  const now = new Date();
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    buckets[key] = { revenue: 0, orders: 0, profit: 0 };
+  }
+  for (const o of Object.values(APP.orders || {})) {
+    const ts = _ts(o.createdAt);
+    if (!ts) continue;
+    const d = new Date(ts);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    if (buckets[key]) {
+      buckets[key].revenue += o.total || 0;
+      buckets[key].orders++;
+      buckets[key].profit += o.profit || 0;
+    }
+  }
+  return buckets;
+}
+
+function renderDashboardChart() {
+  const canvas = document.getElementById('chart-dashboard');
+  if (!canvas || typeof Chart === 'undefined') return;
+  const data   = _buildDaily(30);
+  const labels = Object.keys(data).map(k => {
+    const d = new Date(k);
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  });
+  const values = Object.values(data).map(v => v.revenue);
+  if (_dashChart) _dashChart.destroy();
+  _dashChart = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Revenue',
+        data: values,
+        borderColor: '#2EA056',
+        backgroundColor: 'rgba(46,160,86,0.12)',
+        fill: true,
+        tension: 0.45,
+        pointRadius: 2,
+        pointHoverRadius: 5,
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      onClick: () => showSection('analytics'),
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y.toLocaleString()}` } },
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { maxTicksLimit: 7, font: { size: 10 }, color: '#9ca3af' } },
+        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { font: { size: 10 }, color: '#9ca3af' } },
+      },
+    },
+  });
+}
+
+function renderAnalyticsCharts() {
+  if (typeof Chart === 'undefined') return;
+  const orders  = Object.values(APP.orders || {});
+  const now     = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+
+  // KPI cards
+  const mOrders  = orders.filter(o => _ts(o.createdAt) >= monthStart);
+  const mRevenue = mOrders.reduce((s, o) => s + (o.total  || 0), 0);
+  const mProfit  = mOrders.reduce((s, o) => s + (o.profit || 0), 0);
+  const avgOrder = mOrders.length ? Math.round(mRevenue / mOrders.length) : 0;
+  document.getElementById('analytics-revenue-month').textContent = mRevenue.toLocaleString();
+  document.getElementById('analytics-orders-month').textContent  = mOrders.length;
+  document.getElementById('analytics-avg-order').textContent     = avgOrder.toLocaleString();
+  document.getElementById('analytics-profit-month').textContent  = mProfit.toLocaleString();
+
+  // Monthly Revenue + Profit (12 months)
+  const monthly = _buildMonthly(12);
+  const mLabels  = Object.keys(monthly).map(k => {
+    const [y,m] = k.split('-');
+    return new Date(+y, +m-1, 1).toLocaleDateString(undefined, { month: 'short', year: '2-digit' });
+  });
+  if (_monthlyChart) _monthlyChart.destroy();
+  _monthlyChart = new Chart(document.getElementById('chart-monthly'), {
+    data: {
+      labels: mLabels,
+      datasets: [
+        { type:'bar',  label:'Revenue', data: Object.values(monthly).map(v=>v.revenue), backgroundColor:'rgba(46,160,86,0.75)', borderRadius:5, order:2 },
+        { type:'line', label:'Profit',  data: Object.values(monthly).map(v=>v.profit),  borderColor:'#3b82f6', backgroundColor:'transparent', tension:0.4, borderWidth:2, pointRadius:3, order:1 },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position:'top', labels:{ font:{size:11} } } },
+      scales: {
+        x: { grid:{display:false}, ticks:{font:{size:11}} },
+        y: { beginAtZero:true, grid:{color:'rgba(0,0,0,0.05)'}, ticks:{font:{size:11}} },
+      },
+    },
+  });
+
+  // Daily orders (30d)
+  const daily = _buildDaily(30);
+  const dLabels = Object.keys(daily).map(k => {
+    const d = new Date(k);
+    return d.toLocaleDateString(undefined, { month:'short', day:'numeric' });
+  });
+  if (_dailyAnalChart) _dailyAnalChart.destroy();
+  _dailyAnalChart = new Chart(document.getElementById('chart-daily-analytics'), {
+    type: 'bar',
+    data: {
+      labels: dLabels,
+      datasets: [{ label:'Orders', data: Object.values(daily).map(v=>v.orders), backgroundColor:'rgba(139,92,246,0.75)', borderRadius:4 }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend:{display:false} },
+      scales: {
+        x: { grid:{display:false}, ticks:{maxTicksLimit:8, font:{size:10}} },
+        y: { beginAtZero:true, grid:{color:'rgba(0,0,0,0.05)'}, ticks:{precision:0, font:{size:10}} },
+      },
+    },
+  });
+
+  // Order status doughnut
+  const statusMap = {};
+  for (const o of orders) { const s=o.status||'Unknown'; statusMap[s]=(statusMap[s]||0)+1; }
+  const STATUS_COLORS = { Pending:'#f59e0b', Packed:'#3b82f6', Dispatched:'#8b5cf6', Shipped:'#06b6d4', 'In Transit':'#6366f1', Delivered:'#2EA056', Unknown:'#9ca3af' };
+  if (_statusChart) _statusChart.destroy();
+  _statusChart = new Chart(document.getElementById('chart-status'), {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(statusMap),
+      datasets: [{ data: Object.values(statusMap), backgroundColor: Object.keys(statusMap).map(s=>STATUS_COLORS[s]||'#9ca3af'), borderWidth:2, borderColor:'#fff' }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout:'62%',
+      plugins: { legend:{ position:'right', labels:{ font:{size:11}, boxWidth:12 } } },
+    },
+  });
+
+  // Revenue by currency doughnut
+  const currMap = {};
+  for (const o of orders) { const c=(o.currency||'aed').toUpperCase(); currMap[c]=(currMap[c]||0)+(o.total||0); }
+  const CUR_COLORS = { AED:'#2EA056', USD:'#3b82f6', INR:'#f59e0b' };
+  if (_currencyChart) _currencyChart.destroy();
+  _currencyChart = new Chart(document.getElementById('chart-currency'), {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(currMap).map(c=>`${c}`),
+      datasets: [{ data: Object.values(currMap), backgroundColor: Object.keys(currMap).map(c=>CUR_COLORS[c]||'#9ca3af'), borderWidth:2, borderColor:'#fff' }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout:'62%',
+      plugins: { legend:{ position:'right', labels:{ font:{size:11}, boxWidth:12 } } },
+    },
+  });
+}
 
 </script>
 
