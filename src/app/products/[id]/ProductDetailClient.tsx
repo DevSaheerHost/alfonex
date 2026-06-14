@@ -115,6 +115,31 @@ const COLOR_SWATCHES: Record<string, string> = {
 
 const isColorGroup = (name: string) => /colo(u?)r/i.test(name);
 
+// Returns the first selected variant that carries a price override (base/AED currency).
+function getVariantPrice(
+  variants: VariantGroup[] | undefined,
+  selected: Record<string, string>,
+): number | null {
+  for (const group of variants ?? []) {
+    const v = group.values.find((val) => val.label === selected[group.name]);
+    if (v?.price != null && v.price > 0) return v.price;
+  }
+  return null;
+}
+
+// Scales all currency fields proportionally when a variant has its own AED price.
+function applyVariantPrice(product: Product, variantPriceAED: number): Product {
+  const baseAED = product.priceAED ?? product.price;
+  const ratio   = baseAED > 0 ? variantPriceAED / baseAED : 1;
+  return {
+    ...product,
+    price:    variantPriceAED,
+    priceAED: variantPriceAED,
+    priceUSD: product.priceUSD != null ? Math.round(product.priceUSD * ratio * 100) / 100 : undefined,
+    priceINR: product.priceINR != null ? Math.round(product.priceINR * ratio) : undefined,
+  };
+}
+
 interface Props {
   product:         Product;
   similar:         Product[];
@@ -133,13 +158,17 @@ export default function ProductDetailClient({ product, similar, reviews, initial
   // Toggle between the 2D product image and the interactive 3D viewer
   const [view3d, setView3d] = useState(false);
 
-  const price  = getProdPrice(product);
   const symbol = CURRENCY_SYMBOLS[currency];
   const grade  = GRADE_INFO[product.grade];
   const isOOS  = product.isOOS || product.stock === 0;
 
   // Variant selection — seeded from the URL slug by the server
   const [selected, setSelected] = useState<Record<string, string>>(initialVariants);
+
+  // Derive effective product — applies per-variant price if one is configured
+  const variantPriceAED  = getVariantPrice(product.variants, selected);
+  const effectiveProduct = variantPriceAED != null ? applyVariantPrice(product, variantPriceAED) : product;
+  const price            = getProdPrice(effectiveProduct);
 
   // Displayed image — resolved from the initially-selected colour variant, or falls back to main image
   const [displayImage, setDisplayImage] = useState(() => {
@@ -358,21 +387,32 @@ export default function ProductDetailClient({ product, similar, reviews, initial
                   /* ── Pill buttons (Storage / RAM / etc.) ── */
                   <div className="flex flex-wrap gap-2">
                     {group.values.map((v) => {
-                      const active = currentVal === v.label;
-                      const oos    = v.stock === 0;
+                      const active     = currentVal === v.label;
+                      const oos        = v.stock === 0;
+                      const vPriceAED  = v.price != null && v.price > 0 ? v.price : null;
+                      const vDisplay   = vPriceAED != null
+                        ? getProdPrice(applyVariantPrice(product, vPriceAED))
+                        : null;
                       return (
                         <button
                           key={v.label}
                           disabled={oos}
                           onClick={() => handleVariantSelect(group.name, v)}
-                          className={`rounded-full border-2 px-4 py-1.5 text-sm font-semibold transition
+                          className={`flex flex-col items-center rounded-2xl border-2 px-4 py-1.5 text-sm font-semibold transition
                             ${oos
                               ? 'cursor-not-allowed border-gray-100 text-gray-300 line-through dark:border-gray-800 dark:text-gray-600'
                               : active
                                 ? 'border-primary-500 text-primary-600 dark:text-primary-400'
                                 : 'border-gray-300 text-gray-700 hover:border-primary-400 dark:border-gray-600 dark:text-gray-300'}`}
                         >
-                          {v.label}
+                          <span>{v.label}</span>
+                          {vDisplay != null && (
+                            <span className={`text-[10px] font-normal leading-tight ${
+                              active ? 'text-primary-500 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500'
+                            }`}>
+                              {symbol}{vDisplay.toLocaleString()}
+                            </span>
+                          )}
                         </button>
                       );
                     })}
