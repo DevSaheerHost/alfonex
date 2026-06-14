@@ -13,7 +13,8 @@ export const CURRENCY_SYMBOLS: Record<Currency, string> = {
 export interface VariantValue {
   label:    string;
   stock:    number;
-  imageUrl?: string; // per-colour product image (optional)
+  price?:   number | null;    // optional per-variant price override (in base/AED currency)
+  imageUrl?: string;          // per-colour product image (optional)
 }
 
 export interface VariantGroup {
