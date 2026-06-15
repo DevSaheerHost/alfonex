@@ -7,8 +7,8 @@ export async function GET() {
     scope:            '/admin/',
     display:          'standalone',
     orientation:      'portrait-primary',
-    background_color: '#0f172a',
-    theme_color:      '#6366f1',
+    background_color: '#0c1a10',
+    theme_color:      '#2EA056',
     categories:       ['business', 'productivity'],
     icons: [
       {
