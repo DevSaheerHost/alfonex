@@ -17,6 +17,10 @@ export async function GET() {
 importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
 
+// Force immediate activation so handler changes take effect without waiting for all tabs to close
+self.addEventListener('install',  ()  => self.skipWaiting());
+self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
+
 firebase.initializeApp(${JSON.stringify(config)});
 
 const messaging = firebase.messaging();
