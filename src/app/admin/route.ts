@@ -1,10 +1,7 @@
 export const runtime = 'nodejs';
 
-import { readFileSync }  from 'fs';
-import { join }          from 'path';
-import { cookies }       from 'next/headers';
-import { redirect }      from 'next/navigation';
-import { verifyAdminToken } from '@/lib/adminAuth';
+import { readFileSync } from 'fs';
+import { join }         from 'path';
 
 const TOKENS: Record<string, string | undefined> = {
   '%%FB_API_KEY%%':             process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -21,14 +18,6 @@ const TOKENS: Record<string, string | undefined> = {
 };
 
 export async function GET() {
-  // Verify admin session cookie
-  const cookieStore = await cookies();
-  const token = cookieStore.get('__admin_sess')?.value;
-  if (!token || !(await verifyAdminToken(token))) {
-    redirect('/admin/login');
-  }
-
-  // Read and inject config into admin HTML
   let html = readFileSync(
     join(process.cwd(), 'private', 'admin.html'),
     'utf-8',
@@ -40,8 +29,9 @@ export async function GET() {
 
   return new Response(html, {
     headers: {
-      'Content-Type':  'text/html; charset=utf-8',
-      'X-Robots-Tag':  'noindex, nofollow, noarchive, nosnippet',
+      'Content-Type': 'text/html; charset=utf-8',
+      'X-Robots-Tag': 'noindex, nofollow, noarchive, nosnippet',
     },
   });
 }
+
