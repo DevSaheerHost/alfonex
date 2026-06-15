@@ -3604,6 +3604,77 @@ tbody td{padding:12px 16px;vertical-align:middle}
   </div>
 </div>
 
+<!-- ══ OVERLAY: PER-ADMIN PIN VERIFICATION ══ -->
+<div id="overlay-admin-pin" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);align-items:center;justify-content:center">
+  <div style="background:var(--surface);border-radius:20px;padding:36px 32px;width:100%;max-width:360px;box-shadow:0 24px 60px rgba(0,0,0,.4);text-align:center;border:1px solid var(--border)">
+    <div id="pin-overlay-avatar" style="width:56px;height:56px;border-radius:50%;background:var(--primary);color:#fff;font-size:22px;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 14px"></div>
+    <div style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:4px" id="pin-overlay-name">Admin</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:24px">Enter your PIN to access the panel</div>
+
+    <!-- Digit boxes (digit4 / digit6) -->
+    <div id="pin-digit-wrap" style="display:flex;justify-content:center;gap:8px;margin-bottom:20px"></div>
+
+    <!-- Alphanumeric field -->
+    <div id="pin-alpha-wrap" style="display:none;margin-bottom:20px;position:relative">
+      <div style="display:flex;overflow:hidden;border-radius:12px;border:1.5px solid var(--border);background:var(--bg)">
+        <input id="pin-alpha-input" type="password" autocomplete="current-password" placeholder="Enter your PIN" style="flex:1;background:transparent;padding:12px 14px;font-size:14px;border:none;outline:none;color:var(--text)" onkeydown="if(event.key==='Enter')submitAdminPin()" />
+        <button type="button" onclick="togglePinAlpha()" style="padding:0 14px;background:none;border:none;cursor:pointer;color:var(--muted)"><i class="fa fa-eye" id="pin-alpha-eye"></i></button>
+      </div>
+    </div>
+
+    <div id="pin-overlay-error" style="display:none;color:var(--red);font-size:13px;font-weight:600;margin-bottom:12px"></div>
+    <button id="pin-overlay-btn" onclick="submitAdminPin()" style="width:100%;background:var(--primary);color:#fff;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">Verify</button>
+  </div>
+</div>
+
+<!-- ══ MODAL: SET ADMIN PIN (su_admin only) ══ -->
+<div id="modal-set-pin" class="modal-backdrop">
+  <div class="modal sm">
+    <div class="modal-header">
+      <div class="modal-hicon"><i class="fa-solid fa-key"></i></div>
+      <div class="modal-title">Set Admin PIN — <span id="sp-admin-name" style="color:var(--primary)">Admin</span></div>
+      <button class="modal-close" onclick="closeSetPinModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="sp-target-uid" />
+      <div class="mf-group">
+        <label class="mf-label">PIN Type</label>
+        <select class="mf-input" id="sp-pin-type">
+          <option value="digit4">4-Digit PIN</option>
+          <option value="digit6" selected>6-Digit PIN</option>
+          <option value="alphanumeric">Alphanumeric (6–32 chars)</option>
+        </select>
+      </div>
+      <div class="mf-group">
+        <label class="mf-label">New PIN</label>
+        <div class="mf-pw-wrap"><input type="password" id="sp-pin" class="mf-input" placeholder="Enter PIN" /><button class="pw-toggle" type="button" onclick="togglePw('sp-pin',this)" tabindex="-1"><i class="fa-regular fa-eye"></i></button></div>
+      </div>
+      <div class="mf-group">
+        <label class="mf-label">Confirm PIN</label>
+        <div class="mf-pw-wrap"><input type="password" id="sp-confirm" class="mf-input" placeholder="Confirm PIN" /><button class="pw-toggle" type="button" onclick="togglePw('sp-confirm',this)" tabindex="-1"><i class="fa-regular fa-eye"></i></button></div>
+      </div>
+      <div class="mf-group">
+        <label class="mf-label">Session Duration</label>
+        <select class="mf-input" id="sp-session-hours">
+          <option value="0">Immediately (every time)</option>
+          <option value="1">1 hour</option>
+          <option value="8">8 hours</option>
+          <option value="24" selected>24 hours</option>
+          <option value="168">7 days</option>
+          <option value="-1">Keep logged in</option>
+        </select>
+      </div>
+      <div id="sp-save-msg" style="display:none;padding:8px 12px;border-radius:8px;font-size:13px;margin-bottom:4px"></div>
+    </div>
+    <div class="modal-footer" style="flex-wrap:wrap;gap:8px">
+      <button class="btn-danger btn-sm" id="btn-remove-pin" onclick="removeAdminPin()"><i class="fa-solid fa-trash-can"></i> Remove PIN</button>
+      <div style="flex:1"></div>
+      <button class="btn-secondary" onclick="closeSetPinModal()">Cancel</button>
+      <button class="btn-primary" id="btn-save-admin-pin" onclick="saveAdminPin()"><i class="fa-solid fa-key"></i> Save PIN</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ MODAL: DELETE CONFIRM ══ -->
 <div id="modal-delete" class="modal-backdrop">
   <div class="modal sm">
@@ -3875,6 +3946,7 @@ auth.onAuthStateChanged(async user=>{
       document.getElementById('welcome-name').textContent=`Welcome back, ${a.name||user.email}!`;
       switchView('view-dashboard');
       history.replaceState({ section: 'overview' }, '', '');  /* set base nav state */
+      checkAdminPin(user.uid, a);
       attachProductsListener(); attachOrdersListener(); attachReviewsListener(); attachLoyaltyListener(); attachSearchAnalyticsListener(); attachCustomersListener();
       if(sa) { attachAdminsListener(); attachAuditListeners(); }
       /* Start presence heartbeat + listener for ALL admins */
@@ -5593,6 +5665,7 @@ function renderAdminsTable(){
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
           ${isSuperAdmin && !self ? `<button class="btn-edit btn-sm" onclick="openEditAdminModal('${esc(uid)}')"><i class="fa-solid fa-pen"></i> Edit</button>` : ''}
           ${self ? `<button class="btn-ghost btn-sm" onclick="openEditAdminModal('${esc(uid)}')"><i class="fa-solid fa-pen"></i> Edit Me</button>` : ''}
+          ${isSuperAdmin && !self ? `<button class="btn-ghost btn-sm" onclick="openSetPinModal('${esc(uid)}','${esc(a.name||a.email||'')}',${!!a.pin_hash})" title="Set login PIN for this admin"><i class="fa-solid fa-key"></i> PIN${a.pin_hash ? ' <span style=\'color:var(--green)\'>●</span>' : ''}</button>` : ''}
           ${!self ? `<button class="btn-danger btn-sm" onclick="promptDelete('admin','${esc(uid)}','${esc(a.name||a.email||'')}')"><i class="fa-solid fa-user-minus"></i> Remove</button>` : ''}
         </div>
       </td>
@@ -9642,6 +9715,226 @@ async function pnLoadTopClickers() {
       <div style="flex:1;font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(names[i])}</div>
       <span style="background:rgba(59,130,246,.1);color:#3b82f6;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:800;flex-shrink:0">${e.clicks} clicks</span>
     </div>`).join('');
+}
+
+/* ═══════════════════════════════════════════════════════
+   PER-ADMIN PIN SYSTEM
+═══════════════════════════════════════════════════════ */
+
+// Called right after Firebase Auth + dashboard is shown
+function checkAdminPin(uid, adminData) {
+  const hash    = adminData?.pin_hash;
+  if (!hash) return;                         // no PIN configured for this admin
+
+  const hours   = adminData?.pin_session_hours ?? -1;
+  if (hours === -1) return;                  // "keep logged in" — never ask
+
+  const lastVerified = adminData?.pin_last_verified || 0;
+  if (hours === 0 || (Date.now() - lastVerified) > hours * 3600 * 1000) {
+    showPinOverlay(adminData?.pin_type || 'digit6', adminData);
+  }
+}
+
+let _pinDigitInputs = [];
+
+function showPinOverlay(pinType, adminData) {
+  const overlay = document.getElementById('overlay-admin-pin');
+  if (!overlay) return;
+  overlay.style.display = 'flex';
+
+  // Populate name/avatar
+  const name = adminData?.name || APP.user?.email || 'Admin';
+  document.getElementById('pin-overlay-name').textContent = name;
+  document.getElementById('pin-overlay-avatar').textContent = name.charAt(0).toUpperCase();
+  document.getElementById('pin-overlay-error').style.display = 'none';
+  document.getElementById('pin-overlay-error').textContent   = '';
+
+  const digitWrap = document.getElementById('pin-digit-wrap');
+  const alphaWrap = document.getElementById('pin-alpha-wrap');
+
+  if (pinType === 'alphanumeric') {
+    digitWrap.style.display = 'none';
+    alphaWrap.style.display = 'block';
+    document.getElementById('pin-alpha-input').value = '';
+    setTimeout(() => document.getElementById('pin-alpha-input')?.focus(), 100);
+  } else {
+    alphaWrap.style.display = 'none';
+    digitWrap.style.display = 'flex';
+    const count = pinType === 'digit4' ? 4 : 6;
+    digitWrap.innerHTML = Array.from({ length: count }, (_, i) => `
+      <input type="password" inputmode="numeric" maxlength="1" id="pin-d-${i}"
+        style="width:44px;height:52px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);text-align:center;font-size:20px;font-weight:800;color:var(--text);outline:none;transition:border-color .15s"
+        oninput="pinDigitInput(${i},${count})"
+        onkeydown="pinDigitKey(event,${i})"
+        ${i === 0 ? 'autofocus' : ''}
+      />`).join('');
+    setTimeout(() => document.getElementById('pin-d-0')?.focus(), 100);
+  }
+}
+
+function hidePinOverlay() {
+  const overlay = document.getElementById('overlay-admin-pin');
+  if (overlay) overlay.style.display = 'none';
+}
+
+function togglePinAlpha() {
+  const inp = document.getElementById('pin-alpha-input');
+  const ico = document.getElementById('pin-alpha-eye');
+  if (!inp) return;
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  if (ico) ico.className = inp.type === 'password' ? 'fa fa-eye' : 'fa fa-eye-slash';
+}
+
+function pinDigitInput(i, count) {
+  const inp = document.getElementById(`pin-d-${i}`);
+  if (!inp) return;
+  const v = inp.value.replace(/\D/, '');
+  inp.value = v;
+  if (!v) return;
+  if (i < count - 1) document.getElementById(`pin-d-${i+1}`)?.focus();
+  // Auto-submit when all filled
+  const all = Array.from({ length: count }, (_, j) => document.getElementById(`pin-d-${j}`)?.value || '');
+  if (all.every(Boolean)) submitAdminPin();
+}
+
+function pinDigitKey(e, i) {
+  if (e.key === 'Backspace') {
+    const inp = document.getElementById(`pin-d-${i}`);
+    if (inp?.value) { inp.value = ''; }
+    else if (i > 0) { document.getElementById(`pin-d-${i-1}`)?.focus(); }
+  }
+}
+
+async function submitAdminPin() {
+  const overlay  = document.getElementById('overlay-admin-pin');
+  const errEl    = document.getElementById('pin-overlay-error');
+  const btn      = document.getElementById('pin-overlay-btn');
+  const digitWrap = document.getElementById('pin-digit-wrap');
+
+  let pin = '';
+  if (digitWrap.style.display !== 'none') {
+    const inputs = digitWrap.querySelectorAll('input');
+    pin = Array.from(inputs).map(inp => inp.value).join('');
+    if (pin.length !== inputs.length) { errEl.textContent='Enter all digits'; errEl.style.display='block'; return; }
+  } else {
+    pin = document.getElementById('pin-alpha-input')?.value || '';
+    if (!pin) { errEl.textContent='Enter your PIN'; errEl.style.display='block'; return; }
+  }
+
+  if (btn) { btn.disabled = true; btn.textContent = 'Verifying…'; }
+  errEl.style.display = 'none';
+
+  try {
+    const token = await firebase.auth().currentUser?.getIdToken();
+    const res   = await fetch('/api/admin/verify-admin-pin', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body:    JSON.stringify({ pin }),
+    });
+    const data  = await res.json();
+    if (data.ok) {
+      hidePinOverlay();
+    } else {
+      errEl.textContent  = data.error || 'Wrong PIN';
+      errEl.style.display = 'block';
+      // Clear digit inputs
+      digitWrap.querySelectorAll('input').forEach(inp => inp.value = '');
+      document.getElementById('pin-d-0')?.focus();
+      document.getElementById('pin-alpha-input') && (document.getElementById('pin-alpha-input').value = '');
+    }
+  } catch {
+    errEl.textContent  = 'Network error — try again';
+    errEl.style.display = 'block';
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Verify'; }
+  }
+}
+
+/* ── Set Admin PIN modal (su_admin only) ── */
+function openSetPinModal(uid, name, hasPin) {
+  document.getElementById('sp-target-uid').value     = uid;
+  document.getElementById('sp-admin-name').textContent = name;
+  document.getElementById('sp-pin').value            = '';
+  document.getElementById('sp-confirm').value        = '';
+  document.getElementById('sp-pin-type').value       = 'digit6';
+  document.getElementById('sp-session-hours').value  = '24';
+  document.getElementById('sp-save-msg').style.display = 'none';
+  document.getElementById('btn-remove-pin').style.display = hasPin ? 'inline-flex' : 'none';
+  document.getElementById('modal-set-pin').classList.add('open');
+}
+
+function closeSetPinModal() {
+  document.getElementById('modal-set-pin').classList.remove('open');
+}
+
+async function saveAdminPin() {
+  const targetUid    = document.getElementById('sp-target-uid').value;
+  const pinType      = document.getElementById('sp-pin-type').value;
+  const pin          = document.getElementById('sp-pin').value;
+  const confirm      = document.getElementById('sp-confirm').value;
+  const sessionHours = parseInt(document.getElementById('sp-session-hours').value, 10);
+  const msgEl        = document.getElementById('sp-save-msg');
+
+  function showMsg(text, ok) {
+    msgEl.style.display  = 'block';
+    msgEl.style.background = ok ? '#f0fdf4' : '#fef2f2';
+    msgEl.style.color      = ok ? '#166534' : '#b91c1c';
+    msgEl.style.border     = ok ? '1px solid #bbf7d0' : '1px solid #fca5a5';
+    msgEl.textContent      = text;
+  }
+
+  if (!pin)                                                              return showMsg('PIN is required.', false);
+  if (pin !== confirm)                                                   return showMsg('PINs do not match.', false);
+  if (pinType === 'digit4' && !/^\d{4}$/.test(pin))                     return showMsg('Must be exactly 4 digits.', false);
+  if (pinType === 'digit6' && !/^\d{6}$/.test(pin))                     return showMsg('Must be exactly 6 digits.', false);
+  if (pinType === 'alphanumeric' && (pin.length < 6 || pin.length > 32)) return showMsg('Must be 6–32 characters.', false);
+
+  const btn = setBtnLoading('btn-save-admin-pin', 'Saving…');
+  try {
+    const token = await firebase.auth().currentUser?.getIdToken();
+    const res   = await fetch('/api/admin/set-admin-pin', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body:    JSON.stringify({ targetUid, pinType, pin, sessionHours }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showMsg('✓ PIN saved. Admin will be prompted on next login.', true);
+      setTimeout(closeSetPinModal, 1800);
+    } else {
+      showMsg(data.error || 'Failed to save PIN.', false);
+    }
+  } catch {
+    showMsg('Network error — please try again.', false);
+  } finally {
+    resetBtn(btn, '<i class="fa-solid fa-key"></i> Save PIN');
+  }
+}
+
+async function removeAdminPin() {
+  const targetUid = document.getElementById('sp-target-uid').value;
+  const name      = document.getElementById('sp-admin-name').textContent;
+  if (!confirm(`Remove PIN for ${name}? They will be able to access the panel without a PIN.`)) return;
+  const msgEl = document.getElementById('sp-save-msg');
+  try {
+    const token = await firebase.auth().currentUser?.getIdToken();
+    const res   = await fetch('/api/admin/set-admin-pin', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body:    JSON.stringify({ targetUid, remove: true }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      msgEl.style.display = 'block'; msgEl.style.background = '#f0fdf4'; msgEl.style.color = '#166534'; msgEl.style.border = '1px solid #bbf7d0';
+      msgEl.textContent = '✓ PIN removed.';
+      setTimeout(closeSetPinModal, 1200);
+    } else {
+      msgEl.style.display = 'block'; msgEl.style.background = '#fef2f2'; msgEl.style.color = '#b91c1c'; msgEl.style.border = '1px solid #fca5a5';
+      msgEl.textContent = data.error || 'Failed.';
+    }
+  } catch {
+    alert('Network error.');
+  }
 }
 
 /* ═══════════════════════════════════════════════════════
