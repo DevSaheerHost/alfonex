@@ -237,6 +237,8 @@ input,textarea,select{font-family:var(--font-body)}
 .btn-primary:disabled{background:#D1D5DB;cursor:not-allowed}
 .btn-secondary{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;background:var(--surface);color:var(--text);border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-head);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
 .btn-secondary:hover{border-color:var(--green);color:var(--green)}
+.btn-ghost{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;background:var(--surface);color:var(--text);border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-head);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn-ghost:hover{border-color:var(--green);color:var(--green)}
 .btn-edit{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;background:var(--green-light);color:var(--green);border:1.5px solid var(--green-mid);border-radius:var(--radius-sm);font-size:12px;font-weight:700;cursor:pointer;transition:all .15s}
 .btn-edit:hover{background:var(--green);color:#fff}
 .btn-danger{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;background:#fef2f2;color:var(--red);border:1.5px solid #fecaca;border-radius:var(--radius-sm);font-size:12px;font-weight:700;cursor:pointer;transition:all .15s}
@@ -1071,6 +1073,13 @@ tbody td{padding:12px 16px;vertical-align:middle}
 .wt-tab[data-wt="active"].active{background:#16a34a}
 .wt-tab[data-wt="expired"].active{background:#ef4444}
 .wt-tab[data-wt="unknown"].active{background:#6b7280}
+/* ── Customer filter tabs ── */
+.cf-tab{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap;font-family:var(--font-head)}
+.cf-tab:hover{color:var(--text);border-color:var(--green)}
+.cf-tab.active{color:#fff;border-color:transparent;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.cf-tab[data-cf="all"].active{background:var(--green)}
+.cf-tab[data-cf="online"].active{background:#16a34a}
+.cf-tab[data-cf="repeat"].active{background:#3b82f6}
 /* ── Reservation stat accent bars ── */
 .rs-stat-blue{border-top:3px solid var(--blue)!important}
 .rs-stat-amber{border-top:3px solid #f59e0b!important}
@@ -1908,9 +1917,9 @@ tbody td{padding:12px 16px;vertical-align:middle}
           <option value="name">Name A–Z</option>
         </select>
         <div style="display:flex;gap:6px">
-          <button class="btn-ghost btn-sm" id="cf-all"    onclick="setCustFilter('all')"    style="background:var(--green);color:#fff;border-color:var(--green)">All</button>
-          <button class="btn-ghost btn-sm" id="cf-online" onclick="setCustFilter('online')" >🟢 Online</button>
-          <button class="btn-ghost btn-sm" id="cf-repeat" onclick="setCustFilter('repeat')" >🔁 Repeat</button>
+          <button class="cf-tab active" data-cf="all"    onclick="setCustFilter('all')"><i class="fa-solid fa-list"></i> All</button>
+          <button class="cf-tab"        data-cf="online" onclick="setCustFilter('online')"><i class="fa-solid fa-circle" style="font-size:8px"></i> Online</button>
+          <button class="cf-tab"        data-cf="repeat" onclick="setCustFilter('repeat')"><i class="fa-solid fa-repeat"></i> Repeat</button>
         </div>
       </div>
 
@@ -5979,12 +5988,7 @@ function buildCustomerList() {
 
 function setCustFilter(f) {
   _custFilter = f;
-  ['all','online','repeat'].forEach(s => {
-    const b = document.getElementById('cf-'+s); if (!b) return;
-    b.style.background  = s===f ? 'var(--green)' : '';
-    b.style.color       = s===f ? '#fff' : '';
-    b.style.borderColor = s===f ? 'var(--green)' : '';
-  });
+  document.querySelectorAll('.cf-tab').forEach(b => b.classList.toggle('active', b.dataset.cf === f));
   renderCustomerTable();
 }
 
