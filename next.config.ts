@@ -11,14 +11,6 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: '**.googleusercontent.com' },
     ],
   },
-  async redirects() {
-    return [
-      // Admin login page was removed; PWAs bookmarked to /admin/login redirect to /admin
-      { source: '/admin/login', destination: '/admin', permanent: false },
-    ];
-  },
-  // Serve the customer FCM service worker dynamically so Firebase config
-  // is injected from env vars at request time rather than being hardcoded.
   async rewrites() {
     return [
       { source: '/firebase-messaging-sw.js', destination: '/api/firebase-messaging-sw' },
