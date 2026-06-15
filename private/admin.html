@@ -1699,6 +1699,13 @@ tbody td{padding:12px 16px;vertical-align:middle}
             <div style="font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--green);margin-bottom:14px"><i class="fa-solid fa-pen-to-square"></i> Compose</div>
 
             <div class="mf-group">
+              <label class="mf-label">Select Product <span style="font-weight:500;color:var(--muted)">(optional — auto-fills image &amp; URL)</span></label>
+              <select class="mf-input" id="pn-product-sel" onchange="pnOnProductSelect(this.value)">
+                <option value="">— none (custom) —</option>
+              </select>
+            </div>
+
+            <div class="mf-group">
               <label class="mf-label">Title <span style="color:var(--red)">*</span></label>
               <input class="mf-input" id="pn-title" placeholder="e.g. 🔥 Flash Sale — 20% off iPhones!" maxlength="65" oninput="pnUpdatePreview()">
             </div>
@@ -3664,7 +3671,7 @@ function showSection(name, fromPopstate = false){
     if (name==='pricehistory')  { renderPriceHistory(); }
     if (name==='pricelist')     { attachDealerListener(); renderPriceList(); }
     if (name==='analytics')     { renderAnalyticsCharts(); }
-    if (name==='push-notifications') { pnLoadHistory(); }
+    if (name==='push-notifications') { pnLoadHistory(); populatePnProducts(); }
   }, 0);
 }
 let _lastSection = null;
@@ -9436,6 +9443,31 @@ async function pnSend() {
   } finally {
     btn.disabled = false;
   }
+}
+
+function populatePnProducts() {
+  const sel = document.getElementById('pn-product-sel');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— none (custom) —</option>' +
+    Object.entries(APP.products || {})
+      .filter(([, p]) => !p.isHidden)
+      .sort(([, a], [, b]) => (b.createdAt || 0) - (a.createdAt || 0))
+      .map(([id, p]) => `<option value="${id}">${esc(p.title || id)}</option>`)
+      .join('');
+}
+
+function pnOnProductSelect(productId) {
+  if (!productId) return;
+  const p = (APP.products || {})[productId];
+  if (!p) return;
+  const img = p.imageUrl || (Array.isArray(p.imageUrls) ? p.imageUrls[0] : '') || '';
+  if (img) {
+    document.getElementById('pn-img-url').value = img;
+    pnSwitchImgTab('url');
+  }
+  const slug = adminSlugify(p.title || productId);
+  document.getElementById('pn-click-url').value = `${SITE_BASE}/products/${slug}/p/${productId}`;
+  pnUpdatePreview();
 }
 
 function pnLoadHistory() {
