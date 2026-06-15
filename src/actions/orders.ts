@@ -199,17 +199,14 @@ export async function placeOrder(
     if (tokenSnap.exists()) {
       await adminMessaging().send({
         token: tokenSnap.val() as string,
-        notification: {
-          title: 'Order Placed!',
-          body:  "Your order has been placed. We'll process it shortly.",
+        data: {
+          orderId: orderRef.key!,
+          title:   'Order Placed!',
+          body:    "Your order has been placed. We'll process it shortly.",
         },
-        data:    { orderId: orderRef.key! },
         webpush: {
+          headers: { Urgency: 'high' },
           fcmOptions: { link: `/orders/${orderRef.key}` },
-          notification: {
-            icon:  '/assets/meta/icon/logo.png',
-            badge: '/assets/meta/icon/logo.png',
-          },
         },
       });
     }

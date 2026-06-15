@@ -19,14 +19,9 @@ export async function notifyAdmins(
 
   const result = await adminMessaging().sendEachForMulticast({
     tokens: entries.map((e) => e.token),
-    notification: { title, body },
-    data: data ?? {},
+    data: { title, body, ...(data ?? {}) },
     webpush: {
-      notification: {
-        icon:  '/icons/admin-192.png',
-        badge: '/icons/admin-192.png',
-        vibrate: [200, 100, 200],
-      },
+      headers: { Urgency: 'high' },
       fcmOptions: { link: '/admin' },
     },
   });
