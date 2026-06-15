@@ -40,7 +40,6 @@ export async function POST(req: NextRequest) {
   });
 
   if (!entries.length) {
-    // No devices registered — save record and return
     await adminRtdb().ref('push_notifications').push({
       title, body, imageUrl: imageUrl ?? null, clickUrl: clickUrl ?? null,
       sentAt: Date.now(), sentCount: 0, failedCount: 0,
@@ -48,13 +47,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, sent: 0, failed: 0, total: 0 });
   }
 
+  // Create RTDB record first to get the key — embed notifId in FCM data for click tracking
+  const notifRef = adminRtdb().ref('push_notifications').push();
+  const notifId  = notifRef.key!;
+  await notifRef.set({
+    title, body, imageUrl: imageUrl ?? null, clickUrl: clickUrl ?? null,
+    sentAt: Date.now(), sentCount: 0, failedCount: 0,
+  });
+
   const notification: { title: string; body: string; imageUrl?: string } = { title, body };
   if (imageUrl) notification.imageUrl = imageUrl;
 
   const result = await adminMessaging().sendEachForMulticast({
     tokens: entries.map((e) => e.token),
     notification,
-    data: clickUrl ? { url: clickUrl } : {},
+    data: { notifId, ...(clickUrl ? { url: clickUrl } : {}) },
     webpush: {
       notification: {
         icon:    '/assets/meta/icon/logo.png',
@@ -84,11 +91,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Persist send record
-  await adminRtdb().ref('push_notifications').push({
-    title, body, imageUrl: imageUrl ?? null, clickUrl: clickUrl ?? null,
-    sentAt: Date.now(), sentCount, failedCount,
-  });
+  // Update the pre-created record with real sent/failed counts
+  await notifRef.update({ sentCount, failedCount });
 
   return NextResponse.json({ ok: true, sent: sentCount, failed: failedCount, total: entries.length });
 }

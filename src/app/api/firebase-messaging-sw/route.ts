@@ -38,8 +38,10 @@ messaging.onBackgroundMessage((payload) => {
 // Tap on notification → open/focus the app and navigate to the target URL
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const data    = event.notification.data ?? {};
-  const url     = data.url || (data.orderId ? '/orders/' + data.orderId : '/');
+  const data     = event.notification.data ?? {};
+  const url      = data.url || (data.orderId ? '/orders/' + data.orderId : '/');
+  const notifId  = data.notifId || '';
+  const trackUrl = notifId ? url + (url.includes('?') ? '&' : '?') + '_pnid=' + notifId : url;
 
   event.waitUntil(
     clients
@@ -48,9 +50,9 @@ self.addEventListener('notificationclick', (event) => {
         const existing = wins.find((w) => w.url.startsWith(self.location.origin));
         if (existing) {
           existing.focus();
-          return existing.navigate(url);
+          return existing.navigate(trackUrl);
         }
-        return clients.openWindow(url);
+        return clients.openWindow(trackUrl);
       }),
   );
 });

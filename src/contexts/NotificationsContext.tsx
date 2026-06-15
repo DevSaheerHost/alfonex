@@ -3,7 +3,7 @@
 import {
   createContext, useContext, useEffect, useState, useCallback,
 } from 'react';
-import { getDatabase, ref, onValue, update } from 'firebase/database';
+import { getDatabase, ref, onValue, update, get, set, runTransaction } from 'firebase/database';
 import { getApp } from '@/lib/firebase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import type { AppNotification } from '@/lib/types';
@@ -49,6 +49,24 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     }
     setPushPermission(Notification.permission);
   }, []);
+
+  // Track notification click — reads ?_pnid from URL, writes to RTDB, removes param
+  useEffect(() => {
+    if (!user || typeof window === 'undefined') return;
+    const params  = new URLSearchParams(window.location.search);
+    const notifId = params.get('_pnid');
+    if (!notifId) return;
+    params.delete('_pnid');
+    const qs = params.toString();
+    history.replaceState(null, '', window.location.pathname + (qs ? `?${qs}` : '') + window.location.hash);
+    const db       = getDatabase(getApp());
+    const clickRef = ref(db, `notification_clicks/${notifId}/${user.uid}`);
+    get(clickRef).then((snap) => {
+      if (snap.exists()) return;
+      set(clickRef, Date.now());
+      runTransaction(ref(db, `notification_customer_clicks/${user.uid}`), (n) => (n ?? 0) + 1);
+    });
+  }, [user]);
 
   // Real-time RTDB bell
   useEffect(() => {

@@ -1791,6 +1791,14 @@ tbody td{padding:12px 16px;vertical-align:middle}
               <div style="padding:32px;text-align:center;color:var(--muted);font-size:13px"><i class="fa-solid fa-bell" style="font-size:24px;display:block;margin-bottom:8px;opacity:.25"></i>No notifications sent yet</div>
             </div>
           </div>
+
+          <!-- Top 5 Clickers -->
+          <div class="table-card" style="padding:0;overflow:hidden">
+            <div class="table-topbar"><div class="table-topbar-title"><i class="fa-solid fa-trophy" style="color:#f59e0b"></i> Top Clickers</div></div>
+            <div id="pn-top-clickers" style="padding:0">
+              <div style="padding:24px;text-align:center;color:var(--muted);font-size:13px"><i class="fa-solid fa-cursor" style="font-size:22px;display:block;margin-bottom:8px;opacity:.25"></i>No clicks recorded yet</div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -3671,7 +3679,7 @@ function showSection(name, fromPopstate = false){
     if (name==='pricehistory')  { renderPriceHistory(); }
     if (name==='pricelist')     { attachDealerListener(); renderPriceList(); }
     if (name==='analytics')     { renderAnalyticsCharts(); }
-    if (name==='push-notifications') { pnLoadHistory(); populatePnProducts(); }
+    if (name==='push-notifications') { pnLoadHistory(); pnLoadTopClickers(); populatePnProducts(); }
   }, 0);
 }
 let _lastSection = null;
@@ -9471,7 +9479,7 @@ function pnOnProductSelect(productId) {
 }
 
 function pnLoadHistory() {
-  db.ref('push_notifications').orderByChild('sentAt').limitToLast(10).once('value', snap => {
+  db.ref('push_notifications').orderByChild('sentAt').limitToLast(10).once('value', async snap => {
     const el = document.getElementById('pn-history-list');
     if (!el) return;
     if (!snap.exists()) {
@@ -9480,10 +9488,16 @@ function pnLoadHistory() {
     }
     const items = [];
     snap.forEach(c => items.unshift({ id: c.key, ...c.val() }));
-    el.innerHTML = items.map(n => {
-      const isDraft  = n.status === 'draft';
-      const dateStr  = timeAgo(n.sentAt || n.savedAt);
+    // Fetch click counts in parallel
+    const clickCounts = await Promise.all(
+      items.map(n => n.id ? db.ref('notification_clicks/' + n.id).once('value').then(s => s.numChildren()) : Promise.resolve(0))
+    );
+    el.innerHTML = items.map((n, i) => {
+      const isDraft    = n.status === 'draft';
+      const dateStr    = timeAgo(n.sentAt || n.savedAt);
+      const clicks     = clickCounts[i] || 0;
       const sentBadge  = !isDraft ? `<span style="background:rgba(22,163,74,.12);color:#16a34a;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">${n.sentCount ?? 0} sent</span>` : '';
+      const clickBadge = (!isDraft && clicks) ? `<span style="background:rgba(59,130,246,.1);color:#3b82f6;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700"><i class="fa-solid fa-cursor" style="font-size:8px"></i> ${clicks} clicked</span>` : '';
       const failBadge  = (!isDraft && n.failedCount) ? `<span style="background:rgba(239,68,68,.1);color:#ef4444;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">${n.failedCount} failed</span>` : '';
       const draftBadge = isDraft ? `<span style="background:rgba(107,114,128,.1);color:#6b7280;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">Draft</span>` : '';
       return `<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border)">
@@ -9492,12 +9506,39 @@ function pnLoadHistory() {
           <div style="font-weight:700;font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${n.title}</div>
           ${n.body ? `<div style="font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${n.body}</div>` : ''}
           ${n.clickUrl ? `<div style="font-size:11px;color:var(--green);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><i class="fa-solid fa-link" style="font-size:9px"></i> ${n.clickUrl}</div>` : ''}
-          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${sentBadge}${failBadge}${draftBadge}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${sentBadge}${clickBadge}${failBadge}${draftBadge}</div>
         </div>
         <div style="font-size:11px;color:var(--muted);white-space:nowrap;flex-shrink:0">${dateStr}</div>
       </div>`;
     }).join('');
   });
+}
+
+async function pnLoadTopClickers() {
+  const el = document.getElementById('pn-top-clickers');
+  if (!el) return;
+  const snap = await db.ref('notification_customer_clicks').once('value');
+  if (!snap.exists()) {
+    el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px"><i class="fa-solid fa-cursor" style="font-size:22px;display:block;margin-bottom:8px;opacity:.25"></i>No clicks recorded yet</div>';
+    return;
+  }
+  const entries = [];
+  snap.forEach(c => entries.push({ uid: c.key, clicks: c.val() }));
+  entries.sort((a, b) => b.clicks - a.clicks);
+  const top5 = entries.slice(0, 5);
+  const names = await Promise.all(top5.map(e =>
+    db.ref('users/' + e.uid).once('value').then(s => {
+      const u = s.val() || {};
+      return u.name || u.displayName || u.email || e.uid.slice(0, 8) + '…';
+    })
+  ));
+  const medals = ['🥇', '🥈', '🥉', '4', '5'];
+  el.innerHTML = top5.map((e, i) => `
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border)">
+      <span style="font-size:${i < 3 ? 18 : 13}px;width:22px;text-align:center;flex-shrink:0">${medals[i]}</span>
+      <div style="flex:1;font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(names[i])}</div>
+      <span style="background:rgba(59,130,246,.1);color:#3b82f6;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:800;flex-shrink:0">${e.clicks} clicks</span>
+    </div>`).join('');
 }
 
 </script>
