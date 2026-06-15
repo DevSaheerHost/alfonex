@@ -55,26 +55,22 @@ export async function POST(req: NextRequest) {
     sentAt: Date.now(), sentCount: 0, failedCount: 0,
   });
 
-  const notification: { title: string; body: string; imageUrl?: string } = { title, body };
-  if (imageUrl) notification.imageUrl = imageUrl;
-
   // fcmOptions.link requires an absolute URL; relative paths (from product selector) need the origin prepended
   const siteBase = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://alfonex.com').replace(/\s.*$/, '').replace(/\/$/, '');
   const absClickUrl = clickUrl
     ? (clickUrl.startsWith('http') ? clickUrl : `${siteBase}${clickUrl.startsWith('/') ? '' : '/'}${clickUrl}`)
     : undefined;
 
+  // Data-only message — service worker shows exactly one notification; no FCM auto-display
+  const msgData: Record<string, string> = { notifId, title, body };
+  if (clickUrl)  msgData.url      = clickUrl;
+  if (imageUrl)  msgData.imageUrl = imageUrl;
+
   const result = await adminMessaging().sendEachForMulticast({
     tokens: entries.map((e) => e.token),
-    notification,
-    data: { notifId, ...(clickUrl ? { url: clickUrl } : {}) },
+    data: msgData,
     webpush: {
-      notification: {
-        icon:    '/assets/meta/icon/logo.png',
-        badge:   '/assets/meta/icon/logo.png',
-        vibrate: [200, 100, 200],
-        ...(imageUrl ? { image: imageUrl } : {}),
-      },
+      headers: { Urgency: 'high' },
       ...(absClickUrl ? { fcmOptions: { link: absClickUrl } } : {}),
     },
   });

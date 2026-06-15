@@ -26,20 +26,16 @@ async function sendNotification(
     createdAt: Date.now(),
   });
 
-  // Background FCM push
+  // Background FCM push — data-only so the service worker shows exactly one notification
   try {
     const tokenSnap = await adminRtdb().ref(`users/${userId}/fcmToken`).get();
     if (!tokenSnap.exists()) return;
     await adminMessaging().send({
       token: tokenSnap.val() as string,
-      notification: { title, body },
-      data: { orderId },
+      data: { orderId, title, body },
       webpush: {
+        headers: { Urgency: 'high' },
         fcmOptions: { link: `/orders/${orderId}` },
-        notification: {
-          icon:  '/assets/meta/icon/logo.png',
-          badge: '/assets/meta/icon/logo.png',
-        },
       },
     });
   } catch {

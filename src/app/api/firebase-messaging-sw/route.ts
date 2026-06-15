@@ -22,16 +22,19 @@ firebase.initializeApp(${JSON.stringify(config)});
 const messaging = firebase.messaging();
 
 // Show notification when app is in background / closed
+// Messages are sent data-only so FCM doesn't auto-show a duplicate notification.
+// Title/body are read from payload.data; payload.notification is a fallback.
 messaging.onBackgroundMessage((payload) => {
-  const title = payload.notification?.title ?? 'Alfonex';
-  const body  = payload.notification?.body  ?? '';
+  const title = payload.data?.title || payload.notification?.title || 'Alfonex';
+  const body  = payload.data?.body  || payload.notification?.body  || '';
   self.registration.showNotification(title, {
     body,
     icon:    '/assets/meta/icon/logo.png',
     badge:   '/assets/meta/icon/logo.png',
     vibrate: [200, 100, 200],
-    tag:     payload.data?.orderId ?? 'alfonex-notif',
+    tag:     payload.data?.orderId ?? payload.data?.notifId ?? 'alfonex-notif',
     data:    payload.data ?? {},
+    ...(payload.data?.imageUrl ? { image: payload.data.imageUrl } : {}),
   });
 });
 
