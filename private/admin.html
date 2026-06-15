@@ -1626,6 +1626,72 @@ tbody td{padding:12px 16px;vertical-align:middle}
           </div>
         </div>
       </div>
+
+      <!-- ── Custom Invoice Builder ── -->
+      <div class="table-card" style="padding:0;overflow:hidden">
+        <div class="table-topbar" style="flex-wrap:wrap;gap:8px">
+          <div class="table-topbar-title"><i class="fa-solid fa-pen-ruler" style="color:var(--green)"></i> Custom Invoice Builder</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select class="mf-input" id="ci-currency" style="width:auto;padding:5px 10px;font-size:12px" onchange="customInvRecalc()">
+              <option value="AED">AED</option>
+              <option value="USD">$ USD</option>
+              <option value="INR">₹ INR</option>
+            </select>
+            <input class="mf-input" type="date" id="ci-date" style="width:auto;padding:5px 10px;font-size:12px">
+          </div>
+        </div>
+        <div class="two-col" style="margin:0;gap:0">
+          <!-- Left: client + line items -->
+          <div style="padding:20px;border-right:1px solid var(--border)">
+            <div class="mf-group">
+              <label class="mf-label">Client</label>
+              <div style="display:flex;gap:8px">
+                <select class="mf-input" id="ci-client-sel" onchange="customInvFillClient(this.value)" style="flex:1;min-width:0">
+                  <option value="">— select client —</option>
+                </select>
+                <button class="btn-ghost" onclick="openAddCustomerModal()" title="New Client" style="flex-shrink:0;padding:7px 12px;white-space:nowrap">
+                  <i class="fa-solid fa-user-plus"></i> New
+                </button>
+              </div>
+            </div>
+            <div id="ci-client-info" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;line-height:1.8;color:var(--muted)"></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <span class="mf-label" style="margin:0">Line Items</span>
+              <button class="btn-ghost" onclick="customInvAddRow()" style="padding:4px 10px;font-size:12px">
+                <i class="fa-solid fa-plus"></i> Add Item
+              </button>
+            </div>
+            <div id="ci-rows"></div>
+            <div class="mf-group" style="margin-top:14px">
+              <label class="mf-label">Notes / Payment Terms</label>
+              <textarea class="mf-textarea" id="ci-notes" rows="2" placeholder="e.g. Payment due within 30 days…"></textarea>
+            </div>
+          </div>
+          <!-- Right: totals + preview + actions -->
+          <div style="padding:20px;display:flex;flex-direction:column;gap:16px">
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px 16px">
+              <div class="mf-label" style="margin-bottom:10px">Summary</div>
+              <div style="font-size:13px;display:flex;flex-direction:column;gap:7px">
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Subtotal</span><span id="ci-subtotal-val">—</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <span style="color:var(--muted)">Shipping</span>
+                  <input id="ci-shipping" type="number" min="0" step="0.01" value="0" style="width:80px;padding:4px 8px;border:1px solid var(--border);border-radius:5px;background:var(--input);color:var(--text);font-size:12px;text-align:right" oninput="customInvRecalc()">
+                </div>
+                <div style="display:flex;justify-content:space-between;padding-top:8px;border-top:2px solid var(--green);font-size:16px;font-weight:800;color:var(--green)">
+                  <span>TOTAL</span><span id="ci-total-val">—</span>
+                </div>
+              </div>
+            </div>
+            <div id="ci-preview-area" style="flex:1;border:1px solid var(--border);border-radius:8px;padding:14px;font-size:11px;line-height:1.6;color:var(--muted);text-align:center;min-height:200px;display:flex;align-items:center;justify-content:center;overflow:auto">
+              <div><div style="font-size:30px;margin-bottom:8px">📋</div>Fill in details then click Preview</div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn-primary" style="flex:1" onclick="generateCustomInvoicePDF()"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+              <button class="btn-ghost" style="flex:1" onclick="previewCustomInvoice()"><i class="fa-solid fa-eye"></i> Preview</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- ══════════════════════════════════════
@@ -3826,7 +3892,7 @@ function showSection(name, fromPopstate = false){
   setTimeout(() => {
     if (name==='marketing')     { populatePosterProducts(); updatePoster(); }
     if (name==='labels')        { populateBarcodeProducts(); }
-    if (name==='invoices')      { populateInvoiceOrders(); }
+    if (name==='invoices')      { populateInvoiceOrders(); buildCustomInvClients(); }
     if (name==='audit')         { renderAuditLog(); }
     if (name==='warranty')      { renderWarrantyTable(); }
     if (name==='customers')     { renderCustomerTable(); }
@@ -7340,6 +7406,333 @@ function generateInvoicePDF() {
   auditLog('EDIT', `Invoice PDF generated: Order ${shortId(id)}`, {
     detail:   `Customer: ${custName} | Total: ${sym}${o.total||0} | Status: ${o.status||'—'} | Currency: ${cur}`,
     orderId:  id,
+    category: 'Orders',
+  });
+}
+
+/* ─── CUSTOM INVOICE BUILDER ─────────────────────────────── */
+let _ciRowIdx  = 0;
+const _ciClientMap = {};
+
+function buildCustomInvClients() {
+  const sel = document.getElementById('ci-client-sel');
+  if (!sel) return;
+  const dateEl = document.getElementById('ci-date');
+  if (dateEl && !dateEl.value) dateEl.value = new Date().toISOString().slice(0, 10);
+
+  const savedEntries = Object.entries(APP.customers || {});
+  const orderClients = {};
+  Object.values(APP.orders || {}).forEach(o => {
+    const name  = o.customerName || o.name || '';
+    const phone = (o.customerPhone || o.phone || o.whatsapp || '').replace(/\D/g, '');
+    const key   = phone || name.toLowerCase().trim();
+    if (!key || orderClients[key]) return;
+    orderClients[key] = { name, phone: o.customerPhone || o.phone || o.whatsapp || '',
+      email: o.email || '', country: o.country || '' };
+  });
+
+  let html = '<option value="">— select client —</option>';
+
+  if (savedEntries.length) {
+    html += '<optgroup label="Saved Customers">';
+    savedEntries.forEach(([id, c]) => {
+      const k = 'saved:' + id;
+      _ciClientMap[k] = { name: c.name||'', phone: c.phone||'', email: c.email||'', country: c.country||'' };
+      html += `<option value="${k}">${esc(c.name||id)}${c.phone?' · '+esc(c.phone):''}</option>`;
+    });
+    html += '</optgroup>';
+  }
+
+  const orderKeys = Object.keys(orderClients);
+  if (orderKeys.length) {
+    html += '<optgroup label="From Orders">';
+    orderKeys.forEach(key => {
+      const c = orderClients[key];
+      const k = 'order:' + key;
+      _ciClientMap[k] = c;
+      html += `<option value="${k}">${esc(c.name)}${c.phone?' · '+esc(c.phone):''}</option>`;
+    });
+    html += '</optgroup>';
+  }
+
+  sel.innerHTML = html;
+  if (!document.querySelector('#ci-rows .ci-row')) customInvAddRow();
+}
+
+function customInvFillClient(val) {
+  const info = document.getElementById('ci-client-info');
+  if (!info) return;
+  const c = _ciClientMap[val];
+  if (!val || !c) { info.style.display = 'none'; return; }
+  info.innerHTML = [
+    c.name    ? `<strong>${esc(c.name)}</strong>` : '',
+    c.phone   ? `📞 ${esc(c.phone)}`   : '',
+    c.email   ? `📧 ${esc(c.email)}`   : '',
+    c.country ? `🌍 ${esc(c.country)}` : '',
+  ].filter(Boolean).join('<br>');
+  info.style.display = 'block';
+}
+
+function customInvAddRow() {
+  const idx  = _ciRowIdx++;
+  const rows = document.getElementById('ci-rows');
+  if (!rows) return;
+  const productOpts = '<option value="">— none (custom) —</option>' +
+    Object.entries(APP.products || {})
+      .filter(([, p]) => !p.isHidden)
+      .sort(([,a],[,b]) => (a.title||'').localeCompare(b.title||''))
+      .map(([id, p]) => `<option value="${id}">${esc(p.title||id)}</option>`)
+      .join('');
+  const div = document.createElement('div');
+  div.className = 'ci-row';
+  div.id = `ci-row-${idx}`;
+  div.style.cssText = 'border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--bg);margin-bottom:8px';
+  div.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <select class="mf-input" style="flex:1;min-width:0;font-size:12px;padding:6px 8px" onchange="customInvProductChange(${idx})">
+        ${productOpts}
+      </select>
+      <button class="act-btn danger" onclick="customInvRemoveRow(${idx})" title="Remove" style="flex-shrink:0"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <input class="mf-input" style="font-size:12px;padding:6px 8px" placeholder="Description *" oninput="customInvRecalc()" data-ci-desc>
+      <input class="mf-input" style="font-size:12px;padding:6px 8px" placeholder="Variant / Notes" data-ci-vari>
+    </div>
+    <div style="display:grid;grid-template-columns:80px 1fr 1fr;gap:8px;align-items:end">
+      <div>
+        <div style="font-size:10px;color:var(--muted);margin-bottom:3px">Qty</div>
+        <input class="mf-input" type="number" min="1" value="1" style="padding:6px 8px;font-size:12px" oninput="customInvRecalc()" data-ci-qty>
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--muted);margin-bottom:3px">Unit Price</div>
+        <input class="mf-input" type="number" min="0" step="0.01" value="0" style="padding:6px 8px;font-size:12px" oninput="customInvRecalc()" data-ci-price>
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--muted);margin-bottom:3px">Line Total</div>
+        <div style="padding:6px 8px;font-size:13px;font-weight:700;color:var(--green)" data-ci-line>0.00</div>
+      </div>
+    </div>`;
+  rows.appendChild(div);
+}
+
+function customInvRemoveRow(idx) {
+  document.getElementById(`ci-row-${idx}`)?.remove();
+  customInvRecalc();
+}
+
+function customInvProductChange(idx) {
+  const row = document.getElementById(`ci-row-${idx}`);
+  if (!row) return;
+  const productId = row.querySelector('select')?.value;
+  if (!productId) return;
+  const p   = (APP.products || {})[productId];
+  if (!p) return;
+  const cur   = document.getElementById('ci-currency')?.value || 'AED';
+  const price = cur === 'USD' ? (p.priceUSD || p.price || 0)
+              : cur === 'INR' ? (p.priceINR || p.price || 0)
+              : (p.priceAED || p.price || 0);
+  const descEl  = row.querySelector('[data-ci-desc]');
+  const priceEl = row.querySelector('[data-ci-price]');
+  if (descEl  && !descEl.value)  descEl.value  = p.title || '';
+  if (priceEl) priceEl.value = Number(price).toFixed(2);
+  customInvRecalc();
+}
+
+function customInvRecalc() {
+  let subtotal = 0;
+  document.querySelectorAll('.ci-row').forEach(row => {
+    const qty   = parseFloat(row.querySelector('[data-ci-qty]')?.value  || 1) || 1;
+    const price = parseFloat(row.querySelector('[data-ci-price]')?.value || 0) || 0;
+    const line  = qty * price;
+    subtotal += line;
+    const lineEl = row.querySelector('[data-ci-line]');
+    if (lineEl) lineEl.textContent = line.toFixed(2);
+  });
+  const shipping = parseFloat(document.getElementById('ci-shipping')?.value || 0) || 0;
+  const total    = subtotal + shipping;
+  const cur      = document.getElementById('ci-currency')?.value || 'AED';
+  const sym      = { USD: '$', AED: 'AED ', INR: '₹' }[cur] || '';
+  const fmt      = n => sym + n.toLocaleString(undefined, { minimumFractionDigits: 2 });
+  const stEl = document.getElementById('ci-subtotal-val');
+  const ttEl = document.getElementById('ci-total-val');
+  if (stEl) stEl.textContent = fmt(subtotal);
+  if (ttEl) ttEl.textContent = fmt(total);
+}
+
+function _ciGetItems() {
+  return Array.from(document.querySelectorAll('.ci-row')).map(row => ({
+    desc:  row.querySelector('[data-ci-desc]')?.value  || '',
+    vari:  row.querySelector('[data-ci-vari]')?.value  || '',
+    qty:   parseFloat(row.querySelector('[data-ci-qty]')?.value   || 1) || 1,
+    price: parseFloat(row.querySelector('[data-ci-price]')?.value || 0) || 0,
+    line:  parseFloat(row.querySelector('[data-ci-line]')?.textContent || 0) || 0,
+  }));
+}
+
+function _ciGetClient() {
+  const val = document.getElementById('ci-client-sel')?.value;
+  return _ciClientMap[val] || { name: '', phone: '', email: '', country: '' };
+}
+
+function previewCustomInvoice() {
+  const area  = document.getElementById('ci-preview-area');
+  if (!area) return;
+  const cur   = document.getElementById('ci-currency')?.value || 'AED';
+  const sym   = { USD: '$', AED: 'AED ', INR: '₹' }[cur] || '';
+  const date  = document.getElementById('ci-date')?.value || new Date().toISOString().slice(0, 10);
+  const notes = document.getElementById('ci-notes')?.value || '';
+  const items = _ciGetItems();
+  const client = _ciGetClient();
+  const shipping = parseFloat(document.getElementById('ci-shipping')?.value || 0) || 0;
+  const subtotal = items.reduce((s, it) => s + it.line, 0);
+  const total    = subtotal + shipping;
+  const fmt      = n => sym + n.toLocaleString(undefined, { minimumFractionDigits: 2 });
+  const rows = items.map(it => `
+    <tr><td style="padding:4px 0">${esc(it.desc||'—')}${it.vari?`<br><span style="font-size:10px;color:var(--muted)">${esc(it.vari)}</span>`:''}</td>
+        <td style="text-align:center;padding:4px">${it.qty}</td>
+        <td style="text-align:right;padding:4px">${sym}${Number(it.price).toFixed(2)}</td>
+        <td style="text-align:right;padding:4px;font-weight:700">${sym}${Number(it.line).toFixed(2)}</td></tr>`).join('');
+  area.style.alignItems = 'flex-start';
+  area.innerHTML = `
+    <div style="width:100%;font-size:11px;line-height:1.6;color:var(--text);text-align:left">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid var(--green)">
+        <div><div style="font-size:16px;font-weight:900;color:var(--green)">iAlfonex</div><div style="font-size:9px;color:var(--muted)">Premium Apple Devices</div></div>
+        <div style="text-align:right"><div style="font-size:13px;font-weight:800">INVOICE</div><div style="color:var(--muted);font-size:10px">${date}</div></div>
+      </div>
+      ${client.name?`<div style="margin-bottom:10px;padding:8px;border:1px solid var(--border);border-radius:6px"><strong>${esc(client.name)}</strong>${client.phone?`<br>📞 ${esc(client.phone)}`:''}${client.email?`<br>📧 ${esc(client.email)}`:''}${client.country?`<br>🌍 ${esc(client.country)}`:''}</div>`:''}
+      <table style="width:100%;border-collapse:collapse;margin-bottom:10px">
+        <thead><tr style="border-bottom:1px solid var(--border)">
+          <th style="padding:4px 0;text-align:left;font-size:10px">Item</th>
+          <th style="text-align:center;font-size:10px">Qty</th>
+          <th style="text-align:right;font-size:10px">Unit</th>
+          <th style="text-align:right;font-size:10px">Total</th>
+        </tr></thead>
+        <tbody>${rows||'<tr><td colspan="4" style="color:var(--muted);padding:8px 0;text-align:center">No items</td></tr>'}</tbody>
+      </table>
+      <div style="text-align:right;border-top:1px solid var(--border);padding-top:8px">
+        ${shipping?`<div style="display:flex;justify-content:flex-end;gap:16px;font-size:11px;color:var(--muted)"><span>Subtotal</span><span>${fmt(subtotal)}</span></div><div style="display:flex;justify-content:flex-end;gap:16px;font-size:11px;color:var(--muted)"><span>Shipping</span><span>${fmt(shipping)}</span></div>`:''}
+        <div style="display:flex;justify-content:flex-end;gap:16px;font-size:14px;font-weight:800;color:var(--green);margin-top:6px"><span>TOTAL</span><span>${fmt(total)}</span></div>
+      </div>
+      ${notes?`<div style="margin-top:8px;padding:8px;background:var(--bg);border-radius:6px;font-size:10px;color:var(--muted);font-style:italic">${esc(notes)}</div>`:''}
+    </div>`;
+}
+
+function generateCustomInvoicePDF() {
+  const cur    = document.getElementById('ci-currency')?.value || 'AED';
+  const sym    = { USD: '$', AED: 'AED ', INR: '₹' }[cur] || '';
+  const date   = document.getElementById('ci-date')?.value || new Date().toISOString().slice(0, 10);
+  const notes  = document.getElementById('ci-notes')?.value || '';
+  const items  = _ciGetItems();
+  const client = _ciGetClient();
+  const shipping = parseFloat(document.getElementById('ci-shipping')?.value || 0) || 0;
+  const subtotal = items.reduce((s, it) => s + it.line, 0);
+  const total    = subtotal + shipping;
+  const invId    = 'CI-' + Math.random().toString(36).slice(2, 8).toUpperCase();
+  const fmt      = n => sym + n.toLocaleString(undefined, { minimumFractionDigits: 2 });
+
+  if (!client.name && !items.some(it => it.desc)) {
+    showToast('Add a client or at least one item description', 'error'); return;
+  }
+
+  const itemRows = items.map(it => `
+    <tr>
+      <td style="padding:10px 14px;border-bottom:1px solid #f0f0f0">${esc(it.desc||'Item')}${it.vari?`<br><span style="font-size:10px;color:#888">${esc(it.vari)}</span>`:''}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid #f0f0f0;text-align:center;color:#555">${it.qty}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid #f0f0f0;text-align:right;color:#555">${sym}${Number(it.price).toLocaleString(undefined,{minimumFractionDigits:2})}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:700;color:#111">${sym}${Number(it.line).toLocaleString(undefined,{minimumFractionDigits:2})}</td>
+    </tr>`).join('') || `<tr><td colspan="4" style="padding:14px;color:#999;text-align:center">No items</td></tr>`;
+
+  const win = window.open('', '_blank', 'width=820,height=1100');
+  win.document.write(`<!DOCTYPE html><html><head><title>Invoice ${invId}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Sora',sans-serif;background:#fff;color:#111;font-size:13px;padding:0}
+    @media print{@page{size:A4;margin:0}body{padding:0}}
+    .page{width:210mm;min-height:297mm;margin:0 auto;background:#fff;position:relative;overflow:hidden}
+    .inv-header{background:linear-gradient(135deg,#1a7a42 0%,#2EA056 60%,#34c46a 100%);padding:32px 40px 28px;color:#fff;position:relative;overflow:hidden}
+    .inv-header::after{content:'';position:absolute;right:-40px;top:-40px;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.07)}
+    .inv-header::before{content:'';position:absolute;right:60px;bottom:-60px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.05)}
+    .inv-logo{font-size:28px;font-weight:900;letter-spacing:-1px;color:#fff;margin-bottom:4px}
+    .inv-logo span{color:rgba(255,255,255,.6);font-size:10px;font-weight:600;letter-spacing:2px;display:block;text-transform:uppercase;margin-top:2px}
+    .inv-header-row{display:flex;justify-content:space-between;align-items:flex-start}
+    .inv-num{text-align:right}.inv-num .label{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;opacity:.7;margin-bottom:4px}
+    .inv-num .value{font-size:22px;font-weight:900;letter-spacing:-1px}.inv-num .date{font-size:12px;opacity:.75;margin-top:4px}
+    .inv-body{padding:28px 40px}
+    .inv-section-label{font-size:9px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:#2EA056;margin-bottom:8px;border-bottom:1px solid #e0f2e9;padding-bottom:5px}
+    .inv-to-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px}
+    .inv-to-box{background:#f8fffe;border:1px solid #d4edda;border-radius:10px;padding:14px 16px}
+    .inv-to-name{font-size:15px;font-weight:800;color:#111;margin-bottom:4px}
+    .inv-to-detail{font-size:11px;color:#555;line-height:1.7}
+    .inv-table{width:100%;border-collapse:collapse;margin-bottom:20px;border-radius:10px;overflow:hidden;border:1px solid #e8f5e9}
+    .inv-table thead{background:linear-gradient(90deg,#2EA056,#34c46a)}
+    .inv-table thead th{padding:11px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:#fff;white-space:nowrap}
+    .inv-table thead th:last-child,.inv-table thead th:nth-child(3),.inv-table thead th:nth-child(2){text-align:right}
+    .inv-table tbody tr:nth-child(even){background:#f8fffe}
+    .inv-totals{display:flex;justify-content:flex-end;margin-bottom:20px}
+    .inv-totals-box{background:#f8fffe;border:1px solid #d4edda;border-radius:10px;padding:14px 20px;min-width:220px}
+    .inv-total-row{display:flex;justify-content:space-between;gap:24px;font-size:12px;padding:4px 0;border-bottom:1px solid #e8f5e9}
+    .inv-total-row:last-child{border-bottom:none;padding-top:8px;font-size:15px;font-weight:900;color:#2EA056}
+    .inv-notes{background:#fffbf0;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;font-size:11px;color:#92400e;line-height:1.6;margin-bottom:20px}
+    .inv-footer{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(90deg,#111,#222);color:rgba(255,255,255,.7);padding:14px 40px;display:flex;justify-content:space-between;align-items:center;font-size:10px;font-weight:500}
+    .inv-footer strong{color:#fff}
+  </style></head><body>
+  <div class="page">
+    <div class="inv-header">
+      <div class="inv-header-row">
+        <div><div class="inv-logo">iAlfonex<span>Your Electronics Partner</span></div></div>
+        <div class="inv-num">
+          <div class="label">Invoice</div>
+          <div class="value">#${invId}</div>
+          <div class="date">${date}</div>
+        </div>
+      </div>
+    </div>
+    <div class="inv-body">
+      <div class="inv-to-grid">
+        <div class="inv-to-box">
+          <div class="inv-section-label">Bill To</div>
+          <div class="inv-to-name">${esc(client.name||'Customer')}</div>
+          <div class="inv-to-detail">
+            ${client.email   ? `📧 ${esc(client.email)}<br>`   : ''}
+            ${client.phone   ? `📞 ${esc(client.phone)}<br>`   : ''}
+            ${client.country ? `🌍 ${esc(client.country)}<br>` : ''}
+          </div>
+        </div>
+        <div class="inv-to-box">
+          <div class="inv-section-label">From</div>
+          <div class="inv-to-name">iAlfonex</div>
+          <div class="inv-to-detail">📧 info@alfonex.com<br>📞 +971 555788068<br>🌐 www.alfonex.com<br>📍 Dubai, UAE &amp; India</div>
+        </div>
+      </div>
+      <div class="inv-section-label">Items</div>
+      <table class="inv-table">
+        <thead><tr>
+          <th>Description</th><th style="text-align:center">Qty</th>
+          <th style="text-align:right">Unit Price</th><th style="text-align:right">Total</th>
+        </tr></thead>
+        <tbody>${itemRows}</tbody>
+      </table>
+      <div class="inv-totals">
+        <div class="inv-totals-box">
+          <div class="inv-section-label" style="margin-bottom:10px">Summary</div>
+          ${shipping?`<div class="inv-total-row"><span>Subtotal</span><span>${fmt(subtotal)}</span></div>
+          <div class="inv-total-row"><span>Shipping</span><span>${fmt(shipping)}</span></div>`:''}
+          <div class="inv-total-row"><span>TOTAL</span><span>${fmt(total)}</span></div>
+        </div>
+      </div>
+      ${notes?`<div class="inv-notes">📝 ${esc(notes)}</div>`:''}
+    </div>
+    <div class="inv-footer">
+      <div>© 2026 <strong>iAlfonex</strong> — Premium Apple Devices</div>
+      <div>Generated ${new Date().toLocaleString()}</div>
+    </div>
+  </div>
+  <script>window.onload=()=>setTimeout(()=>window.print(),400);<\/script>
+  </body></html>`);
+  win.document.close();
+  auditLog('EDIT', `Custom Invoice PDF: ${invId}`, {
+    detail:   `Client: ${client.name||'—'} | Total: ${fmt(total)} | Items: ${items.length}`,
     category: 'Orders',
   });
 }
