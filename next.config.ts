@@ -11,6 +11,21 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: '**.googleusercontent.com' },
     ],
   },
+  // Serve the customer FCM service worker dynamically so Firebase config
+  // is injected from env vars at request time rather than being hardcoded.
+  async rewrites() {
+    return [
+      { source: '/firebase-messaging-sw.js', destination: '/api/firebase-messaging-sw' },
+    ];
+  },
+  async headers() {
+    return [
+      {
+        source: '/firebase-messaging-sw.js',
+        headers: [{ key: 'Service-Worker-Allowed', value: '/' }],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

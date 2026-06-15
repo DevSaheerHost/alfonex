@@ -18,6 +18,11 @@ interface NotifCtx {
   enablePush:     () => Promise<void>;
 }
 
+interface ForegroundToast {
+  title: string;
+  body:  string;
+}
+
 const NotifContext = createContext<NotifCtx>({
   notifications: [],
   unreadCount: 0,
@@ -30,9 +35,10 @@ const NotifContext = createContext<NotifCtx>({
 
 export function NotificationsProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const [notifications,  setNotifications]  = useState<AppNotification[]>([]);
-  const [pushPermission, setPushPermission] = useState<NotificationPermission | 'unsupported'>('default');
-  const [pushError,      setPushError]      = useState('');
+  const [notifications,    setNotifications]    = useState<AppNotification[]>([]);
+  const [pushPermission,   setPushPermission]   = useState<NotificationPermission | 'unsupported'>('default');
+  const [pushError,        setPushError]        = useState('');
+  const [foregroundToast,  setForegroundToast]  = useState<ForegroundToast | null>(null);
 
   // Read initial permission state
   useEffect(() => {
@@ -62,16 +68,21 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     return unsub;
   }, [user]);
 
-  // Handle foreground FCM messages (app is open — update bell via RTDB listener above)
+  // Handle foreground FCM messages — show toast and update bell via RTDB listener
   useEffect(() => {
     if (!user || pushPermission !== 'granted') return;
     let cancel: (() => void) | undefined;
+    let toastTimer: ReturnType<typeof setTimeout>;
     import('@/lib/firebase/messaging').then(({ subscribeForeground }) => {
-      cancel = subscribeForeground(() => {
-        // RTDB onValue already updates the bell; nothing extra needed here
+      cancel = subscribeForeground((payload) => {
+        const title = payload.notification?.title ?? 'Alfonex';
+        const body  = payload.notification?.body  ?? '';
+        setForegroundToast({ title, body });
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => setForegroundToast(null), 4500);
       });
     });
-    return () => cancel?.();
+    return () => { cancel?.(); clearTimeout(toastTimer); };
   }, [user, pushPermission]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
@@ -111,6 +122,40 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       markRead, markAllRead, enablePush,
     }}>
       {children}
+
+      {/* Foreground FCM toast — visible on any page when app is open */}
+      {foregroundToast && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '76px',
+            left: '50%',
+            zIndex: 9999,
+            maxWidth: '340px',
+            width: 'calc(100% - 32px)',
+          }}
+          className="flex animate-slide-up items-start gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-2xl dark:border-gray-700 dark:bg-dark-surface"
+        >
+          <i className="fa fa-bell mt-0.5 shrink-0 text-primary-600 dark:text-primary-400" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold leading-snug text-gray-900 dark:text-white">
+              {foregroundToast.title}
+            </p>
+            {foregroundToast.body && (
+              <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                {foregroundToast.body}
+              </p>
+            )}
+          </div>
+          <button
+            onClick={() => setForegroundToast(null)}
+            className="ml-1 shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            aria-label="Dismiss"
+          >
+            <i className="fa fa-xmark text-xs" />
+          </button>
+        </div>
+      )}
     </NotifContext.Provider>
   );
 }
