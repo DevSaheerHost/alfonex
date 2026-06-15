@@ -7315,6 +7315,7 @@ async function postAnnouncement() {
   document.getElementById('ann-title-inp').value = '';
   document.getElementById('ann-body-inp').value  = '';
   showToast('Announcement posted!','success');
+  broadcastToAdmins(`📢 Announcement — ${title}`, body, { type: 'announcement' });
 }
 
 async function deleteAnnouncement(id) {
@@ -8255,7 +8256,7 @@ async function saveMeeting() {
   };
   try {
     if (id){ await db.ref('meetings/'+id).update(payload); showToast('Meeting updated!','success'); auditLog('EDIT',`Updated meeting: ${title}`,{detail:date+' '+time,category:'Meetings'}); }
-    else { payload.createdAt=Date.now(); await db.ref('meetings').push(payload); showToast('Meeting scheduled!','success'); auditLog('ADD',`Scheduled meeting: ${title}`,{detail:date+' '+time+' | '+payload.participants,category:'Meetings'}); }
+    else { payload.createdAt=Date.now(); await db.ref('meetings').push(payload); showToast('Meeting scheduled!','success'); auditLog('ADD',`Scheduled meeting: ${title}`,{detail:date+' '+time+' | '+payload.participants,category:'Meetings'}); broadcastToAdmins(`📅 Meeting Scheduled — ${title}`, `${date} ${time}${payload.participants ? ' · ' + payload.participants : ''}`, { type: 'meeting' }); }
     closeMeetingModal();
   } catch(e){ showToast('Error: '+e.message,'error'); }
   finally { resetBtn(btn,'<i class="fa-solid fa-calendar-plus"></i> Save Meeting'); }
@@ -9641,6 +9642,21 @@ async function pnLoadTopClickers() {
       <div style="flex:1;font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(names[i])}</div>
       <span style="background:rgba(59,130,246,.1);color:#3b82f6;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:800;flex-shrink:0">${e.clicks} clicks</span>
     </div>`).join('');
+}
+
+/* ═══════════════════════════════════════════════════════
+   BROADCAST TO ADMINS — fire-and-forget via /api/admin/broadcast
+═══════════════════════════════════════════════════════ */
+async function broadcastToAdmins(title, body, data = {}) {
+  try {
+    const token = await firebase.auth().currentUser?.getIdToken();
+    if (!token) return;
+    await fetch('/api/admin/broadcast', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body:    JSON.stringify({ title, body, data }),
+    });
+  } catch { /* silent — never block the UI action */ }
 }
 
 /* ═══════════════════════════════════════════════════════
