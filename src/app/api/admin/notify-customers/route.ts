@@ -58,6 +58,12 @@ export async function POST(req: NextRequest) {
   const notification: { title: string; body: string; imageUrl?: string } = { title, body };
   if (imageUrl) notification.imageUrl = imageUrl;
 
+  // fcmOptions.link requires an absolute URL; relative paths (from product selector) need the origin prepended
+  const siteBase = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://alfonex.com').replace(/\s.*$/, '').replace(/\/$/, '');
+  const absClickUrl = clickUrl
+    ? (clickUrl.startsWith('http') ? clickUrl : `${siteBase}${clickUrl.startsWith('/') ? '' : '/'}${clickUrl}`)
+    : undefined;
+
   const result = await adminMessaging().sendEachForMulticast({
     tokens: entries.map((e) => e.token),
     notification,
@@ -69,7 +75,7 @@ export async function POST(req: NextRequest) {
         vibrate: [200, 100, 200],
         ...(imageUrl ? { image: imageUrl } : {}),
       },
-      ...(clickUrl ? { fcmOptions: { link: clickUrl } } : {}),
+      ...(absClickUrl ? { fcmOptions: { link: absClickUrl } } : {}),
     },
   });
 

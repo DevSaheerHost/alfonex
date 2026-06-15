@@ -9474,8 +9474,7 @@ function pnOnProductSelect(productId) {
     pnSwitchImgTab('url');
   }
   const slug = adminSlugify(p.title || productId);
-  const _base = (typeof SITE_BASE === 'string' && SITE_BASE.startsWith('http')) ? SITE_BASE : 'https://alfonex.com';
-  document.getElementById('pn-click-url').value = `${_base}/products/${slug}/p/${productId}`;
+  document.getElementById('pn-click-url').value = `/products/${slug}/p/${productId}`;
   pnUpdatePreview();
 }
 
