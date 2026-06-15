@@ -35,11 +35,11 @@ messaging.onBackgroundMessage((payload) => {
   });
 });
 
-// Tap on notification → open/focus the app and navigate to the order
+// Tap on notification → open/focus the app and navigate to the target URL
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const orderId = event.notification.data?.orderId;
-  const url = orderId ? '/orders/' + orderId : '/orders';
+  const data    = event.notification.data ?? {};
+  const url     = data.url || (data.orderId ? '/orders/' + data.orderId : '/');
 
   event.waitUntil(
     clients

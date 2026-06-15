@@ -20,10 +20,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
   }
 
-  const { title, body, imageUrl } = (await req.json()) as {
-    title:     string;
-    body:      string;
-    imageUrl?: string;
+  const { title, body, imageUrl, clickUrl } = (await req.json()) as {
+    title:      string;
+    body:       string;
+    imageUrl?:  string;
+    clickUrl?:  string;
   };
 
   if (!title?.trim()) {
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
   if (!entries.length) {
     // No devices registered — save record and return
     await adminRtdb().ref('push_notifications').push({
-      title, body, imageUrl: imageUrl ?? null,
+      title, body, imageUrl: imageUrl ?? null, clickUrl: clickUrl ?? null,
       sentAt: Date.now(), sentCount: 0, failedCount: 0,
     });
     return NextResponse.json({ ok: true, sent: 0, failed: 0, total: 0 });
@@ -53,6 +54,7 @@ export async function POST(req: NextRequest) {
   const result = await adminMessaging().sendEachForMulticast({
     tokens: entries.map((e) => e.token),
     notification,
+    data: clickUrl ? { url: clickUrl } : {},
     webpush: {
       notification: {
         icon:    '/assets/meta/icon/logo.png',
@@ -60,6 +62,7 @@ export async function POST(req: NextRequest) {
         vibrate: [200, 100, 200],
         ...(imageUrl ? { image: imageUrl } : {}),
       },
+      ...(clickUrl ? { fcmOptions: { link: clickUrl } } : {}),
     },
   });
 
@@ -83,7 +86,7 @@ export async function POST(req: NextRequest) {
 
   // Persist send record
   await adminRtdb().ref('push_notifications').push({
-    title, body, imageUrl: imageUrl ?? null,
+    title, body, imageUrl: imageUrl ?? null, clickUrl: clickUrl ?? null,
     sentAt: Date.now(), sentCount, failedCount,
   });
 

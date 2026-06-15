@@ -1738,6 +1738,15 @@ tbody td{padding:12px 16px;vertical-align:middle}
               </div>
             </div>
 
+            <div class="mf-group">
+              <label class="mf-label">Click URL <span style="font-weight:500;color:var(--muted)">(where to go when tapped)</span></label>
+              <div style="position:relative">
+                <i class="fa-solid fa-link" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:12px;pointer-events:none"></i>
+                <input class="mf-input" id="pn-click-url" placeholder="e.g. /products or https://alfonex.com/sale" style="padding-left:32px">
+              </div>
+              <div style="font-size:11px;color:var(--muted);margin-top:4px">Leave blank to open the home page</div>
+            </div>
+
             <!-- Action buttons -->
             <div style="display:flex;gap:10px;margin-top:6px">
               <button class="btn-secondary" onclick="pnSaveDraft()"><i class="fa-solid fa-floppy-disk"></i> Save Draft</button>
@@ -9377,12 +9386,13 @@ function pnClearImage() {
 }
 
 async function pnSaveDraft() {
-  const title  = document.getElementById('pn-title')?.value.trim();
-  const body   = document.getElementById('pn-body')?.value.trim();
+  const title    = document.getElementById('pn-title')?.value.trim();
+  const body     = document.getElementById('pn-body')?.value.trim();
+  const clickUrl = document.getElementById('pn-click-url')?.value.trim();
   if (!title) { showToast('Title is required', 'error'); return; }
   await db.ref('push_notifications').push({
     title, body: body || '', imageUrl: document.getElementById('pn-img-url')?.value.trim() || null,
-    savedAt: Date.now(), status: 'draft',
+    clickUrl: clickUrl || null, savedAt: Date.now(), status: 'draft',
   });
   showToast('Draft saved', 'success');
   pnLoadHistory();
@@ -9392,6 +9402,7 @@ async function pnSend() {
   const title    = document.getElementById('pn-title')?.value.trim();
   const body     = document.getElementById('pn-body')?.value.trim();
   const imageUrl = document.getElementById('pn-img-url')?.value.trim();
+  const clickUrl = document.getElementById('pn-click-url')?.value.trim();
   if (!title) { showToast('Title is required', 'error'); return; }
 
   const btn = document.getElementById('pn-send-btn');
@@ -9407,7 +9418,7 @@ async function pnSend() {
     const res = await fetch('/api/admin/notify-customers', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
-      body:    JSON.stringify({ title, body: body || '', imageUrl: imageUrl || undefined }),
+      body:    JSON.stringify({ title, body: body || '', imageUrl: imageUrl || undefined, clickUrl: clickUrl || undefined }),
     });
     const data = await res.json();
     if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
@@ -9448,6 +9459,7 @@ function pnLoadHistory() {
         <div style="flex:1;min-width:0">
           <div style="font-weight:700;font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${n.title}</div>
           ${n.body ? `<div style="font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${n.body}</div>` : ''}
+          ${n.clickUrl ? `<div style="font-size:11px;color:var(--green);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><i class="fa-solid fa-link" style="font-size:9px"></i> ${n.clickUrl}</div>` : ''}
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${sentBadge}${failBadge}${draftBadge}</div>
         </div>
         <div style="font-size:11px;color:var(--muted);white-space:nowrap;flex-shrink:0">${dateStr}</div>
