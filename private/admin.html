@@ -5202,14 +5202,17 @@ async function advanceOrderStatus(){
   const curIdx=ORDER_STATUSES.indexOf(o.status);
   if(curIdx<0||curIdx>=ORDER_STATUSES.length-1)return;
   const nextStatus=ORDER_STATUSES[curIdx+1];
-  const tsField=STATUS_TS[nextStatus];
   const btn=document.getElementById('btn-advance');
   const originalHTML=btn.innerHTML;
   btn.disabled=true; btn.innerHTML='<div class="spin-ring" style="width:14px;height:14px;border-width:2px;border-top-color:#fff"></div>';
   try{
-    const update={status:nextStatus,updatedAt:Date.now()};
-    if(tsField) update[tsField]=Date.now();
-    await db.ref(`orders/${id}`).update(update);
+    const idToken=await auth.currentUser.getIdToken();
+    const res=await fetch(`/api/admin/orders/${id}`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${idToken}`},
+      body:JSON.stringify({status:nextStatus}),
+    });
+    if(!res.ok)throw new Error((await res.json()).error||'Update failed');
     showToast(`Marked as ${nextStatus}!`,'success');
     auditLog('EDIT', `Order ${shortId(id)} status: ${o.status} → ${nextStatus}`, { detail:`Customer: ${o.customerName||'—'} | Total: $${o.total||0}`, orderId:id, category:'Orders' });
     awardPoints(5,'Advanced order status');
@@ -5252,7 +5255,13 @@ async function saveDeliveryInfo(orderId){
   const courier=document.getElementById('dp-courier')?.value.trim()||'';
   const trackingNo=document.getElementById('dp-tracking')?.value.trim()||'';
   try{
-    await db.ref(`orders/${orderId}`).update({courier,trackingNo,updatedAt:Date.now()});
+    const idToken=await auth.currentUser.getIdToken();
+    const res=await fetch(`/api/admin/orders/${orderId}`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${idToken}`},
+      body:JSON.stringify({courier,trackingNo}),
+    });
+    if(!res.ok)throw new Error((await res.json()).error||'Save failed');
     showToast('Delivery info saved.','success');
   }catch(err){showToast('Save failed: '+err.message,'error');}
 }
