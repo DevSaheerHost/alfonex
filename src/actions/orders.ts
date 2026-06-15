@@ -34,7 +34,8 @@ export async function placeOrder(
 
   if (!cart.length) throw new Error('Cart is empty');
 
-  const shipping = SHIPPING_RATES[currency];
+  const totalQty = cart.reduce((s, i) => s + i.qty, 0);
+  const shipping = SHIPPING_RATES[currency] * totalQty;
   const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
 
   // Validate and apply loyalty points redemption

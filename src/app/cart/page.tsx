@@ -13,7 +13,7 @@ export default function CartPage() {
   const { currency } = useApp();
 
   const symbol   = CURRENCY_SYMBOLS[currency];
-  const shipping = SHIPPING_RATES[currency];
+  const shipping = SHIPPING_RATES[currency] * totalQty;
   const total    = subtotal + shipping;
 
   if (items.length === 0) {

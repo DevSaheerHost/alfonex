@@ -48,7 +48,7 @@ export default function CheckoutPage() {
   const [error, setError]            = useState('');
 
   const symbol   = CURRENCY_SYMBOLS[currency];
-  const shipping = SHIPPING_RATES[currency];
+  const shipping = SHIPPING_RATES[currency] * totalQty;
 
   // Loyalty points
   const [loyaltyBalance,   setLoyaltyBalance]   = useState(0);
