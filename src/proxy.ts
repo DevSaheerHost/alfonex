@@ -23,8 +23,13 @@ export function proxy(request: NextRequest) {
     if (host === 'alfonex.com' || host === 'www.alfonex.com') {
       return new NextResponse(null, { status: 404 });
     }
-    // Login page and auth API are public on the Vercel URL
-    if (pathname.startsWith('/admin/login') || pathname.startsWith('/api/admin-auth')) {
+    // Login page, auth API, and PWA resources are public on the Vercel URL
+    if (
+      pathname.startsWith('/admin/login') ||
+      pathname.startsWith('/api/admin-auth') ||
+      pathname === '/admin/manifest.json' ||
+      pathname === '/admin/sw.js'
+    ) {
       return NextResponse.next();
     }
     // All other /admin/* require the session cookie
