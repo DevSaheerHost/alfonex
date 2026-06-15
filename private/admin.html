@@ -1195,6 +1195,7 @@ tbody td{padding:12px 16px;vertical-align:middle}
         <div class="sb-section-label">Administration</div>
         <button class="sb-link" data-section="admins" onclick="showSection('admins')"><span class="sb-ic"><i class="fa-solid fa-users-gear"></i></span>Manage Admins</button>
         <button class="sb-link" data-section="audit" onclick="showSection('audit')"><span class="sb-ic"><i class="fa-solid fa-scroll"></i></span>Audit Trail</button>
+        <button class="sb-link" data-section="security" onclick="showSection('security')"><span class="sb-ic"><i class="fa-solid fa-lock"></i></span>Security</button>
       </div>
     </nav>
     <div class="sb-bottom">
@@ -2465,6 +2466,97 @@ tbody td{padding:12px 16px;vertical-align:middle}
 
 
     <!-- ══════════════════════════════════════
+         SECURITY
+    ══════════════════════════════════════ -->
+    <section id="section-security" class="content-section">
+      <div class="sec-header">
+        <div>
+          <div class="sec-title">Security</div>
+          <div class="sec-sub">Manage admin passcode, session settings, and account security</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr;gap:20px;max-width:560px">
+
+        <!-- Card 1: Session Info -->
+        <div class="table-card" style="padding:20px">
+          <div style="font-size:14px;font-weight:700;margin-bottom:14px;color:var(--text)">
+            <i class="fa-solid fa-circle-info" style="color:var(--primary);margin-right:6px"></i>Session Info
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px" id="sec-session-info">
+            <div class="stat-card"><div class="stat-val" id="sec-last-login">—</div><div class="stat-label">Last Login</div></div>
+            <div class="stat-card"><div class="stat-val" id="sec-passcode-type">—</div><div class="stat-label">Passcode Type</div></div>
+          </div>
+          <div id="sec-lockout-banner" style="display:none;margin-top:14px;padding:12px 14px;border-radius:10px;background:#fef2f2;border:1px solid #fca5a5;color:#b91c1c;font-size:13px;display:flex;align-items:center;gap:10px">
+            <i class="fa-solid fa-lock" style="font-size:16px"></i>
+            <span id="sec-lockout-msg">Account locked</span>
+            <button class="btn-primary btn-sm" onclick="secClearLockout()" style="margin-left:auto;background:#b91c1c;border-color:#b91c1c">Clear Lockout</button>
+          </div>
+        </div>
+
+        <!-- Card 2: Change Passcode -->
+        <div class="table-card" style="padding:20px">
+          <div style="font-size:14px;font-weight:700;margin-bottom:16px;color:var(--text)">
+            <i class="fa-solid fa-key" style="color:var(--primary);margin-right:6px"></i>Change Passcode
+          </div>
+
+          <!-- Type selector -->
+          <div class="mf-group">
+            <label class="mf-label">Passcode Type</label>
+            <select class="mf-input" id="sec-type-sel" onchange="secTogglePreview(this.value)">
+              <option value="digit4">4-Digit PIN</option>
+              <option value="digit6" selected>6-Digit PIN</option>
+              <option value="alphanumeric">Alphanumeric (6–32 chars)</option>
+            </select>
+          </div>
+
+          <!-- New passcode -->
+          <div class="mf-group" style="position:relative">
+            <label class="mf-label">New Passcode</label>
+            <div style="position:relative">
+              <input class="mf-input" id="sec-passcode" type="password" placeholder="Enter new passcode" style="padding-right:40px" oninput="secValidateMatch()" />
+              <button type="button" onclick="secTogglePw('sec-passcode','sec-eye1')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted)"><i class="fa fa-eye" id="sec-eye1"></i></button>
+            </div>
+          </div>
+
+          <!-- Confirm passcode -->
+          <div class="mf-group" style="position:relative">
+            <label class="mf-label">Confirm Passcode</label>
+            <div style="position:relative">
+              <input class="mf-input" id="sec-confirm" type="password" placeholder="Confirm passcode" style="padding-right:40px" oninput="secValidateMatch()" />
+              <button type="button" onclick="secTogglePw('sec-confirm','sec-eye2')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted)"><i class="fa fa-eye" id="sec-eye2"></i></button>
+            </div>
+            <div id="sec-match-err" style="display:none;color:var(--red);font-size:12px;margin-top:4px"><i class="fa fa-circle-xmark"></i> Passcodes do not match</div>
+          </div>
+
+          <!-- Session duration -->
+          <div class="mf-group">
+            <label class="mf-label">Session Duration</label>
+            <select class="mf-input" id="sec-session-hours">
+              <option value="1">1 hour</option>
+              <option value="8">8 hours</option>
+              <option value="24" selected>24 hours</option>
+              <option value="168">7 days</option>
+            </select>
+          </div>
+
+          <div id="sec-save-msg" style="display:none;margin-bottom:10px;padding:8px 12px;border-radius:8px;font-size:13px"></div>
+          <button class="btn-primary" onclick="secSavePasscode()" style="width:100%"><i class="fa-solid fa-floppy-disk"></i> Save Passcode</button>
+        </div>
+
+        <!-- Card 3: Danger zone -->
+        <div class="table-card" style="padding:20px">
+          <div style="font-size:14px;font-weight:700;margin-bottom:14px;color:var(--red)">
+            <i class="fa-solid fa-triangle-exclamation" style="margin-right:6px"></i>Sign Out
+          </div>
+          <p style="font-size:13px;color:var(--muted);margin-bottom:14px">This will clear your admin session cookie and return you to the login page.</p>
+          <button class="btn-danger btn-sm" onclick="secLogout()"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════
          REVIEWS MANAGEMENT
     ══════════════════════════════════════ -->
     <section id="section-reviews" class="content-section">
@@ -3640,7 +3732,7 @@ function showSection(name, fromPopstate = false){
     invoices:'Customer Invoices', comms:'Team Communication',
     meetings:'Meeting Scheduler', pricehistory:'Price Change History', reservations:'Device Reservations', pricelist:'Price List',
     audit:'Audit Trail', reviews:'Product Reviews', loyalty:'Loyalty & Referrals', 'search-analytics':'Search Analytics',
-    analytics:'Analytics', 'push-notifications':'Push Notifications'
+    analytics:'Analytics', 'push-notifications':'Push Notifications', security:'Security'
   };
   document.getElementById('header-page-title').innerHTML=`<span>${T[name]||name}</span>`;
   closeSidebar();
@@ -3680,6 +3772,7 @@ function showSection(name, fromPopstate = false){
     if (name==='pricelist')     { attachDealerListener(); renderPriceList(); }
     if (name==='analytics')     { renderAnalyticsCharts(); }
     if (name==='push-notifications') { pnLoadHistory(); pnLoadTopClickers(); populatePnProducts(); }
+    if (name==='security')           { secLoadInfo(); }
   }, 0);
 }
 let _lastSection = null;
@@ -9548,6 +9641,125 @@ async function pnLoadTopClickers() {
       <div style="flex:1;font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(names[i])}</div>
       <span style="background:rgba(59,130,246,.1);color:#3b82f6;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:800;flex-shrink:0">${e.clicks} clicks</span>
     </div>`).join('');
+}
+
+/* ═══════════════════════════════════════════════════════
+   SECURITY SECTION
+═══════════════════════════════════════════════════════ */
+async function secLoadInfo() {
+  try {
+    const snap = await db.ref('admin_config').once('value');
+    const cfg  = snap.val() || {};
+
+    // Last login
+    const llEl = document.getElementById('sec-last-login');
+    if (llEl) {
+      llEl.textContent = cfg.last_login_at
+        ? new Date(cfg.last_login_at).toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })
+        : '—';
+    }
+
+    // Passcode type
+    const ptEl = document.getElementById('sec-passcode-type');
+    if (ptEl) {
+      const labels = { digit4:'4-Digit PIN', digit6:'6-Digit PIN', alphanumeric:'Alphanumeric' };
+      ptEl.textContent = labels[cfg.passcode_type] || '6-Digit PIN';
+    }
+
+    // Pre-select type & session in form
+    const typeSel = document.getElementById('sec-type-sel');
+    if (typeSel && cfg.passcode_type) typeSel.value = cfg.passcode_type;
+    const sessSel = document.getElementById('sec-session-hours');
+    if (sessSel && cfg.session_hours) sessSel.value = String(cfg.session_hours);
+
+    // Lockout banner
+    const banner = document.getElementById('sec-lockout-banner');
+    const msgEl  = document.getElementById('sec-lockout-msg');
+    if (banner && msgEl) {
+      const locked = (cfg.lockout_until || 0) > Date.now();
+      banner.style.display = locked ? 'flex' : 'none';
+      if (locked) {
+        const secsLeft = Math.ceil(((cfg.lockout_until || 0) - Date.now()) / 1000);
+        msgEl.textContent = `Account locked — ${Math.floor(secsLeft/60)}m ${secsLeft%60}s remaining`;
+      }
+    }
+  } catch (e) {
+    console.error('secLoadInfo:', e);
+  }
+}
+
+function secTogglePw(inputId, iconId) {
+  const inp = document.getElementById(inputId);
+  const ico = document.getElementById(iconId);
+  if (!inp) return;
+  if (inp.type === 'password') { inp.type = 'text';     if (ico) { ico.classList.remove('fa-eye');       ico.classList.add('fa-eye-slash'); } }
+  else                         { inp.type = 'password'; if (ico) { ico.classList.remove('fa-eye-slash'); ico.classList.add('fa-eye');       } }
+}
+
+function secValidateMatch() {
+  const a = document.getElementById('sec-passcode')?.value  || '';
+  const b = document.getElementById('sec-confirm')?.value   || '';
+  const errEl = document.getElementById('sec-match-err');
+  if (errEl) errEl.style.display = (b && a !== b) ? 'block' : 'none';
+}
+
+async function secSavePasscode() {
+  const type         = document.getElementById('sec-type-sel')?.value     || 'digit6';
+  const passcode     = document.getElementById('sec-passcode')?.value      || '';
+  const confirm      = document.getElementById('sec-confirm')?.value       || '';
+  const sessionHours = parseInt(document.getElementById('sec-session-hours')?.value || '24', 10);
+  const msgEl        = document.getElementById('sec-save-msg');
+
+  function showMsg(text, ok) {
+    if (!msgEl) return;
+    msgEl.style.display = 'block';
+    msgEl.style.background = ok ? '#f0fdf4' : '#fef2f2';
+    msgEl.style.color       = ok ? '#166534' : '#b91c1c';
+    msgEl.style.border      = ok ? '1px solid #bbf7d0' : '1px solid #fca5a5';
+    msgEl.textContent       = text;
+    if (ok) setTimeout(() => { msgEl.style.display = 'none'; }, 3000);
+  }
+
+  if (!passcode) return showMsg('Please enter a passcode.', false);
+  if (passcode !== confirm) return showMsg('Passcodes do not match.', false);
+
+  // Client-side format validation (mirrors server)
+  if (type === 'digit4' && !/^\d{4}$/.test(passcode))           return showMsg('Must be exactly 4 digits.', false);
+  if (type === 'digit6' && !/^\d{6}$/.test(passcode))           return showMsg('Must be exactly 6 digits.', false);
+  if (type === 'alphanumeric' && (passcode.length < 6 || passcode.length > 32)) return showMsg('Must be 6–32 characters.', false);
+
+  try {
+    const res   = await fetch('/api/admin/set-passcode', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ type, passcode, sessionHours }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showMsg('✓ Passcode saved successfully.', true);
+      document.getElementById('sec-passcode').value = '';
+      document.getElementById('sec-confirm').value  = '';
+      secLoadInfo();
+    } else {
+      showMsg(data.error || 'Failed to save.', false);
+    }
+  } catch {
+    showMsg('Network error — please try again.', false);
+  }
+}
+
+async function secClearLockout() {
+  try {
+    await db.ref('admin_config').update({ failed_attempts: 0, lockout_until: 0 });
+    const banner = document.getElementById('sec-lockout-banner');
+    if (banner) banner.style.display = 'none';
+    showToast('Lockout cleared', 'success');
+  } catch { showToast('Failed to clear lockout', 'error'); }
+}
+
+async function secLogout() {
+  await fetch('/api/admin-auth', { method: 'DELETE' });
+  window.location.replace('/admin/login');
 }
 
 </script>
