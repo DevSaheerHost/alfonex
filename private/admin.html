@@ -1049,6 +1049,22 @@ tbody td{padding:12px 16px;vertical-align:middle}
 [data-theme="dark"] .sa-period-tabs button.active{background:var(--green-mid)}
 
 @media(max-width:600px){.sa-two-col{grid-template-columns:1fr!important}}
+
+/* ── Reservation filter tabs ── */
+.rs-filter-bar{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.rs-tab{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap;font-family:var(--font-head)}
+.rs-tab:hover{color:var(--text);border-color:var(--green)}
+.rs-tab.active{color:#fff;border-color:transparent;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.rs-tab[data-rs="all"].active{background:var(--green)}
+.rs-tab[data-rs="pending"].active{background:#f59e0b}
+.rs-tab[data-rs="contacted"].active{background:#3b82f6}
+.rs-tab[data-rs="completed"].active{background:#16a34a}
+.rs-tab[data-rs="cancelled"].active{background:#ef4444}
+/* ── Reservation stat accent bars ── */
+.rs-stat-blue{border-top:3px solid var(--blue)!important}
+.rs-stat-amber{border-top:3px solid #f59e0b!important}
+.rs-stat-bblue{border-top:3px solid #3b82f6!important}
+.rs-stat-green{border-top:3px solid var(--green)!important}
 </style>
 </head>
 <body>
@@ -2180,25 +2196,37 @@ tbody td{padding:12px 16px;vertical-align:middle}
           <div class="sec-sub">Customers who reserved a device for future purchase</div>
         </div>
         <div class="sec-header-right">
-          <button class="btn-ghost btn-sm" onclick="exportReservations()"><i class="fa-solid fa-download"></i> Export CSV</button>
+          <button class="btn-primary btn-sm" onclick="exportReservations()"><i class="fa-solid fa-download"></i> Export CSV</button>
         </div>
       </div>
 
       <!-- Stats -->
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
-        <div class="stat-card blue">  <div class="stat-icon blue"><i class="fa-solid fa-bookmark"></i></div>    <div><div class="stat-num" id="rs-total">0</div>   <div class="stat-lbl">Total</div></div></div>
-        <div class="stat-card amber"> <div class="stat-icon amber"><i class="fa-solid fa-hourglass-half"></i></div><div><div class="stat-num" id="rs-pending">0</div>  <div class="stat-lbl">Pending</div></div></div>
-        <div class="stat-card green"> <div class="stat-icon green"><i class="fa-solid fa-phone"></i></div>       <div><div class="stat-num" id="rs-contacted">0</div><div class="stat-lbl">Contacted</div></div></div>
-        <div class="stat-card blue">  <div class="stat-icon blue"><i class="fa-solid fa-circle-check"></i></div> <div><div class="stat-num" id="rs-completed">0</div><div class="stat-lbl">Completed</div></div></div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
+        <div class="stat-card rs-stat-blue">
+          <div class="stat-icon blue"><i class="fa-solid fa-bookmark"></i></div>
+          <div><div class="stat-num" id="rs-total">0</div><div class="stat-lbl">Total</div></div>
+        </div>
+        <div class="stat-card rs-stat-amber">
+          <div class="stat-icon amber"><i class="fa-solid fa-hourglass-half"></i></div>
+          <div><div class="stat-num" id="rs-pending">0</div><div class="stat-lbl">Pending</div></div>
+        </div>
+        <div class="stat-card rs-stat-bblue">
+          <div class="stat-icon blue"><i class="fa-solid fa-phone"></i></div>
+          <div><div class="stat-num" id="rs-contacted">0</div><div class="stat-lbl">Contacted</div></div>
+        </div>
+        <div class="stat-card rs-stat-green">
+          <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
+          <div><div class="stat-num" id="rs-completed">0</div><div class="stat-lbl">Completed</div></div>
+        </div>
       </div>
 
       <!-- Filter tabs -->
-      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-        <button class="btn-ghost btn-sm" id="rsf-all"       onclick="filterReservations('all')"       style="background:var(--green);color:#fff;border-color:var(--green)">All</button>
-        <button class="btn-ghost btn-sm" id="rsf-pending"   onclick="filterReservations('pending')"   >⏳ Pending</button>
-        <button class="btn-ghost btn-sm" id="rsf-contacted" onclick="filterReservations('contacted')" >📞 Contacted</button>
-        <button class="btn-ghost btn-sm" id="rsf-completed" onclick="filterReservations('completed')" >✅ Completed</button>
-        <button class="btn-ghost btn-sm" id="rsf-cancelled" onclick="filterReservations('cancelled')" >❌ Cancelled</button>
+      <div class="rs-filter-bar">
+        <button class="rs-tab active" data-rs="all"       onclick="filterReservations('all')"><i class="fa-solid fa-list"></i> All</button>
+        <button class="rs-tab"        data-rs="pending"   onclick="filterReservations('pending')"><i class="fa-solid fa-hourglass-half"></i> Pending</button>
+        <button class="rs-tab"        data-rs="contacted" onclick="filterReservations('contacted')"><i class="fa-solid fa-phone"></i> Contacted</button>
+        <button class="rs-tab"        data-rs="completed" onclick="filterReservations('completed')"><i class="fa-solid fa-circle-check"></i> Completed</button>
+        <button class="rs-tab"        data-rs="cancelled" onclick="filterReservations('cancelled')"><i class="fa-solid fa-ban"></i> Cancelled</button>
       </div>
 
       <!-- Table -->
@@ -2211,18 +2239,18 @@ tbody td{padding:12px 16px;vertical-align:middle}
           <table style="width:100%;border-collapse:collapse;font-size:12px">
             <thead>
               <tr style="background:var(--bg)">
-                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Customer</th>
-                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Device</th>
-                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Note</th>
-                <th style="padding:9px 14px;text-align:right;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Price</th>
-                <th style="padding:9px 14px;text-align:right;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Advance</th>
-                <th style="padding:9px 14px;text-align:center;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Status</th>
-                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Date</th>
-                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Actions</th>
+                <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Customer</th>
+                <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Device</th>
+                <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Note</th>
+                <th style="padding:10px 14px;text-align:right;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Price</th>
+                <th style="padding:10px 14px;text-align:right;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Advance</th>
+                <th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Status</th>
+                <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Date</th>
+                <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Actions</th>
               </tr>
             </thead>
             <tbody id="reserv-tbody">
-              <tr><td colspan="8" style="padding:30px;text-align:center;color:var(--muted)">No reservations yet</td></tr>
+              <tr><td colspan="8"><div style="text-align:center;padding:48px 24px"><i class="fa-solid fa-bookmark" style="font-size:36px;color:var(--border);display:block;margin-bottom:14px"></i><div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:4px">No reservations yet</div><div style="font-size:12px;color:var(--muted)">Reservations from customers will appear here</div></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -8071,7 +8099,7 @@ db.ref('reservations').orderByChild('createdAt').on('value', snap => {
 
 function filterReservations(status) {
   _reservFilter = status;
-  ['all','pending','contacted','completed','cancelled'].forEach(s=>{const b=document.getElementById('rsf-'+s);if(!b)return;b.style.background=s===status?'var(--green)':'';b.style.color=s===status?'#fff':'';b.style.borderColor=s===status?'var(--green)':'';});
+  document.querySelectorAll('.rs-tab').forEach(b => b.classList.toggle('active', b.dataset.rs === status));
   renderReservations();
 }
 
@@ -8088,7 +8116,7 @@ function renderReservations() {
   if (_reservFilter!=='all') list = list.filter(([,r])=>r.status===_reservFilter);
   if (search) list = list.filter(([,r])=>(r.customerName||'').toLowerCase().includes(search)||(r.customerPhone||'').includes(search)||(r.productTitle||'').toLowerCase().includes(search));
   const countEl = document.getElementById('rs-count-label'); if(countEl) countEl.textContent = `(${list.length} reservations)`;
-  if (!list.length){ tbody.innerHTML = '<tr><td colspan="8" style="padding:30px;text-align:center;color:var(--muted)">No reservations found</td></tr>'; return; }
+  if (!list.length){ tbody.innerHTML = '<tr><td colspan="8"><div style="text-align:center;padding:48px 24px"><i class="fa-solid fa-bookmark-slash" style="font-size:36px;color:var(--border);display:block;margin-bottom:14px"></i><div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:4px">No reservations found</div><div style="font-size:12px;color:var(--muted)">Try a different filter or search term</div></div></td></tr>'; return; }
   const SYMS = {USD:'$',AED:'AED ',INR:'₹'};
   tbody.innerHTML = list.map(([id,r],i)=>{
     const st = RESERV_STATUS[r.status]||RESERV_STATUS.pending;
@@ -8108,7 +8136,16 @@ function renderReservations() {
       <td style="padding:10px 14px;text-align:right">${r.advance>0?`<div style="font-weight:800;color:var(--green);font-size:13px">${sym}${Number(r.advance).toLocaleString()}</div><div style="font-size:10px;color:var(--muted)">paid</div>`:'<span style="font-size:12px;color:var(--muted)">—</span>'}</td>
       <td style="padding:10px 14px;text-align:center"><span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:10px;font-weight:800;text-transform:uppercase;background:${st.bg};color:${st.color}"><i class="fa-solid ${st.icon}" style="font-size:9px"></i> ${st.label}</span></td>
       <td style="padding:10px 14px;white-space:nowrap"><div style="font-size:12px;font-weight:600">${dateStr}</div><div style="font-size:11px;color:var(--muted)">${timeStr}</div></td>
-      <td style="padding:10px 14px"><div style="display:flex;gap:5px;flex-wrap:wrap"><select class="mf-input" onchange="updateReservationStatus('${id}',this.value)" style="height:28px;font-size:11px;padding:0 6px;width:auto;border-radius:6px"><option value="pending" ${r.status==='pending'?'selected':''}>⏳ Pending</option><option value="contacted" ${r.status==='contacted'?'selected':''}>📞 Contacted</option><option value="completed" ${r.status==='completed'?'selected':''}>✅ Completed</option><option value="cancelled" ${r.status==='cancelled'?'selected':''}>❌ Cancelled</option></select><a href="https://wa.me/${waNum}" target="_blank" class="btn-ghost btn-sm" style="color:#25D366;border-color:#25D366;text-decoration:none"><i class="fa-brands fa-whatsapp"></i></a><button class="act-btn danger" onclick="deleteReservation('${id}')"><i class="fa-solid fa-trash"></i></button></div></td>
+      <td style="padding:10px 14px"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <select class="mf-input" onchange="updateReservationStatus('${id}',this.value)" style="height:30px;font-size:11px;font-weight:600;padding:0 8px;width:auto;border-radius:8px;min-width:110px">
+          <option value="pending"   ${r.status==='pending'  ?'selected':''}>⏳ Pending</option>
+          <option value="contacted" ${r.status==='contacted'?'selected':''}>📞 Contacted</option>
+          <option value="completed" ${r.status==='completed'?'selected':''}>✅ Completed</option>
+          <option value="cancelled" ${r.status==='cancelled'?'selected':''}>❌ Cancelled</option>
+        </select>
+        <a href="https://wa.me/${waNum}" target="_blank" title="WhatsApp" style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;border:1.5px solid #25D366;color:#25D366;text-decoration:none;font-size:14px;flex-shrink:0;transition:all .15s" onmouseover="this.style.background='#25D366';this.style.color='#fff'" onmouseout="this.style.background='';this.style.color='#25D366'"><i class="fa-brands fa-whatsapp"></i></a>
+        <button onclick="deleteReservation('${id}')" title="Delete" style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;border:1.5px solid #fecaca;background:#fef2f2;color:#ef4444;cursor:pointer;font-size:12px;flex-shrink:0;transition:all .15s" onmouseover="this.style.background='#ef4444';this.style.color='#fff';this.style.borderColor='#ef4444'" onmouseout="this.style.background='#fef2f2';this.style.color='#ef4444';this.style.borderColor='#fecaca'"><i class="fa-solid fa-trash"></i></button>
+      </div></td>
     </tr>`;
   }).join('');
 }
