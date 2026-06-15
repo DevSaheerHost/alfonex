@@ -217,6 +217,19 @@ export async function placeOrder(
     // Push failure must not fail the order
   }
 
+  // Notify all admin devices of the new order (works even when their PWA is closed)
+  try {
+    const { notifyAdmins } = await import('@/lib/firebase/notify-admins');
+    const itemCount = items.length;
+    await notifyAdmins(
+      `🛒 New Order — ${form.name}`,
+      `${itemCount} item${itemCount !== 1 ? 's' : ''} · ${currency.toUpperCase()} ${total.toFixed(2)}`,
+      { orderId: orderRef.key! },
+    );
+  } catch {
+    // Never block the order on admin notification failure
+  }
+
   return { orderId: orderRef.key! };
 }
 
