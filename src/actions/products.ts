@@ -122,11 +122,11 @@ export async function decrementProductStock(
 
 // ─── Product view tracking ────────────────────────────────────────────────────
 
-const VIEW_THRESHOLD  = 3;         // visits within a week triggers notification
+const VIEW_THRESHOLD  = 3;
 const NOTIFY_COOLDOWN = 7 * 24 * 60 * 60 * 1000; // re-notify at most once per 7 days
+const NOTIFY_DELAY_MS = 2 * 60 * 60 * 1000;       // send 2 hours after threshold hit
 
 export async function recordProductView(productId: string): Promise<void> {
-  // Skip silently for unauthenticated users
   let uid: string;
   try {
     const cookieStore = await cookies();
@@ -153,55 +153,40 @@ export async function recordProductView(productId: string): Promise<void> {
   const visits: number[] = Object.values(data.visits ?? {}) as number[];
   const recentCount = visits.filter((ts) => ts > weekAgo).length;
 
-  // Skip if already notified this week or threshold not met
-  const notifiedAt = data.notified_at as number | undefined;
-  if (notifiedAt !== undefined && notifiedAt > weekAgo) return;
+  // Skip if already notified or already scheduled this week
+  const notifiedAt  = data.notified_at  as number | undefined;
+  const scheduledAt = data.scheduled_at as number | undefined;
+  if (notifiedAt  !== undefined && notifiedAt  > weekAgo) return;
+  if (scheduledAt !== undefined && scheduledAt > weekAgo) return;
   if (recentCount < VIEW_THRESHOLD) return;
 
-  // Fetch product + user data together
+  // Threshold hit — fetch product + user data and schedule the notification
   const [productSnap, userSnap] = await Promise.all([
     db.ref(`products/${productId}`).get(),
     db.ref(`users/${uid}`).get(),
   ]);
-  const product  = productSnap.val() as (Product & { title: string; imageUrl?: string }) | null;
+  const product = productSnap.val() as (Product & { title: string; imageUrl?: string }) | null;
   if (!product) return;
   const userData     = (userSnap.val() ?? {}) as Record<string, string>;
-  const fcmToken     = userData.fcmToken;
   const customerName = userData.name || userData.displayName || 'Customer';
-
-  // Mark notified before sending so concurrent triggers don't double-fire
-  await viewRef.child('notified_at').set(Date.now());
 
   const siteBase   = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://alfonex.com';
   const productUrl = `${siteBase}/products/${slugify(product.title)}/p/${productId}`;
+  const sendAt     = Date.now() + NOTIFY_DELAY_MS;
 
-  // Push to customer
-  if (fcmToken) {
-    try {
-      await adminMessaging().send({
-        token: fcmToken,
-        notification: {
-          title: `Still thinking about it? 👀`,
-          body:  `You've looked at "${product.title}" ${recentCount} times this week — grab it before it's gone!`,
-        },
-        data: { productId, type: 'product_interest', url: productUrl },
-        webpush: {
-          notification: {
-            icon:  product.imageUrl ?? `${siteBase}/assets/meta/icon/logo.png`,
-            badge: `${siteBase}/assets/meta/icon/logo.png`,
-          },
-          fcmOptions: { link: productUrl },
-        },
-      });
-    } catch { /* stale token — ignore */ }
-  }
+  // Write scheduled_at on the view record (dedup guard)
+  await viewRef.child('scheduled_at').set(sendAt);
 
-  // Alert admins
-  try {
-    await notifyAdmins(
-      `🔥 Hot Lead — ${customerName}`,
-      `Viewed "${product.title}" ${recentCount}× this week. Good time to reach out!`,
-      { productId, uid, type: 'product_interest' },
-    );
-  } catch { /* never block tracking */ }
+  // Store pending notification for the cron job to pick up
+  await db.ref(`product_interest_pending/${uid}/${productId}`).set({
+    send_at:       sendAt,
+    product_title: product.title,
+    product_image: product.imageUrl ?? null,
+    product_url:   productUrl,
+    recent_count:  recentCount,
+    customer_name: customerName,
+    fcm_token:     userData.fcmToken ?? null,
+    uid,
+    productId,
+  });
 }

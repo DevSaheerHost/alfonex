@@ -183,8 +183,13 @@ export default function ProductDetailClient({ product, similar, reviews, initial
   const wished          = has(product.id);
   const [reserveOpen, setReserveOpen] = useState(false);
 
-  // Track this view — fires once per page load, server action handles auth + threshold check
+  // Track this view — deduplicated per session so colour/variant changes
+  // (which remount the component) don't count as extra visits.
   useEffect(() => {
+    const ssKey = `pv_${product.id}`;
+    const last  = Number(sessionStorage.getItem(ssKey) ?? 0);
+    if (Date.now() - last < 30 * 60 * 1000) return; // already counted within 30 min
+    sessionStorage.setItem(ssKey, String(Date.now()));
     recordProductView(product.id).catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.id]);
