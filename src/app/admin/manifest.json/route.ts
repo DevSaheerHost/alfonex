@@ -4,7 +4,7 @@ export async function GET() {
     short_name:       'Admin',
     description:      'Alfonex Admin Dashboard — manage products, orders, and customers.',
     start_url:        '/admin',
-    scope:            '/admin/',
+    scope:            '/admin',
     display:          'standalone',
     orientation:      'portrait-primary',
     background_color: '#0c1a10',

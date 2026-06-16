@@ -9343,7 +9343,7 @@ function markSeen(id) {
 async function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return null;
   try {
-    const reg = await navigator.serviceWorker.register('/admin/sw.js', { scope: '/admin/' });
+    const reg = await navigator.serviceWorker.register('/admin/sw.js', { scope: '/admin' });
     console.log('[SW] Registered:', reg.scope);
     return reg;
   } catch (e) {
