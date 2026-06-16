@@ -383,12 +383,13 @@ export default function ProductDetailClient({ product, similar, reviews, initial
                 </p>
 
                 {colorGroup ? (
-                  /* ── Color swatches ── */
-                  <div className="flex flex-wrap gap-3">
+                  /* ── Color thumbnails (image) or swatches (CSS fallback) ── */
+                  <div className="flex flex-wrap gap-2">
                     {group.values.map((v) => {
-                      const active = currentVal === v.label;
-                      const oos    = v.stock === 0;
-                      const bg     = COLOR_SWATCHES[v.label.toLowerCase()] ?? '#e5e7eb';
+                      const active  = currentVal === v.label;
+                      const oos     = v.stock === 0;
+                      const hasImg  = !!v.imageUrl;
+                      const bg      = COLOR_SWATCHES[v.label.toLowerCase()] ?? '#e5e7eb';
                       const isLight = [
                         'starlight', 'silver', 'white', 'white titanium', 'gold',
                         'champagne gold', 'rose gold', 'sky blue', 'sierra blue',
@@ -401,23 +402,45 @@ export default function ProductDetailClient({ product, similar, reviews, initial
                           key={v.label}
                           disabled={oos}
                           onClick={() => handleVariantSelect(group.name, v)}
-                          className={`flex flex-col items-center gap-1 transition ${oos ? 'cursor-not-allowed opacity-40' : 'hover:opacity-90'}`}
+                          className={`flex flex-col items-center gap-1 transition ${oos ? 'cursor-not-allowed opacity-50' : 'hover:opacity-90'}`}
                         >
-                          <span
-                            className={`flex h-11 w-11 rounded-xl border-2 transition ${
+                          {hasImg ? (
+                            <span className={`relative flex h-14 w-14 overflow-hidden rounded-xl border-2 bg-gray-50 transition dark:bg-gray-800 ${
                               active
                                 ? 'border-primary-500 ring-2 ring-primary-400 ring-offset-1 dark:ring-offset-gray-900'
                                 : `border-gray-200 dark:border-gray-700 ${!oos ? 'hover:border-primary-300' : ''}`
-                            } ${oos ? 'relative overflow-hidden' : ''}`}
-                            style={{ backgroundColor: bg, boxShadow: isLight ? 'inset 0 0 0 1px rgba(0,0,0,.08)' : undefined }}
-                          >
-                            {oos && (
-                              /* diagonal strikethrough line for OOS color swatches */
-                              <span className="absolute inset-0 flex items-center justify-center">
-                                <span className="h-px w-[130%] rotate-45 bg-gray-400 opacity-70" />
-                              </span>
-                            )}
-                          </span>
+                            }`}>
+                              <Image
+                                src={v.imageUrl!}
+                                alt={v.label}
+                                fill
+                                className="object-contain p-1"
+                                sizes="56px"
+                              />
+                              {oos && (
+                                <span className="absolute inset-0 flex items-end justify-center bg-white/70 pb-0.5 dark:bg-black/60">
+                                  <span className="text-center text-[7px] font-bold uppercase leading-tight text-gray-500">
+                                    Out of<br />stock
+                                  </span>
+                                </span>
+                              )}
+                            </span>
+                          ) : (
+                            <span
+                              className={`flex h-11 w-11 rounded-xl border-2 transition ${
+                                active
+                                  ? 'border-primary-500 ring-2 ring-primary-400 ring-offset-1 dark:ring-offset-gray-900'
+                                  : `border-gray-200 dark:border-gray-700 ${!oos ? 'hover:border-primary-300' : ''}`
+                              } ${oos ? 'relative overflow-hidden' : ''}`}
+                              style={{ backgroundColor: bg, boxShadow: isLight ? 'inset 0 0 0 1px rgba(0,0,0,.08)' : undefined }}
+                            >
+                              {oos && (
+                                <span className="absolute inset-0 flex items-center justify-center">
+                                  <span className="h-px w-[130%] rotate-45 bg-gray-400 opacity-70" />
+                                </span>
+                              )}
+                            </span>
+                          )}
                           <span className={`text-[10px] font-medium leading-tight ${
                             active ? 'text-primary-600 dark:text-primary-400' : 'text-gray-500 dark:text-gray-400'
                           } ${oos ? 'line-through' : ''}`}>
