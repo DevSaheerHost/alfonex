@@ -262,7 +262,7 @@ export default function ProductDetailClient({ product, similar, reviews, initial
   };
 
   return (
-    <div className="page-wrapper animate-sheet-enter">
+    <div className="page-wrapper">
       {/* Reads ?q= param and logs the search-to-click event to RTDB.
           Suspense is required by Next.js for any useSearchParams caller. */}
       <Suspense fallback={null}>
