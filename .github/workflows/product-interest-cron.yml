@@ -1,0 +1,16 @@
+name: Product Interest Notifications
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'   # every 15 minutes, free on GitHub Actions
+  workflow_dispatch:           # allow manual trigger from GitHub UI
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send due product-interest notifications
+        run: |
+          curl -sf \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.SITE_URL }}/api/cron/product-interest"
