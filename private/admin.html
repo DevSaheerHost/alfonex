@@ -1698,6 +1698,61 @@ tbody td{padding:12px 16px;vertical-align:middle}
           </div>
         </div>
       </div>
+
+      <!-- ── Bulk Pricelist Generator ── -->
+      <div class="table-card" style="padding:0;overflow:hidden;margin-top:20px">
+        <div class="table-topbar" style="flex-wrap:wrap;gap:8px">
+          <div class="table-topbar-title"><i class="fa-solid fa-layer-group" style="color:var(--green)"></i> Bulk Pricelist Generator</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <select class="mf-input" id="bp-currency" style="width:auto;padding:5px 10px;font-size:12px" onchange="bpRecalc()">
+              <option value="AED">AED</option>
+              <option value="USD">$ USD</option>
+              <option value="INR">₹ INR</option>
+            </select>
+            <input class="mf-input" type="date" id="bp-valid" style="width:auto;padding:5px 10px;font-size:12px" title="Valid until date">
+          </div>
+        </div>
+        <div class="two-col" style="gap:0;margin:0">
+          <!-- Left: client + product rows -->
+          <div style="padding:20px;border-right:1px solid var(--border)">
+            <div class="mf-group">
+              <label class="mf-label">Client / Company Name <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+              <input class="mf-input" id="bp-client" placeholder="e.g. Al Noor Trading LLC">
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <span class="mf-label" style="margin:0">Products</span>
+              <button class="btn-ghost" onclick="bpAddRow()" style="padding:4px 10px;font-size:12px"><i class="fa-solid fa-plus"></i> Add Product</button>
+            </div>
+            <!-- Column labels -->
+            <div style="display:grid;grid-template-columns:1fr 64px 100px 90px 80px 28px;gap:6px;padding:0 2px;margin-bottom:4px">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--muted)">Product</div>
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);text-align:center">Qty</div>
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);text-align:right">Unit Price</div>
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);text-align:right">Bulk Extra<br><span style="font-weight:400">/unit</span></div>
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);text-align:right">Total</div>
+              <div></div>
+            </div>
+            <div id="bp-rows"></div>
+            <div class="mf-group" style="margin-top:14px">
+              <label class="mf-label">Terms / Notes</label>
+              <textarea class="mf-textarea" id="bp-notes" rows="2" placeholder="e.g. Prices valid for 7 days. Delivery 3–5 business days."></textarea>
+            </div>
+          </div>
+          <!-- Right: summary + actions -->
+          <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px 16px">
+              <div class="mf-label" style="margin-bottom:10px">Order Summary</div>
+              <div id="bp-summary" style="font-size:13px;display:flex;flex-direction:column;gap:8px">
+                <div style="color:var(--muted);text-align:center;padding:16px 0;font-size:12px">Add products to get started</div>
+              </div>
+            </div>
+            <button class="btn-primary" onclick="bpGeneratePDF()"><i class="fa-solid fa-file-pdf"></i> Download Pricelist PDF</button>
+            <button class="btn-ghost" onclick="bpPreview()"><i class="fa-solid fa-eye"></i> Preview</button>
+          </div>
+        </div>
+        <!-- Preview panel (hidden by default) -->
+        <div id="bp-preview-area" style="display:none;padding:20px;border-top:1px solid var(--border)"></div>
+      </div>
     </section>
 
     <!-- ══════════════════════════════════════
@@ -3898,7 +3953,7 @@ function showSection(name, fromPopstate = false){
   setTimeout(() => {
     if (name==='marketing')     { populatePosterProducts(); updatePoster(); }
     if (name==='labels')        { populateBarcodeProducts(); }
-    if (name==='invoices')      { populateInvoiceOrders(); buildCustomInvClients(); }
+    if (name==='invoices')      { populateInvoiceOrders(); buildCustomInvClients(); bpInit(); }
     if (name==='audit')         { renderAuditLog(); }
     if (name==='warranty')      { renderWarrantyTable(); }
     if (name==='customers')     { renderCustomerTable(); }
@@ -7419,6 +7474,315 @@ function generateInvoicePDF() {
 /* ─── CUSTOM INVOICE BUILDER ─────────────────────────────── */
 let _ciRowIdx  = 0;
 const _ciClientMap = {};
+
+/* ═══════════════════════════════════════════════
+   BULK PRICELIST GENERATOR
+═══════════════════════════════════════════════ */
+let _bpRowIdx = 0;
+
+function bpInit() {
+  const validEl = document.getElementById('bp-valid');
+  if (validEl && !validEl.value) {
+    const d = new Date(); d.setDate(d.getDate() + 7);
+    validEl.value = d.toISOString().slice(0, 10);
+  }
+  if (!document.querySelector('#bp-rows .bp-row')) bpAddRow();
+}
+
+function bpAddRow() {
+  const idx  = _bpRowIdx++;
+  const rows = document.getElementById('bp-rows');
+  if (!rows) return;
+  const opts = '<option value="">— select product —</option>' +
+    Object.entries(APP.products || {})
+      .filter(([, p]) => !p.isHidden)
+      .sort(([, a], [, b]) => (a.title || '').localeCompare(b.title || ''))
+      .map(([id, p]) => `<option value="${id}">${esc(p.title || id)}</option>`)
+      .join('');
+  const div = document.createElement('div');
+  div.className = 'bp-row';
+  div.id = `bp-row-${idx}`;
+  div.style.cssText = 'display:grid;grid-template-columns:1fr 64px 100px 90px 80px 28px;gap:6px;align-items:center;margin-bottom:8px';
+  div.innerHTML = `
+    <select class="mf-input bp-product" style="font-size:12px;padding:6px 8px" onchange="bpProductChange(${idx})">
+      ${opts}
+    </select>
+    <input type="number" class="mf-input bp-qty" min="1" value="1" style="text-align:center;font-size:12px;padding:6px 4px" oninput="bpRecalc()">
+    <input type="number" class="mf-input bp-price" min="0" step="0.01" value="0" style="text-align:right;font-size:12px;padding:6px 8px" oninput="bpRecalc()">
+    <input type="number" class="mf-input bp-extra" min="0" step="0.01" value="0" placeholder="0" style="text-align:right;font-size:12px;padding:6px 8px" oninput="bpRecalc()">
+    <span class="bp-linetotal" style="font-size:12px;font-weight:800;text-align:right;color:var(--green);white-space:nowrap">—</span>
+    <button onclick="bpRemoveRow(${idx})" style="background:none;border:none;color:var(--muted);cursor:pointer;padding:2px;font-size:14px" title="Remove"><i class="fa-solid fa-xmark"></i></button>`;
+  rows.appendChild(div);
+}
+
+function bpRemoveRow(idx) {
+  document.getElementById(`bp-row-${idx}`)?.remove();
+  bpRecalc();
+}
+
+function bpProductChange(idx) {
+  const row = document.getElementById(`bp-row-${idx}`);
+  if (!row) return;
+  const pid = row.querySelector('.bp-product')?.value;
+  const p   = pid ? (APP.products || {})[pid] : null;
+  if (!p) return;
+  const cur   = document.getElementById('bp-currency')?.value || 'AED';
+  const price = cur === 'USD' ? (p.priceUSD || p.price || 0)
+              : cur === 'INR' ? (p.priceINR || p.price || 0)
+              : (p.priceAED   || p.price    || 0);
+  row.querySelector('.bp-price').value = Number(price).toFixed(2);
+  bpRecalc();
+}
+
+function bpRecalc() {
+  const cur = document.getElementById('bp-currency')?.value || 'AED';
+  const sym = { USD: '$', AED: 'AED ', INR: '₹' }[cur] || '';
+  const fmt = n => sym + Number(n).toLocaleString(undefined, { minimumFractionDigits: 2 });
+  let grandTotal = 0; let totalQty = 0; let rowCount = 0;
+  document.querySelectorAll('.bp-row').forEach(row => {
+    const qty   = parseFloat(row.querySelector('.bp-qty')?.value   || 1) || 1;
+    const price = parseFloat(row.querySelector('.bp-price')?.value || 0) || 0;
+    const extra = parseFloat(row.querySelector('.bp-extra')?.value || 0) || 0;
+    const line  = qty * (price + extra);
+    grandTotal += line;
+    totalQty   += qty;
+    rowCount++;
+    const ltEl = row.querySelector('.bp-linetotal');
+    if (ltEl) ltEl.textContent = fmt(line);
+  });
+  const sumEl = document.getElementById('bp-summary');
+  if (!sumEl) return;
+  if (rowCount === 0) {
+    sumEl.innerHTML = '<div style="color:var(--muted);text-align:center;padding:16px 0;font-size:12px">Add products to get started</div>';
+    return;
+  }
+  sumEl.innerHTML = `
+    <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Total items</span><span>${rowCount} product${rowCount!==1?'s':''}</span></div>
+    <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Total qty</span><span>${totalQty} pcs</span></div>
+    <div style="display:flex;justify-content:space-between;padding-top:10px;border-top:2px solid var(--green);font-size:16px;font-weight:900;color:var(--green)">
+      <span>GRAND TOTAL</span><span>${fmt(grandTotal)}</span>
+    </div>`;
+}
+
+function _bpGetRows() {
+  return Array.from(document.querySelectorAll('.bp-row')).map(row => {
+    const pid   = row.querySelector('.bp-product')?.value || '';
+    const p     = pid ? (APP.products || {})[pid] : null;
+    const cur   = document.getElementById('bp-currency')?.value || 'AED';
+    const sym   = { USD: '$', AED: 'AED ', INR: '₹' }[cur] || '';
+    const qty   = parseFloat(row.querySelector('.bp-qty')?.value   || 1) || 1;
+    const price = parseFloat(row.querySelector('.bp-price')?.value || 0) || 0;
+    const extra = parseFloat(row.querySelector('.bp-extra')?.value || 0) || 0;
+    const effective = price + extra;
+    const line  = qty * effective;
+    return { pid, title: p?.title || 'Custom Item', qty, price, extra, effective, line, sym };
+  }).filter(r => r.title && r.qty > 0);
+}
+
+function bpPreview() {
+  const rows  = _bpGetRows();
+  const cur   = document.getElementById('bp-currency')?.value || 'AED';
+  const sym   = { USD: '$', AED: 'AED ', INR: '₹' }[cur] || '';
+  const fmt   = n => sym + Number(n).toLocaleString(undefined, { minimumFractionDigits: 2 });
+  const client = document.getElementById('bp-client')?.value.trim() || '';
+  const notes  = document.getElementById('bp-notes')?.value.trim() || '';
+  const valid  = document.getElementById('bp-valid')?.value || '';
+  const today  = new Date().toISOString().slice(0, 10);
+  const grand  = rows.reduce((s, r) => s + r.line, 0);
+  const area   = document.getElementById('bp-preview-area');
+  if (!area) return;
+  if (!rows.length) { showToast('Add at least one product', 'error'); return; }
+  const tableRows = rows.map((r, i) => `
+    <tr style="border-bottom:1px solid #e5e7eb">
+      <td style="padding:8px 6px;font-size:12px">${i+1}</td>
+      <td style="padding:8px 6px;font-size:12px;font-weight:600">${esc(r.title)}</td>
+      <td style="padding:8px 6px;text-align:center;font-size:12px">${r.qty}</td>
+      <td style="padding:8px 6px;text-align:right;font-size:12px">${sym}${Number(r.price).toLocaleString(undefined,{minimumFractionDigits:2})}</td>
+      <td style="padding:8px 6px;text-align:right;font-size:12px;color:${r.extra>0?'#e55b00':'var(--muted)'}">${r.extra>0?'+'+sym+Number(r.extra).toLocaleString(undefined,{minimumFractionDigits:2}):'—'}</td>
+      <td style="padding:8px 6px;text-align:right;font-size:12px;font-weight:700">${sym}${Number(r.effective).toLocaleString(undefined,{minimumFractionDigits:2})}</td>
+      <td style="padding:8px 6px;text-align:right;font-size:13px;font-weight:800;color:var(--green)">${fmt(r.line)}</td>
+    </tr>`).join('');
+  area.style.display = 'block';
+  area.innerHTML = `
+    <div style="max-width:720px;margin:0 auto;font-family:var(--font-body);font-size:12px;color:var(--text)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:14px;border-bottom:3px solid var(--green);margin-bottom:16px">
+        <div>
+          <div style="font-size:20px;font-weight:900;color:var(--green)">Alfonex</div>
+          <div style="font-size:10px;color:var(--muted)">Premium Apple Devices</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:15px;font-weight:900;letter-spacing:1px">BULK PRICELIST</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">Date: ${today}${valid?` &nbsp;|&nbsp; Valid Until: ${valid}`:''}</div>
+          ${client?`<div style="font-size:12px;font-weight:700;margin-top:4px">Prepared for: ${esc(client)}</div>`:''}
+        </div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:16px">
+        <thead>
+          <tr style="background:var(--bg)">
+            <th style="padding:8px 6px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)">#</th>
+            <th style="padding:8px 6px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)">Product</th>
+            <th style="padding:8px 6px;text-align:center;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)">Qty</th>
+            <th style="padding:8px 6px;text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)">Unit Price</th>
+            <th style="padding:8px 6px;text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)">Bulk Extra</th>
+            <th style="padding:8px 6px;text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)">Eff. Price</th>
+            <th style="padding:8px 6px;text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)">Total</th>
+          </tr>
+        </thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:${notes?'12px':'0'}">
+        <div style="border-top:2px solid var(--green);padding-top:10px;text-align:right;min-width:200px">
+          <div style="font-size:18px;font-weight:900;color:var(--green)">GRAND TOTAL: ${fmt(grand)}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${rows.reduce((s,r)=>s+r.qty,0)} pcs total</div>
+        </div>
+      </div>
+      ${notes?`<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:11px;color:var(--muted);white-space:pre-line">${esc(notes)}</div>`:''}
+    </div>`;
+}
+
+function bpGeneratePDF() {
+  const rows  = _bpGetRows();
+  if (!rows.length) { showToast('Add at least one product', 'error'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc   = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const cur   = document.getElementById('bp-currency')?.value || 'AED';
+  const sym   = { USD: '$', AED: 'AED ', INR: '₹' }[cur] || '';
+  const fmt   = n => sym + Number(n).toLocaleString(undefined, { minimumFractionDigits: 2 });
+  const client = document.getElementById('bp-client')?.value.trim() || '';
+  const notes  = document.getElementById('bp-notes')?.value.trim() || '';
+  const valid  = document.getElementById('bp-valid')?.value || '';
+  const today  = new Date().toISOString().slice(0, 10);
+  const grand  = rows.reduce((s, r) => s + r.line, 0);
+  const W = 210; const M = 14;
+
+  // Header bar
+  doc.setFillColor(46, 160, 86);
+  doc.rect(0, 0, W, 22, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.text('Alfonex', M, 14);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Premium Apple Devices', M, 19.5);
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text('BULK PRICELIST', W - M, 13, { align: 'right' });
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Date: ' + today, W - M, 19.5, { align: 'right' });
+
+  let y = 30;
+  // Sub-header info
+  doc.setTextColor(60, 60, 60);
+  doc.setFontSize(9);
+  if (client) {
+    doc.setFont('helvetica', 'bold');
+    doc.text('Prepared for: ' + client, M, y);
+    y += 6;
+  }
+  if (valid) {
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(120, 120, 120);
+    doc.text('Valid Until: ' + valid, M, y);
+    y += 6;
+  }
+  y += 2;
+
+  // Table header
+  const cols = [10, 80, 15, 26, 26, 26, 26];  // widths
+  const headers = ['#', 'Product', 'Qty', 'Unit Price', 'Bulk Extra', 'Eff. Price', 'Total'];
+  const aligns  = ['center','left','center','right','right','right','right'];
+  doc.setFillColor(240, 253, 244);
+  doc.rect(M, y - 4, W - M * 2, 8, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(46, 160, 86);
+  let x = M;
+  headers.forEach((h, i) => {
+    const cx = aligns[i] === 'right' ? x + cols[i] : aligns[i] === 'center' ? x + cols[i]/2 : x + 2;
+    doc.text(h, cx, y, { align: aligns[i] === 'center' ? 'center' : aligns[i] === 'right' ? 'right' : 'left' });
+    x += cols[i];
+  });
+  y += 6;
+  doc.setDrawColor(46, 160, 86);
+  doc.setLineWidth(0.4);
+  doc.line(M, y - 2, W - M, y - 2);
+
+  // Table rows
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  rows.forEach((r, i) => {
+    if (y > 265) { doc.addPage(); y = 20; }
+    if (i % 2 === 0) {
+      doc.setFillColor(249, 250, 251);
+      doc.rect(M, y - 4, W - M * 2, 7, 'F');
+    }
+    doc.setTextColor(30, 30, 30);
+    const vals = [
+      String(i + 1),
+      r.title.length > 38 ? r.title.slice(0, 36) + '…' : r.title,
+      String(r.qty),
+      fmt(r.price),
+      r.extra > 0 ? '+' + fmt(r.extra) : '—',
+      fmt(r.effective),
+      fmt(r.line),
+    ];
+    x = M;
+    vals.forEach((v, vi) => {
+      if (vi === 4 && r.extra > 0) doc.setTextColor(229, 91, 0);
+      else if (vi === 6) doc.setTextColor(46, 160, 86);
+      else doc.setTextColor(30, 30, 30);
+      const cx = aligns[vi] === 'right' ? x + cols[vi] : aligns[vi] === 'center' ? x + cols[vi]/2 : x + 2;
+      doc.text(v, cx, y, { align: aligns[vi] === 'center' ? 'center' : aligns[vi] === 'right' ? 'right' : 'left' });
+      x += cols[vi];
+    });
+    doc.setDrawColor(229, 231, 235);
+    doc.setLineWidth(0.2);
+    doc.line(M, y + 3, W - M, y + 3);
+    y += 7;
+  });
+
+  // Grand total
+  y += 4;
+  doc.setFillColor(46, 160, 86);
+  doc.rect(M, y - 4, W - M * 2, 10, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.text('GRAND TOTAL', M + 2, y + 2);
+  doc.text(fmt(grand), W - M, y + 2, { align: 'right' });
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`${rows.reduce((s,r)=>s+r.qty,0)} pcs total`, M + 2, y + 7);
+  y += 16;
+
+  // Notes
+  if (notes) {
+    doc.setTextColor(80, 80, 80);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Terms & Notes', M, y); y += 5;
+    doc.setFont('helvetica', 'normal');
+    const lines = doc.splitTextToSize(notes, W - M * 2);
+    doc.text(lines, M, y);
+    y += lines.length * 4.5 + 4;
+  }
+
+  // Footer
+  doc.setFillColor(240, 253, 244);
+  doc.rect(0, 285, W, 12, 'F');
+  doc.setTextColor(46, 160, 86);
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Alfonex — Premium Apple Devices', W / 2, 291, { align: 'center' });
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(120, 120, 120);
+  doc.text('This is a pricelist/quotation, not a final invoice.', W / 2, 295, { align: 'center' });
+
+  const fname = `Alfonex_Bulk_Pricelist_${today.replace(/-/g,'')}.pdf`;
+  doc.save(fname);
+}
 
 function buildCustomInvClients() {
   const sel = document.getElementById('ci-client-sel');
