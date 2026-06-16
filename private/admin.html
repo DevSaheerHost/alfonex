@@ -1173,6 +1173,7 @@ tbody td{padding:12px 16px;vertical-align:middle}
       <button class="sb-link" data-section="warranty" onclick="showSection('warranty')"><span class="sb-ic"><i class="fa-solid fa-shield-halved"></i></span>Warranty<span class="sb-badge" id="sb-warranty-count" style="display:none;background:#f59e0b">0</span></button>
       <button class="sb-link" data-section="products" onclick="showSection('products')"><span class="sb-ic"><i class="fa-solid fa-box-open"></i></span>Products<span class="sb-badge" id="sb-prod-count">0</span></button>
       <button class="sb-link" data-section="orders" onclick="showSection('orders')"><span class="sb-ic"><i class="fa-solid fa-clipboard-list"></i></span>Orders<span class="sb-badge" id="sb-order-count">0</span></button>
+      <button class="sb-link" data-section="offline-orders" onclick="showSection('offline-orders')"><span class="sb-ic"><i class="fa-solid fa-store"></i></span>Offline Orders<span class="sb-badge" id="sb-offorder-count" style="display:none;background:#8b5cf6">0</span></button>
       <button class="sb-link" data-section="banners" onclick="showSection('banners')"><span class="sb-ic"><i class="fa-solid fa-image"></i></span>Banners</button>
       <!-- Business -->
       <div class="sb-section-label">Business</div>
@@ -1409,6 +1410,54 @@ tbody td{padding:12px 16px;vertical-align:middle}
         <div class="table-wrap"><table>
           <thead><tr><th>Order</th><th>Customer</th><th class="hide-mobile">Items</th><th>Total</th><th>Status</th><th class="hide-mobile">Payment</th><th class="hide-mobile">Date</th><th>Actions</th></tr></thead>
           <tbody id="order-tbody"><tr><td colspan="8"><div class="empty-state"><div class="empty-icon">📋</div><p>No orders yet.</p></div></td></tr></tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════
+         OFFLINE ORDERS
+    ══════════════════════════════════════ -->
+    <section id="section-offline-orders" class="content-section">
+      <div class="sec-header">
+        <div><div class="sec-title">Offline Orders</div><div class="sec-sub">Walk-in, phone &amp; WhatsApp orders recorded manually</div></div>
+        <div class="sec-header-right">
+          <button class="btn-primary" onclick="openOfflineOrderModal()"><i class="fa-solid fa-plus"></i> New Offline Order</button>
+        </div>
+      </div>
+
+      <!-- Stats row -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+        <div class="stat-card purple"><div class="stat-icon" style="background:#ede9fe;color:#7c3aed"><i class="fa-solid fa-store"></i></div><div><div class="stat-num" id="oo-stat-total">0</div><div class="stat-lbl">Total</div></div></div>
+        <div class="stat-card amber"><div class="stat-icon amber"><i class="fa-solid fa-hourglass-half"></i></div><div><div class="stat-num" id="oo-stat-pending">0</div><div class="stat-lbl">Pending</div></div></div>
+        <div class="stat-card green"><div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div><div><div class="stat-num" id="oo-stat-delivered">0</div><div class="stat-lbl">Delivered</div></div></div>
+        <div class="stat-card blue"><div class="stat-icon blue"><i class="fa-solid fa-coins"></i></div><div><div class="stat-num" id="oo-stat-revenue">0</div><div class="stat-lbl">Revenue (AED)</div></div></div>
+      </div>
+
+      <div class="table-card">
+        <div class="filter-tabs" id="oo-filter-tabs">
+          <button class="filter-tab active" data-status="all"       onclick="setOOFilter('all')">All <span class="tab-count" id="oo-tc-all">0</span></button>
+          <button class="filter-tab" data-status="Pending"          onclick="setOOFilter('Pending')"><i class="fa-solid fa-hourglass-half"></i> Pending <span class="tab-count" id="oo-tc-pending">0</span></button>
+          <button class="filter-tab" data-status="Delivered"        onclick="setOOFilter('Delivered')"><i class="fa-solid fa-circle-check"></i> Delivered <span class="tab-count" id="oo-tc-delivered">0</span></button>
+          <button class="filter-tab" data-status="Cancelled"        onclick="setOOFilter('Cancelled')"><i class="fa-solid fa-ban"></i> Cancelled <span class="tab-count" id="oo-tc-cancelled">0</span></button>
+        </div>
+        <div class="table-topbar">
+          <div class="table-topbar-title">Offline Orders</div>
+          <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="search" id="oo-search" placeholder="Customer / phone…" oninput="renderOfflineOrdersTable()"></div>
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr>
+            <th>Order ID</th>
+            <th>Customer</th>
+            <th class="hide-mobile">Items</th>
+            <th>Total</th>
+            <th>Payment</th>
+            <th>Status</th>
+            <th class="hide-mobile">Date</th>
+            <th>Actions</th>
+          </tr></thead>
+          <tbody id="oo-tbody">
+            <tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🏪</div><p>No offline orders yet.</p></div></td></tr>
+          </tbody>
         </table></div>
       </div>
     </section>
@@ -3951,7 +4000,7 @@ function showSection(name, fromPopstate = false){
     dealers:'Dealer Management', customers:'Customer Management',
     warehouse:'Multi-Warehouse System', international:'International Business',
     marketing:'Marketing Tools', labels:'Labels & Barcodes',
-    invoices:'Customer Invoices', 'custom-invoice':'Custom Invoice Builder', 'bulk-pricelist':'Bulk Pricelist Generator', comms:'Team Communication',
+    invoices:'Customer Invoices', 'custom-invoice':'Custom Invoice Builder', 'bulk-pricelist':'Bulk Pricelist Generator', 'offline-orders':'Offline Orders', comms:'Team Communication',
     meetings:'Meeting Scheduler', pricehistory:'Price Change History', reservations:'Device Reservations', pricelist:'Price List',
     audit:'Audit Trail', reviews:'Product Reviews', loyalty:'Loyalty & Referrals', 'search-analytics':'Search Analytics',
     analytics:'Analytics', 'push-notifications':'Push Notifications', security:'Security'
@@ -3978,6 +4027,7 @@ function showSection(name, fromPopstate = false){
     if (name==='marketing')     { populatePosterProducts(); updatePoster(); }
     if (name==='labels')        { populateBarcodeProducts(); }
     if (name==='invoices')        { populateInvoiceOrders(); }
+    if (name==='offline-orders') { attachOfflineOrdersListener(); }
     if (name==='custom-invoice') { buildCustomInvClients(); }
     if (name==='bulk-pricelist') { bpInit(); }
     if (name==='audit')         { renderAuditLog(); }
@@ -10921,6 +10971,285 @@ async function secClearLockout() {
   } catch { showToast('Failed to clear lockout', 'error'); }
 }
 
+/* ═══════════════════════════════════════════════
+   OFFLINE ORDERS
+═══════════════════════════════════════════════ */
+let _ooEditId    = null;
+let _ooRowIdx    = 0;
+let _ooListener  = null;
+let _ooFilter    = 'all';
+APP.offlineOrders = {};
+
+function attachOfflineOrdersListener() {
+  if (_ooListener) return;   // already attached
+  _ooListener = db.ref('offline_orders').orderByChild('createdAt').on('value', snap => {
+    APP.offlineOrders = snap.val() || {};
+    renderOfflineOrdersTable();
+    _ooUpdateBadge();
+  });
+}
+
+function _ooUpdateBadge() {
+  const pending = Object.values(APP.offlineOrders).filter(o => o.status === 'Pending').length;
+  const badge   = document.getElementById('sb-offorder-count');
+  if (!badge) return;
+  badge.textContent = pending;
+  badge.style.display = pending > 0 ? 'inline-flex' : 'none';
+}
+
+function setOOFilter(status) {
+  _ooFilter = status;
+  document.querySelectorAll('#oo-filter-tabs .filter-tab').forEach(t =>
+    t.classList.toggle('active', t.dataset.status === status));
+  renderOfflineOrdersTable();
+}
+
+function renderOfflineOrdersTable() {
+  const SYMS = { USD:'$', AED:'AED ', INR:'₹' };
+  const q    = (document.getElementById('oo-search')?.value || '').toLowerCase();
+  let entries = Object.entries(APP.offlineOrders)
+    .sort(([,a],[,b]) => (b.createdAt||0) - (a.createdAt||0));
+
+  // Counts for tabs
+  const counts = { all: entries.length, Pending: 0, Delivered: 0, Cancelled: 0 };
+  entries.forEach(([,o]) => { if (counts[o.status] !== undefined) counts[o.status]++; });
+  [['all','oo-tc-all'],['Pending','oo-tc-pending'],['Delivered','oo-tc-delivered'],['Cancelled','oo-tc-cancelled']]
+    .forEach(([k, id]) => { const el = document.getElementById(id); if (el) el.textContent = counts[k] || 0; });
+
+  // Stats
+  const all = Object.values(APP.offlineOrders);
+  document.getElementById('oo-stat-total')    && (document.getElementById('oo-stat-total').textContent    = all.length);
+  document.getElementById('oo-stat-pending')  && (document.getElementById('oo-stat-pending').textContent  = all.filter(o=>o.status==='Pending').length);
+  document.getElementById('oo-stat-delivered')&& (document.getElementById('oo-stat-delivered').textContent= all.filter(o=>o.status==='Delivered').length);
+  const aedRev = all.filter(o=>o.status!=='Cancelled').reduce((s,o)=>{
+    const r = o.currency==='AED'?1 : o.currency==='USD'?3.67 : o.currency==='INR'?(1/23):1;
+    return s + (o.total||0)*r;
+  }, 0);
+  document.getElementById('oo-stat-revenue')  && (document.getElementById('oo-stat-revenue').textContent  = Math.round(aedRev).toLocaleString());
+
+  // Filter + search
+  if (_ooFilter !== 'all') entries = entries.filter(([,o]) => o.status === _ooFilter);
+  if (q) entries = entries.filter(([,o]) =>
+    (o.customerName||'').toLowerCase().includes(q) ||
+    (o.customerPhone||'').toLowerCase().includes(q) ||
+    (o.id||'').toLowerCase().includes(q));
+
+  const tbody = document.getElementById('oo-tbody');
+  if (!tbody) return;
+  if (!entries.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🏪</div><p>No offline orders found.</p></div></td></tr>`;
+    return;
+  }
+
+  const PAY_COLOR = { Paid:'#22c55e', Partial:'#f59e0b', Unpaid:'#ef4444' };
+  const STATUS_COLOR = { Pending:'#f59e0b', Delivered:'#22c55e', Cancelled:'#ef4444' };
+
+  tbody.innerHTML = entries.map(([id, o]) => {
+    const sym      = SYMS[(o.currency||'AED').toUpperCase()] || 'AED ';
+    const itemList = (o.items||[]).map(it => `${it.qty}× ${esc(it.title)}`).join(', ');
+    const shortId  = id.slice(-6).toUpperCase();
+    const dateStr  = o.createdAt ? new Date(o.createdAt).toLocaleDateString() : '—';
+    return `<tr>
+      <td><span class="badge" style="background:var(--surface2);color:var(--text);font-size:11px">#${shortId}</span></td>
+      <td>
+        <div style="font-weight:600">${esc(o.customerName||'—')}</div>
+        ${o.customerPhone ? `<div style="font-size:11px;color:var(--muted)">${esc(o.customerPhone)}</div>` : ''}
+      </td>
+      <td class="hide-mobile" style="font-size:12px;color:var(--muted);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${itemList||'—'}</td>
+      <td style="font-weight:700">${sym}${Number(o.total||0).toLocaleString()}</td>
+      <td>
+        <span class="badge" style="background:${PAY_COLOR[o.paymentStatus]||'#6b7280'}22;color:${PAY_COLOR[o.paymentStatus]||'#6b7280'};font-size:11px">${esc(o.paymentStatus||'—')}</span>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">${esc(o.paymentMethod||'')}</div>
+      </td>
+      <td><span class="badge" style="background:${STATUS_COLOR[o.status]||'#6b7280'}22;color:${STATUS_COLOR[o.status]||'#6b7280'}">${esc(o.status||'Pending')}</span></td>
+      <td class="hide-mobile" style="font-size:12px;color:var(--muted)">${dateStr}</td>
+      <td>
+        <div style="display:flex;gap:6px">
+          <button class="btn-edit" onclick="openOfflineOrderModal('${id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
+          ${o.status==='Pending'
+            ? `<button class="btn-primary btn-sm" onclick="ooMarkDelivered('${id}')" title="Mark Delivered" style="padding:5px 8px;font-size:11px"><i class="fa-solid fa-circle-check"></i></button>`
+            : ''}
+          <button class="btn-danger" onclick="ooDelete('${id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Modal open/close ─────────────────────────────────────────
+function openOfflineOrderModal(editId = null) {
+  _ooEditId  = editId;
+  _ooRowIdx  = 0;
+  const modal = document.getElementById('modal-offline-order');
+  if (!modal) return;
+
+  document.getElementById('oo-modal-title').textContent = editId ? 'Edit Offline Order' : 'New Offline Order';
+  document.getElementById('oo-rows').innerHTML = '';
+
+  // Default date = today
+  const today = new Date().toISOString().slice(0, 10);
+  document.getElementById('oo-date').value      = today;
+  document.getElementById('oo-notes').value     = '';
+  document.getElementById('oo-currency').value  = 'AED';
+
+  if (editId && APP.offlineOrders[editId]) {
+    const o = APP.offlineOrders[editId];
+    document.getElementById('oo-customer-name').value  = o.customerName  || '';
+    document.getElementById('oo-customer-phone').value = o.customerPhone || '';
+    document.getElementById('oo-currency').value       = o.currency      || 'AED';
+    document.getElementById('oo-pay-method').value     = o.paymentMethod || 'Cash';
+    document.getElementById('oo-pay-status').value     = o.paymentStatus || 'Paid';
+    document.getElementById('oo-status').value         = o.status        || 'Pending';
+    document.getElementById('oo-notes').value          = o.notes         || '';
+    if (o.createdAt) document.getElementById('oo-date').value = new Date(o.createdAt).toISOString().slice(0, 10);
+    (o.items || []).forEach(it => ooAddRow(it));
+  } else {
+    document.getElementById('oo-customer-name').value  = '';
+    document.getElementById('oo-customer-phone').value = '';
+    document.getElementById('oo-pay-method').value     = 'Cash';
+    document.getElementById('oo-pay-status').value     = 'Paid';
+    document.getElementById('oo-status').value         = 'Pending';
+    ooAddRow();
+  }
+  ooRecalc();
+  modal.classList.add('open');
+}
+
+function closeOfflineOrderModal() {
+  document.getElementById('modal-offline-order')?.classList.remove('open');
+  _ooEditId = null;
+}
+
+// ── Row management ───────────────────────────────────────────
+function ooAddRow(prefill = null) {
+  const idx  = _ooRowIdx++;
+  const rows = document.getElementById('oo-rows');
+  if (!rows) return;
+  const opts = '<option value="">— select product —</option>' +
+    Object.entries(APP.products || {})
+      .filter(([, p]) => !p.isHidden)
+      .sort(([,a],[,b]) => (a.title||'').localeCompare(b.title||''))
+      .map(([id, p]) => `<option value="${id}">${esc(p.title||id)}</option>`)
+      .join('');
+  const div = document.createElement('div');
+  div.className = 'oo-row';
+  div.id = `oo-row-${idx}`;
+  div.style.cssText = 'display:grid;grid-template-columns:1fr 70px 110px 28px;gap:6px;align-items:center;margin-bottom:8px';
+  div.innerHTML = `
+    <div>
+      <select class="mf-input oo-prod" style="font-size:12px;padding:6px 8px;margin-bottom:4px" onchange="ooProductChange(${idx})">
+        ${opts}
+      </select>
+      <input class="mf-input oo-desc" style="font-size:12px;padding:6px 8px" placeholder="Description / variant" oninput="ooRecalc()">
+    </div>
+    <input type="number" class="mf-input oo-qty" min="1" value="1" style="text-align:center;font-size:12px;padding:6px 4px" oninput="ooRecalc()">
+    <input type="number" class="mf-input oo-price" min="0" step="0.01" value="0" style="text-align:right;font-size:12px;padding:6px 8px" oninput="ooRecalc()">
+    <button onclick="ooRemoveRow(${idx})" style="background:none;border:none;color:var(--muted);cursor:pointer;padding:2px;font-size:14px" title="Remove"><i class="fa-solid fa-xmark"></i></button>`;
+  rows.appendChild(div);
+
+  if (prefill) {
+    div.querySelector('.oo-desc').value  = prefill.title  || '';
+    div.querySelector('.oo-qty').value   = prefill.qty    || 1;
+    div.querySelector('.oo-price').value = prefill.price  || 0;
+  }
+}
+
+function ooRemoveRow(idx) {
+  document.getElementById(`oo-row-${idx}`)?.remove();
+  ooRecalc();
+}
+
+function ooProductChange(idx) {
+  const row = document.getElementById(`oo-row-${idx}`);
+  if (!row) return;
+  const pid = row.querySelector('.oo-prod')?.value;
+  const p   = pid ? (APP.products||{})[pid] : null;
+  if (!p) return;
+  const cur   = document.getElementById('oo-currency')?.value || 'AED';
+  const price = cur==='USD' ? (p.priceUSD||p.price||0)
+              : cur==='INR' ? (p.priceINR||p.price||0)
+              : (p.priceAED||p.price||0);
+  row.querySelector('.oo-desc').value  = p.title || '';
+  row.querySelector('.oo-price').value = Number(price).toFixed(2);
+  ooRecalc();
+}
+
+function ooRecalc() {
+  const cur = document.getElementById('oo-currency')?.value || 'AED';
+  const sym = { USD:'$', AED:'AED ', INR:'₹' }[cur] || '';
+  let total = 0;
+  document.querySelectorAll('.oo-row').forEach(row => {
+    const qty   = parseFloat(row.querySelector('.oo-qty')?.value   || 1) || 1;
+    const price = parseFloat(row.querySelector('.oo-price')?.value || 0) || 0;
+    total += qty * price;
+  });
+  const el = document.getElementById('oo-total-display');
+  if (el) el.textContent = sym + total.toLocaleString(undefined, { minimumFractionDigits: 2 });
+}
+
+// ── Save ─────────────────────────────────────────────────────
+async function saveOfflineOrder() {
+  const name = document.getElementById('oo-customer-name')?.value.trim();
+  if (!name) { showToast('Customer name is required', 'error'); return; }
+
+  const items = Array.from(document.querySelectorAll('.oo-row')).map(row => ({
+    title: row.querySelector('.oo-desc')?.value.trim() || '',
+    qty:   parseFloat(row.querySelector('.oo-qty')?.value   || 1) || 1,
+    price: parseFloat(row.querySelector('.oo-price')?.value || 0) || 0,
+  })).filter(it => it.title);
+
+  if (!items.length) { showToast('Add at least one item', 'error'); return; }
+
+  const cur   = document.getElementById('oo-currency')?.value || 'AED';
+  const total = items.reduce((s, it) => s + it.qty * it.price, 0);
+  const dateVal = document.getElementById('oo-date')?.value;
+
+  const data = {
+    customerName:   name,
+    customerPhone:  document.getElementById('oo-customer-phone')?.value.trim() || '',
+    items,
+    total:          Math.round(total * 100) / 100,
+    currency:       cur,
+    paymentMethod:  document.getElementById('oo-pay-method')?.value || 'Cash',
+    paymentStatus:  document.getElementById('oo-pay-status')?.value || 'Paid',
+    status:         document.getElementById('oo-status')?.value     || 'Pending',
+    notes:          document.getElementById('oo-notes')?.value.trim() || '',
+    createdAt:      dateVal ? new Date(dateVal).getTime() : Date.now(),
+    updatedAt:      Date.now(),
+    adminName:      APP.user?.displayName || APP.user?.email || 'Admin',
+  };
+
+  const btn = document.getElementById('oo-save-btn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…'; }
+
+  try {
+    if (_ooEditId) {
+      await db.ref(`offline_orders/${_ooEditId}`).update(data);
+      showToast('Order updated', 'success');
+    } else {
+      await db.ref('offline_orders').push(data);
+      showToast('Offline order saved', 'success');
+    }
+    closeOfflineOrderModal();
+  } catch (e) {
+    showToast('Save failed: ' + e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Order'; }
+  }
+}
+
+// ── Quick actions ─────────────────────────────────────────────
+async function ooMarkDelivered(id) {
+  await db.ref(`offline_orders/${id}`).update({ status: 'Delivered', updatedAt: Date.now() });
+  showToast('Marked as Delivered', 'success');
+}
+
+async function ooDelete(id) {
+  if (!confirm('Delete this offline order?')) return;
+  await db.ref(`offline_orders/${id}`).remove();
+  showToast('Order deleted', 'success');
+}
+
 async function secLogout() {
   await auth.signOut().catch(() => {});
   await fetch('/api/admin-auth', { method: 'DELETE' });
@@ -10948,6 +11277,100 @@ async function secLogout() {
           <button class="btn-primary" style="background:var(--red);border-color:var(--red)" onclick="exitAdminPanel()">
             <i class="fa-solid fa-right-from-bracket"></i> Exit
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         OFFLINE ORDER MODAL
+    ══════════════════════════════════════ -->
+    <div class="modal-backdrop" id="modal-offline-order">
+      <div class="modal lg">
+        <div class="modal-header">
+          <div class="modal-title" id="oo-modal-title">New Offline Order</div>
+          <button class="modal-close" onclick="closeOfflineOrderModal()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body" style="max-height:75vh;overflow-y:auto">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div class="mf-group">
+              <label class="mf-label">Customer Name *</label>
+              <input class="mf-input" id="oo-customer-name" placeholder="e.g. Ahmed Al Rashid">
+            </div>
+            <div class="mf-group">
+              <label class="mf-label">Phone / WhatsApp</label>
+              <input class="mf-input" id="oo-customer-phone" placeholder="+971 50 000 0000">
+            </div>
+            <div class="mf-group">
+              <label class="mf-label">Currency</label>
+              <select class="mf-input" id="oo-currency" onchange="ooRecalc()">
+                <option value="AED">AED</option>
+                <option value="USD">$ USD</option>
+                <option value="INR">₹ INR</option>
+              </select>
+            </div>
+            <div class="mf-group">
+              <label class="mf-label">Order Date</label>
+              <input class="mf-input" type="date" id="oo-date">
+            </div>
+          </div>
+
+          <!-- Items -->
+          <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 8px">
+            <span class="mf-label" style="margin:0">Items *</span>
+            <button class="btn-ghost" onclick="ooAddRow()" style="padding:4px 10px;font-size:12px"><i class="fa-solid fa-plus"></i> Add Item</button>
+          </div>
+          <!-- column labels -->
+          <div style="display:grid;grid-template-columns:1fr 70px 110px 28px;gap:6px;padding:0 2px;margin-bottom:4px">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--muted)">Product / Description</div>
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);text-align:center">Qty</div>
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);text-align:right">Unit Price</div>
+            <div></div>
+          </div>
+          <div id="oo-rows"></div>
+
+          <!-- Totals + payment -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px">
+            <div class="mf-group">
+              <label class="mf-label">Payment Method</label>
+              <select class="mf-input" id="oo-pay-method">
+                <option value="Cash">Cash</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="Card">Card</option>
+                <option value="UPI">UPI</option>
+                <option value="Crypto">Crypto</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="mf-group">
+              <label class="mf-label">Payment Status</label>
+              <select class="mf-input" id="oo-pay-status">
+                <option value="Paid">Paid</option>
+                <option value="Partial">Partial</option>
+                <option value="Unpaid">Unpaid</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div class="mf-group">
+              <label class="mf-label">Order Status</label>
+              <select class="mf-input" id="oo-status">
+                <option value="Pending">Pending</option>
+                <option value="Delivered">Delivered</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+            </div>
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:flex;flex-direction:column;gap:6px;justify-content:center">
+              <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--muted)">Total</span><span id="oo-total-display" style="font-weight:800;color:var(--green);font-size:15px">—</span></div>
+            </div>
+          </div>
+          <div class="mf-group">
+            <label class="mf-label">Notes</label>
+            <textarea class="mf-textarea" id="oo-notes" rows="2" placeholder="Delivery address, special instructions…"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" onclick="closeOfflineOrderModal()">Cancel</button>
+          <button class="btn-primary" id="oo-save-btn" onclick="saveOfflineOrder()"><i class="fa-solid fa-floppy-disk"></i> Save Order</button>
         </div>
       </div>
     </div>
