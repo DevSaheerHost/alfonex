@@ -1776,6 +1776,8 @@ tbody td{padding:12px 16px;vertical-align:middle}
               <option value="INR">₹ INR</option>
             </select>
             <input class="mf-input" type="date" id="bp-valid" style="width:auto;padding:5px 10px;font-size:12px" title="Valid until date">
+            <button class="btn-ghost" onclick="bpExportJSON()" title="Export pricelist as JSON" style="padding:5px 10px;font-size:12px;white-space:nowrap"><i class="fa-solid fa-download"></i> Export</button>
+            <label class="btn-ghost" style="padding:5px 10px;font-size:12px;cursor:pointer;white-space:nowrap;margin:0" title="Import pricelist from JSON"><i class="fa-solid fa-upload"></i> Import<input type="file" accept=".json" style="display:none" onchange="bpImportJSON(this)"></label>
           </div>
         </div>
         <div class="two-col" style="gap:0;margin:0">
@@ -1794,12 +1796,13 @@ tbody td{padding:12px 16px;vertical-align:middle}
               <button class="btn-ghost" onclick="bpAddRow()" style="padding:4px 10px;font-size:12px"><i class="fa-solid fa-plus"></i> Add Product</button>
             </div>
             <!-- Column labels -->
-            <div style="display:grid;grid-template-columns:1fr 64px 100px 90px 80px 28px;gap:6px;padding:0 2px;margin-bottom:4px">
+            <div style="display:grid;grid-template-columns:1fr 64px 100px 90px 80px 28px 28px;gap:6px;padding:0 2px;margin-bottom:4px">
               <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--muted)">Product</div>
               <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);text-align:center">Qty</div>
               <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);text-align:right">Unit Price</div>
               <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);text-align:right">Bulk Extra<br><span style="font-weight:400">/unit</span></div>
               <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);text-align:right">Total</div>
+              <div></div>
               <div></div>
             </div>
             <div id="bp-rows"></div>
@@ -1818,8 +1821,11 @@ tbody td{padding:12px 16px;vertical-align:middle}
             </div>
             <button class="btn-primary" onclick="bpGeneratePDF()"><i class="fa-solid fa-file-pdf"></i> Download PDF</button>
             <button class="btn-ghost" onclick="bpPreview()"><i class="fa-solid fa-eye"></i> Preview</button>
-            <button class="btn-ghost" onclick="bpCopyWhatsApp()" style="background:rgba(37,211,102,.12);border-color:rgba(37,211,102,.4);color:#128C7E" title="Copy ready-to-paste WhatsApp message">
-              <i class="fa-brands fa-whatsapp" style="color:#25D366"></i> Copy WhatsApp Text
+            <button class="btn-ghost" onclick="bpCopyWhatsApp()" style="background:rgba(37,211,102,.12);border-color:rgba(37,211,102,.4);color:#128C7E" title="Share all products — full pricelist message">
+              <i class="fa-brands fa-whatsapp" style="color:#25D366"></i> Share All Products
+            </button>
+            <button class="btn-ghost" onclick="bpShareDealerQuote()" style="background:rgba(59,130,246,.1);border-color:rgba(59,130,246,.4);color:#2563eb" title="Share a compact dealer quote with per-product totals">
+              <i class="fa-solid fa-file-lines" style="color:#3b82f6"></i> Share Dealer Quote
             </button>
           </div>
         </div>
@@ -7578,7 +7584,7 @@ function bpAddRow() {
   const div = document.createElement('div');
   div.className = 'bp-row';
   div.id = `bp-row-${idx}`;
-  div.style.cssText = 'display:grid;grid-template-columns:1fr 64px 100px 90px 80px 28px;gap:6px;align-items:center;margin-bottom:8px';
+  div.style.cssText = 'display:grid;grid-template-columns:1fr 64px 100px 90px 80px 28px 28px;gap:6px;align-items:center;margin-bottom:8px';
   div.innerHTML = `
     <select class="mf-input bp-product" style="font-size:12px;padding:6px 8px" onchange="bpProductChange(${idx})">
       ${opts}
@@ -7587,6 +7593,7 @@ function bpAddRow() {
     <input type="number" class="mf-input bp-price" min="0" step="0.01" value="0" style="text-align:right;font-size:12px;padding:6px 8px" oninput="bpRecalc()">
     <input type="number" class="mf-input bp-extra" min="0" step="0.01" value="0" placeholder="0" style="text-align:right;font-size:12px;padding:6px 8px" oninput="bpRecalc()">
     <span class="bp-linetotal" style="font-size:12px;font-weight:800;text-align:right;color:var(--green);white-space:nowrap">—</span>
+    <button onclick="bpShareSingleRow(${idx})" style="background:none;border:none;color:#25D366;cursor:pointer;padding:2px;font-size:15px" title="Share this product on WhatsApp"><i class="fa-brands fa-whatsapp"></i></button>
     <button onclick="bpRemoveRow(${idx})" style="background:none;border:none;color:var(--muted);cursor:pointer;padding:2px;font-size:14px" title="Remove"><i class="fa-solid fa-xmark"></i></button>`;
   rows.appendChild(div);
 }
@@ -7926,6 +7933,133 @@ function bpCopyWhatsApp() {
     });
 }
 
+/* ── Pricelist: share single product row ─────────────────────────────── */
+function bpShareSingleRow(idx) {
+  const row  = document.getElementById(`bp-row-${idx}`);
+  if (!row) return;
+  const pid  = row.querySelector('.bp-product')?.value || '';
+  const p    = pid ? (APP.products || {})[pid] : null;
+  const title = p?.title || 'Product';
+  const cur  = document.getElementById('bp-currency')?.value || 'AED';
+  const qty  = parseFloat(row.querySelector('.bp-qty')?.value   || 1) || 1;
+  const price = parseFloat(row.querySelector('.bp-price')?.value || 0) || 0;
+  const extra = parseFloat(row.querySelector('.bp-extra')?.value || 0) || 0;
+  const effective = price + extra;
+  const line  = qty * effective;
+  const fmtNum = n => Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 });
+  const fmtAmt = n => cur === 'INR' ? `₹${fmtNum(n)}` : `${fmtNum(n)} ${cur}`;
+  const msg = [
+    `📱 *${title}*`,
+    '',
+    `📦 Qty: ${qty} PCS`,
+    `💰 Unit Price: ${fmtAmt(effective)}${extra > 0 ? ` (incl. bulk discount)` : ''}`,
+    `🧾 Total: *${fmtAmt(line)}*`,
+    '',
+    'Contact us for availability and latest pricing.',
+  ].join('\n');
+  navigator.clipboard.writeText(msg)
+    .then(() => showToast(`Copied price for ${title}!`, 'success'))
+    .catch(() => { const ta = document.createElement('textarea'); ta.value = msg; ta.style.cssText = 'position:fixed;top:-9999px'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); showToast('Copied!', 'success'); });
+}
+
+/* ── Pricelist: share compact dealer quote ───────────────────────────── */
+function bpShareDealerQuote() {
+  const rows   = _bpGetRows();
+  if (!rows.length) { showToast('Add at least one product', 'error'); return; }
+  const cur    = document.getElementById('bp-currency')?.value || 'AED';
+  const client = document.getElementById('bp-client')?.value.trim() || '';
+  const title  = document.getElementById('bp-title')?.value.trim() || 'Bulk Pricelist';
+  const valid  = document.getElementById('bp-valid')?.value || '';
+  const notes  = document.getElementById('bp-notes')?.value.trim() || '';
+  const grand  = rows.reduce((s, r) => s + r.line, 0);
+  const totalQ = rows.reduce((s, r) => s + r.qty, 0);
+  const fmtNum = n => Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 });
+  const fmtAmt = n => cur === 'INR' ? `₹${fmtNum(n)}` : `${fmtNum(n)} ${cur}`;
+
+  const lines = rows.map((r, i) =>
+    `${i+1}. ${r.title}\n   ${r.qty} pcs × ${fmtAmt(r.effective)} = *${fmtAmt(r.line)}*`
+  ).join('\n');
+
+  const msg = [
+    `📋 *${title}*${client ? `\nPrepared for: ${client}` : ''}`,
+    '',
+    lines,
+    '',
+    `📦 Total Qty: ${totalQ} pcs`,
+    `💰 *Grand Total: ${fmtAmt(grand)}*`,
+    ...(valid ? [`📅 Valid until: ${valid}`] : []),
+    ...(notes ? ['', notes] : []),
+    '',
+    '— Alfonex',
+  ].join('\n');
+
+  navigator.clipboard.writeText(msg)
+    .then(() => showToast('Dealer quote copied!', 'success'))
+    .catch(() => { const ta = document.createElement('textarea'); ta.value = msg; ta.style.cssText = 'position:fixed;top:-9999px'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); showToast('Copied!', 'success'); });
+}
+
+/* ── Pricelist: export / import JSON ─────────────────────────────────── */
+function bpExportJSON() {
+  const rows = Array.from(document.querySelectorAll('.bp-row')).map(row => ({
+    pid:   row.querySelector('.bp-product')?.value || '',
+    title: row.querySelector('.bp-product option:checked')?.text || '',
+    qty:   parseFloat(row.querySelector('.bp-qty')?.value   || 1) || 1,
+    price: parseFloat(row.querySelector('.bp-price')?.value || 0) || 0,
+    extra: parseFloat(row.querySelector('.bp-extra')?.value || 0) || 0,
+  }));
+  const data = {
+    title:     document.getElementById('bp-title')?.value.trim()  || '',
+    client:    document.getElementById('bp-client')?.value.trim() || '',
+    currency:  document.getElementById('bp-currency')?.value      || 'AED',
+    validDate: document.getElementById('bp-valid')?.value         || '',
+    notes:     document.getElementById('bp-notes')?.value.trim()  || '',
+    rows,
+    exportedAt: new Date().toISOString(),
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `Alfonex_Pricelist_${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('Pricelist exported!', 'success');
+}
+
+function bpImportJSON(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.title)     document.getElementById('bp-title').value    = data.title;
+      if (data.client)    document.getElementById('bp-client').value   = data.client;
+      if (data.currency)  document.getElementById('bp-currency').value = data.currency;
+      if (data.validDate) document.getElementById('bp-valid').value    = data.validDate;
+      if (data.notes)     document.getElementById('bp-notes').value    = data.notes;
+      // Clear existing rows then re-add
+      document.getElementById('bp-rows').innerHTML = '';
+      (data.rows || []).forEach(r => {
+        bpAddRow();
+        const newRow = document.getElementById(`bp-row-${_bpRowIdx - 1}`);
+        if (!newRow) return;
+        const sel = newRow.querySelector('.bp-product');
+        if (r.pid) sel.value = r.pid;
+        if (!sel.value && r.title) {
+          Array.from(sel.options).forEach(o => { if (o.text === r.title) o.selected = true; });
+        }
+        newRow.querySelector('.bp-qty').value   = r.qty;
+        newRow.querySelector('.bp-price').value = r.price;
+        newRow.querySelector('.bp-extra').value = r.extra;
+      });
+      bpRecalc();
+      showToast('Pricelist imported!', 'success');
+    } catch { showToast('Invalid JSON file', 'error'); }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
 function buildCustomInvClients() {
   const sel = document.getElementById('ci-client-sel');
   if (!sel) return;
@@ -8008,7 +8142,11 @@ function customInvAddRow() {
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
       <input class="mf-input" style="font-size:12px;padding:6px 8px" placeholder="Description *" oninput="customInvRecalc()" data-ci-desc>
-      <input class="mf-input" style="font-size:12px;padding:6px 8px" placeholder="Variant / Notes" data-ci-vari>
+      <input class="mf-input" style="font-size:12px;padding:6px 8px" placeholder="Variant / Grade" data-ci-vari>
+    </div>
+    <div style="margin-bottom:8px">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:3px">IMEI / Serial No. <span style="font-weight:400">(optional, max 15 chars)</span></div>
+      <input class="mf-input" style="font-size:12px;padding:6px 8px;font-family:monospace;letter-spacing:.5px" placeholder="e.g. 352136170312345" maxlength="15" data-ci-imei>
     </div>
     <div style="display:grid;grid-template-columns:80px 1fr 1fr;gap:8px;align-items:end">
       <div>
@@ -8075,6 +8213,7 @@ function _ciGetItems() {
   return Array.from(document.querySelectorAll('.ci-row')).map(row => ({
     desc:  row.querySelector('[data-ci-desc]')?.value  || '',
     vari:  row.querySelector('[data-ci-vari]')?.value  || '',
+    imei:  (row.querySelector('[data-ci-imei]')?.value || '').trim().slice(0, 15),
     qty:   parseFloat(row.querySelector('[data-ci-qty]')?.value   || 1) || 1,
     price: parseFloat(row.querySelector('[data-ci-price]')?.value || 0) || 0,
     line:  parseFloat(row.querySelector('[data-ci-line]')?.textContent || 0) || 0,
@@ -8100,7 +8239,7 @@ function previewCustomInvoice() {
   const total    = subtotal + shipping;
   const fmt      = n => sym + n.toLocaleString(undefined, { minimumFractionDigits: 2 });
   const rows = items.map(it => `
-    <tr><td style="padding:4px 0">${esc(it.desc||'—')}${it.vari?`<br><span style="font-size:10px;color:var(--muted)">${esc(it.vari)}</span>`:''}</td>
+    <tr><td style="padding:4px 0">${esc(it.desc||'—')}${it.vari?`<br><span style="font-size:10px;color:var(--muted)">${esc(it.vari)}</span>`:''}${it.imei?`<br><span style="font-size:9px;color:var(--muted);font-family:monospace">IMEI: ${esc(it.imei)}</span>`:''}</td>
         <td style="text-align:center;padding:4px">${it.qty}</td>
         <td style="text-align:right;padding:4px">${sym}${Number(it.price).toFixed(2)}</td>
         <td style="text-align:right;padding:4px;font-weight:700">${sym}${Number(it.line).toFixed(2)}</td></tr>`).join('');
@@ -8148,7 +8287,7 @@ function generateCustomInvoicePDF() {
 
   const itemRows = items.map(it => `
     <tr>
-      <td style="padding:10px 14px;border-bottom:1px solid #f0f0f0">${esc(it.desc||'Item')}${it.vari?`<br><span style="font-size:10px;color:#888">${esc(it.vari)}</span>`:''}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid #f0f0f0">${esc(it.desc||'Item')}${it.vari?`<br><span style="font-size:10px;color:#888">${esc(it.vari)}</span>`:''}${it.imei?`<br><span style="font-size:9px;color:#aaa;font-family:monospace">IMEI: ${esc(it.imei)}</span>`:''}</td>
       <td style="padding:10px 14px;border-bottom:1px solid #f0f0f0;text-align:center;color:#555">${it.qty}</td>
       <td style="padding:10px 14px;border-bottom:1px solid #f0f0f0;text-align:right;color:#555">${sym}${Number(it.price).toLocaleString(undefined,{minimumFractionDigits:2})}</td>
       <td style="padding:10px 14px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:700;color:#111">${sym}${Number(it.line).toLocaleString(undefined,{minimumFractionDigits:2})}</td>
