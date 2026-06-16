@@ -131,7 +131,7 @@ export default function Header() {
               </button>
 
               {showNotif && (
-                <div className="absolute right-0 top-full z-50 mt-2 w-80 rounded-2xl border border-gray-100 bg-white shadow-xl dark:border-gray-700 dark:bg-dark-surface">
+                <div className="fixed right-4 top-16 z-50 w-80 max-w-[calc(100vw-2rem)] rounded-2xl border border-gray-100 bg-white shadow-xl dark:border-gray-700 dark:bg-dark-surface">
                   {/* Header */}
                   <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-gray-700">
                     <p className="text-sm font-semibold dark:text-gray-100">Notifications</p>
