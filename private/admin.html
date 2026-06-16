@@ -1716,6 +1716,10 @@ tbody td{padding:12px 16px;vertical-align:middle}
           <!-- Left: client + product rows -->
           <div style="padding:20px;border-right:1px solid var(--border)">
             <div class="mf-group">
+              <label class="mf-label">List Title <span style="font-weight:400;color:var(--muted)">(shown on PDF &amp; WhatsApp text)</span></label>
+              <input class="mf-input" id="bp-title" placeholder="e.g. iPhone Wholesale Price List (256GB)">
+            </div>
+            <div class="mf-group">
               <label class="mf-label">Client / Company Name <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
               <input class="mf-input" id="bp-client" placeholder="e.g. Al Noor Trading LLC">
             </div>
@@ -1746,8 +1750,11 @@ tbody td{padding:12px 16px;vertical-align:middle}
                 <div style="color:var(--muted);text-align:center;padding:16px 0;font-size:12px">Add products to get started</div>
               </div>
             </div>
-            <button class="btn-primary" onclick="bpGeneratePDF()"><i class="fa-solid fa-file-pdf"></i> Download Pricelist PDF</button>
+            <button class="btn-primary" onclick="bpGeneratePDF()"><i class="fa-solid fa-file-pdf"></i> Download PDF</button>
             <button class="btn-ghost" onclick="bpPreview()"><i class="fa-solid fa-eye"></i> Preview</button>
+            <button class="btn-ghost" onclick="bpCopyWhatsApp()" style="background:rgba(37,211,102,.12);border-color:rgba(37,211,102,.4);color:#128C7E" title="Copy ready-to-paste WhatsApp message">
+              <i class="fa-brands fa-whatsapp" style="color:#25D366"></i> Copy WhatsApp Text
+            </button>
           </div>
         </div>
         <!-- Preview panel (hidden by default) -->
@@ -7648,6 +7655,7 @@ function bpGeneratePDF() {
   const cur   = document.getElementById('bp-currency')?.value || 'AED';
   const sym   = { USD: '$', AED: 'AED ', INR: '₹' }[cur] || '';
   const fmt   = n => sym + Number(n).toLocaleString(undefined, { minimumFractionDigits: 2 });
+  const listTitle = document.getElementById('bp-title')?.value.trim() || 'Bulk Pricelist';
   const client = document.getElementById('bp-client')?.value.trim() || '';
   const notes  = document.getElementById('bp-notes')?.value.trim() || '';
   const valid  = document.getElementById('bp-valid')?.value || '';
@@ -7667,7 +7675,7 @@ function bpGeneratePDF() {
   doc.text('Premium Apple Devices', M, 19.5);
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
-  doc.text('BULK PRICELIST', W - M, 13, { align: 'right' });
+  doc.text(listTitle.toUpperCase().slice(0, 42), W - M, 13, { align: 'right' });
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.text('Date: ' + today, W - M, 19.5, { align: 'right' });
@@ -7782,6 +7790,71 @@ function bpGeneratePDF() {
 
   const fname = `Alfonex_Bulk_Pricelist_${today.replace(/-/g,'')}.pdf`;
   doc.save(fname);
+}
+
+function bpCopyWhatsApp() {
+  const rows   = _bpGetRows();
+  if (!rows.length) { showToast('Add at least one product', 'error'); return; }
+  const cur    = document.getElementById('bp-currency')?.value || 'AED';
+  const sym    = cur === 'INR' ? '₹' : cur;          // "AED" / "USD" / "₹"
+  const title  = document.getElementById('bp-title')?.value.trim() || 'Wholesale Price List';
+  const notes  = document.getElementById('bp-notes')?.value.trim() || '';
+  const grand  = rows.reduce((s, r) => s + r.line, 0);
+  const totalQ = rows.reduce((s, r) => s + r.qty, 0);
+
+  const fmtNum = n => Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 });
+  const fmtAmt = n => cur === 'INR' ? `₹${fmtNum(n)}` : `${fmtNum(n)} ${cur}`;
+
+  // Product lines
+  const lines = rows.map(r => {
+    const unitStr = fmtAmt(r.effective);   // effective = unit + bulk extra
+    const totStr  = fmtAmt(r.line);
+    return `• ${r.title} – ${unitStr}\n  ➡️ ${r.qty} PCS – ${totStr}`;
+  }).join('\n\n');
+
+  // Summary
+  const summaryParts = [];
+  // If all quantities are equal, say "X PCS Each Model"
+  const allSameQty = rows.every(r => r.qty === rows[0].qty);
+  if (allSameQty && rows.length > 1) {
+    summaryParts.push(`📦 ${rows[0].qty} PCS Each Model (${totalQ} PCS Total)`);
+  } else {
+    summaryParts.push(`📦 ${totalQ} PCS Total`);
+  }
+  summaryParts.push(`💰 Grand Total: ${fmtAmt(grand)}`);
+
+  const footer = [
+    '✅ Bulk Quantity Available',
+    '✅ Tested & Verified Devices',
+    '✅ Fast Delivery Available',
+    '',
+    'For bulk orders and latest stock availability, contact us directly.',
+  ];
+
+  const msg = [
+    `📱 *${title}*`,
+    '',
+    lines,
+    '',
+    summaryParts.join('\n'),
+    '',
+    ...(notes ? [notes, ''] : []),
+    footer.join('\n'),
+  ].join('\n');
+
+  navigator.clipboard.writeText(msg)
+    .then(() => showToast('WhatsApp text copied to clipboard!', 'success'))
+    .catch(() => {
+      // Fallback for older browsers
+      const ta = document.createElement('textarea');
+      ta.value = msg;
+      ta.style.cssText = 'position:fixed;top:-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast('WhatsApp text copied!', 'success');
+    });
 }
 
 function buildCustomInvClients() {
