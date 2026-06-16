@@ -15,23 +15,29 @@ export default function ProfileClient({ initialProfile }: Props) {
   const { user, logout }  = useAuth();
   const router            = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState('');
+  const [editing, setEditing] = useState(false);
+  const [error,   setError]   = useState('');
 
   const [name,     setName]     = useState(initialProfile?.name ?? user?.displayName ?? '');
   const [whatsapp, setWhatsapp] = useState(initialProfile?.whatsapp ?? '');
 
   const handleSave = () => {
     setError('');
-    setSaved(false);
     startTransition(async () => {
       try {
         await upsertProfile({ name: name.trim(), whatsapp: whatsapp.trim() });
-        setSaved(true);
+        setEditing(false);
       } catch (e: unknown) {
         setError((e as Error).message);
       }
     });
+  };
+
+  const handleCancel = () => {
+    setName(initialProfile?.name ?? user?.displayName ?? '');
+    setWhatsapp(initialProfile?.whatsapp ?? '');
+    setError('');
+    setEditing(false);
   };
 
   const handleLogout = async () => {
@@ -45,33 +51,53 @@ export default function ProfileClient({ initialProfile }: Props) {
 
       {/* Profile card */}
       <div className="card mb-4 p-5">
-        <div className="mb-4 flex items-center gap-3">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-100 text-2xl text-primary-600 dark:bg-primary-900 dark:text-primary-300">
+        <div className="flex items-center gap-3">
+          <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-primary-100 text-2xl text-primary-600 dark:bg-primary-900 dark:text-primary-300">
             <i className="fa fa-circle-user" />
           </div>
-          <div>
-            <p className="font-semibold dark:text-gray-100">{user?.displayName ?? name}</p>
-            <p className="text-sm text-gray-400">{user?.email}</p>
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-semibold dark:text-gray-100">{name || user?.displayName}</p>
+            <p className="truncate text-sm text-gray-400">{user?.email}</p>
+            {whatsapp && !editing && (
+              <p className="mt-0.5 text-xs text-gray-400"><i className="fa-brands fa-whatsapp mr-1 text-green-500" />{whatsapp}</p>
+            )}
           </div>
+          {!editing && (
+            <button
+              onClick={() => setEditing(true)}
+              className="flex-shrink-0 rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-gray-800 dark:hover:text-primary-400"
+              aria-label="Edit profile"
+            >
+              <i className="fa fa-pen text-sm" />
+            </button>
+          )}
         </div>
 
-        <div className="flex flex-col gap-3">
-          <div>
-            <label className="mb-1 block text-xs font-medium text-gray-500">Full Name</label>
-            <input className="input" value={name} onChange={(e) => setName(e.target.value)} />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-gray-500">WhatsApp Number</label>
-            <input className="input" type="tel" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} />
-          </div>
-        </div>
+        {editing && (
+          <div className="mt-4 animate-page-enter">
+            <div className="flex flex-col gap-3">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-500">Full Name</label>
+                <input className="input" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-500">WhatsApp Number</label>
+                <input className="input" type="tel" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="+91 …" />
+              </div>
+            </div>
 
-        {error  && <p className="mt-2 text-xs text-red-600">{error}</p>}
-        {saved  && <p className="mt-2 text-xs text-green-600">Profile saved!</p>}
+            {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
 
-        <button onClick={handleSave} disabled={isPending} className="btn-primary mt-4 w-full">
-          {isPending ? 'Saving…' : 'Save Changes'}
-        </button>
+            <div className="mt-4 flex gap-2">
+              <button onClick={handleSave} disabled={isPending} className="btn-primary flex-1">
+                {isPending ? 'Saving…' : 'Save'}
+              </button>
+              <button onClick={handleCancel} disabled={isPending} className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Quick links */}
