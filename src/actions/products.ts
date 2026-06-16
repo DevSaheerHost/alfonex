@@ -154,7 +154,8 @@ export async function recordProductView(productId: string): Promise<void> {
   const recentCount = visits.filter((ts) => ts > weekAgo).length;
 
   // Skip if already notified this week or threshold not met
-  if ((data.notified_at as number | undefined) > weekAgo) return;
+  const notifiedAt = data.notified_at as number | undefined;
+  if (notifiedAt !== undefined && notifiedAt > weekAgo) return;
   if (recentCount < VIEW_THRESHOLD) return;
 
   // Fetch product + user data together
