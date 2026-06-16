@@ -61,10 +61,12 @@ self.addEventListener('install', (e) => {
 });
 
 self.addEventListener('activate', (e) => {
+  // Do NOT call clients.claim() — claiming open pages mid-lifecycle causes
+  // browsers (especially mobile) to reload the page, which looks like a loop.
+  // The new SW takes effect on the next navigation instead.
   e.waitUntil(
     caches.keys()
       .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
-      .then(() => self.clients.claim())
   );
 });
 

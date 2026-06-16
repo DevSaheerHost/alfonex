@@ -10466,8 +10466,9 @@ async function secClearLockout() {
 }
 
 async function secLogout() {
+  await auth.signOut().catch(() => {});
   await fetch('/api/admin-auth', { method: 'DELETE' });
-  window.location.replace('/admin/login');
+  window.location.replace('/admin');
 }
 
 </script>
