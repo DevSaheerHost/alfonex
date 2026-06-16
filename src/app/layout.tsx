@@ -8,6 +8,7 @@ import { NotificationsProvider } from '@/contexts/NotificationsContext';
 import Header            from '@/components/layout/Header';
 import BottomNav         from '@/components/layout/BottomNav';
 import SideNav           from '@/components/layout/SideNav';
+import PageTransition    from '@/components/layout/PageTransition';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://alfonex.com'),
@@ -79,7 +80,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <div className="mx-auto max-w-6xl lg:flex lg:gap-6 lg:px-6 lg:pt-4">
                   <SideNav />
                   <main className="min-w-0 flex-1 pb-20 lg:pb-10">
-                    {children}
+                    <PageTransition>{children}</PageTransition>
                   </main>
                 </div>
                 <BottomNav />

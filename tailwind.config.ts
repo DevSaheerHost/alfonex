@@ -43,9 +43,19 @@ const config: Config = {
           '0%':   { opacity: '0', transform: 'translateX(-50%) translateY(16px)' },
           '100%': { opacity: '1', transform: 'translateX(-50%) translateY(0)' },
         },
+        'page-enter': {
+          '0%':   { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'sheet-enter': {
+          '0%':   { opacity: '0', transform: 'translateY(60px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
       },
       animation: {
-        'slide-up': 'slide-up 0.25s ease-out both',
+        'slide-up':    'slide-up 0.25s ease-out both',
+        'page-enter':  'page-enter 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94) both',
+        'sheet-enter': 'sheet-enter 0.35s cubic-bezier(0.32, 0.72, 0, 1) both',
       },
     },
   },
