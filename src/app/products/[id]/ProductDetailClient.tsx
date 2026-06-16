@@ -366,8 +366,10 @@ export default function ProductDetailClient({ product, similar, reviews, initial
             </div>
           </div>
 
-          {/* Variants */}
-          {product.variants?.map((group: VariantGroup) => {
+          {/* Variants — colour groups always first, then storage/RAM/etc */}
+          {[...(product.variants ?? [])]
+            .sort((a, b) => (isColorGroup(a.name) ? 0 : 1) - (isColorGroup(b.name) ? 0 : 1))
+            .map((group: VariantGroup) => {
             const currentVal = selected[group.name];
             const colorGroup = isColorGroup(group.name);
             return (
@@ -383,8 +385,8 @@ export default function ProductDetailClient({ product, similar, reviews, initial
                 </p>
 
                 {colorGroup ? (
-                  /* ── Color thumbnails (image) or swatches (CSS fallback) ── */
-                  <div className="flex flex-wrap gap-2">
+                  /* ── Color thumbnails (image) or swatches (CSS fallback) — horizontal scroll ── */
+                  <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                     {group.values.map((v) => {
                       const active  = currentVal === v.label;
                       const oos     = v.stock === 0;
@@ -402,7 +404,7 @@ export default function ProductDetailClient({ product, similar, reviews, initial
                           key={v.label}
                           disabled={oos}
                           onClick={() => handleVariantSelect(group.name, v)}
-                          className={`flex flex-col items-center gap-1 transition ${oos ? 'cursor-not-allowed opacity-50' : 'hover:opacity-90'}`}
+                          className={`flex flex-shrink-0 flex-col items-center gap-1 transition ${oos ? 'cursor-not-allowed opacity-50' : 'hover:opacity-90'}`}
                         >
                           {hasImg ? (
                             <span className={`relative flex h-14 w-14 overflow-hidden rounded-xl border-2 bg-gray-50 transition dark:bg-gray-800 ${
