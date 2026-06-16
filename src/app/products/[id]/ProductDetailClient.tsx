@@ -2,8 +2,9 @@
 
 import Image   from 'next/image';
 import Link    from 'next/link';
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { recordProductView } from '@/actions/products';
 import { useApp, useProductPrice } from '@/contexts/AppContext';
 import { useCart }                  from '@/contexts/CartContext';
 import { useWishlist }              from '@/contexts/WishlistContext';
@@ -181,6 +182,12 @@ export default function ProductDetailClient({ product, similar, reviews, initial
   const { toggle, has } = useWishlist();
   const wished          = has(product.id);
   const [reserveOpen, setReserveOpen] = useState(false);
+
+  // Track this view — fires once per page load, server action handles auth + threshold check
+  useEffect(() => {
+    recordProductView(product.id).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product.id]);
   // Toggle between the 2D product image and the interactive 3D viewer
   const [view3d, setView3d] = useState(false);
 

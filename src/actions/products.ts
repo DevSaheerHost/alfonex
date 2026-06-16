@@ -1,7 +1,10 @@
 'use server';
 
-import { cache } from 'react';
-import { adminRtdb } from '@/lib/firebase/admin';
+import { cache }    from 'react';
+import { cookies }  from 'next/headers';
+import { adminRtdb, adminAuth, adminMessaging } from '@/lib/firebase/admin';
+import { notifyAdmins } from '@/lib/firebase/notify-admins';
+import { slugify }  from '@/lib/slug';
 import type { Product } from '@/lib/types';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -115,4 +118,89 @@ export async function decrementProductStock(
     }
     return product;
   });
+}
+
+// ─── Product view tracking ────────────────────────────────────────────────────
+
+const VIEW_THRESHOLD  = 3;         // visits within a week triggers notification
+const NOTIFY_COOLDOWN = 7 * 24 * 60 * 60 * 1000; // re-notify at most once per 7 days
+
+export async function recordProductView(productId: string): Promise<void> {
+  // Skip silently for unauthenticated users
+  let uid: string;
+  try {
+    const cookieStore = await cookies();
+    const session = cookieStore.get('__session')?.value;
+    if (!session) return;
+    const decoded = await adminAuth().verifySessionCookie(session, true);
+    uid = decoded.uid;
+  } catch {
+    return;
+  }
+
+  const db      = adminRtdb();
+  const viewRef = db.ref(`product_views/${uid}/${productId}`);
+
+  // Record this visit
+  await viewRef.child('visits').push(Date.now());
+
+  // Read back the full record
+  const snap    = await viewRef.get();
+  const data    = snap.val() ?? {};
+  const weekAgo = Date.now() - NOTIFY_COOLDOWN;
+
+  // Count visits in the last 7 days
+  const visits: number[] = Object.values(data.visits ?? {}) as number[];
+  const recentCount = visits.filter((ts) => ts > weekAgo).length;
+
+  // Skip if already notified this week or threshold not met
+  if ((data.notified_at as number | undefined) > weekAgo) return;
+  if (recentCount < VIEW_THRESHOLD) return;
+
+  // Fetch product + user data together
+  const [productSnap, userSnap] = await Promise.all([
+    db.ref(`products/${productId}`).get(),
+    db.ref(`users/${uid}`).get(),
+  ]);
+  const product  = productSnap.val() as (Product & { title: string; imageUrl?: string }) | null;
+  if (!product) return;
+  const userData     = (userSnap.val() ?? {}) as Record<string, string>;
+  const fcmToken     = userData.fcmToken;
+  const customerName = userData.name || userData.displayName || 'Customer';
+
+  // Mark notified before sending so concurrent triggers don't double-fire
+  await viewRef.child('notified_at').set(Date.now());
+
+  const siteBase   = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://alfonex.com';
+  const productUrl = `${siteBase}/products/${slugify(product.title)}/p/${productId}`;
+
+  // Push to customer
+  if (fcmToken) {
+    try {
+      await adminMessaging().send({
+        token: fcmToken,
+        notification: {
+          title: `Still thinking about it? 👀`,
+          body:  `You've looked at "${product.title}" ${recentCount} times this week — grab it before it's gone!`,
+        },
+        data: { productId, type: 'product_interest', url: productUrl },
+        webpush: {
+          notification: {
+            icon:  product.imageUrl ?? `${siteBase}/assets/meta/icon/logo.png`,
+            badge: `${siteBase}/assets/meta/icon/logo.png`,
+          },
+          fcmOptions: { link: productUrl },
+        },
+      });
+    } catch { /* stale token — ignore */ }
+  }
+
+  // Alert admins
+  try {
+    await notifyAdmins(
+      `🔥 Hot Lead — ${customerName}`,
+      `Viewed "${product.title}" ${recentCount}× this week. Good time to reach out!`,
+      { productId, uid, type: 'product_interest' },
+    );
+  } catch { /* never block tracking */ }
 }
