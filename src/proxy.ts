@@ -23,20 +23,7 @@ export function proxy(request: NextRequest) {
     if (host === 'alfonex.com' || host === 'www.alfonex.com') {
       return new NextResponse(null, { status: 404 });
     }
-    // Login page, auth API, and PWA resources are public on the Vercel URL
-    if (
-      pathname.startsWith('/admin/login') ||
-      pathname.startsWith('/api/admin-auth') ||
-      pathname === '/admin/manifest.json' ||
-      pathname === '/admin/sw.js'
-    ) {
-      return NextResponse.next();
-    }
-    // All other /admin/* require the session cookie
-    const adminToken = request.cookies.get('__admin_sess')?.value;
-    if (!adminToken) {
-      return NextResponse.redirect(new URL('/admin/login', request.url));
-    }
+    // Admin HTML handles its own Firebase auth client-side — just pass through.
     return NextResponse.next();
   }
 
