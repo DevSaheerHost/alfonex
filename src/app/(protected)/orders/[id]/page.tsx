@@ -101,14 +101,30 @@ export default async function OrderDetailPage({ params }: Props) {
           {STEPS.map((step, i) => {
             const done    = i <= stepIndex;
             const current = i === stepIndex;
+            const isFirst = i === 0;
+            const isLast  = i === STEPS.length - 1;
             const tsVal   = done ? (order[STEP_TS[step]] as string | undefined) : undefined;
             return (
-              <div key={step} className="flex flex-1 flex-col items-center">
-                <div className={`relative flex h-8 w-8 items-center justify-center rounded-full text-xs
+              <div key={step} className="relative flex flex-1 flex-col items-center">
+                {/* Left half-connector */}
+                {!isFirst && (
+                  <div className={`absolute left-0 right-1/2 top-4 h-0.5 -translate-y-px
+                    ${i <= stepIndex ? 'bg-primary-500' : 'bg-gray-200 dark:bg-gray-700'}`}
+                  />
+                )}
+                {/* Right half-connector */}
+                {!isLast && (
+                  <div className={`absolute left-1/2 right-0 top-4 h-0.5 -translate-y-px
+                    ${i < stepIndex ? 'bg-primary-500' : 'bg-gray-200 dark:bg-gray-700'}`}
+                  />
+                )}
+                {/* Circle */}
+                <div className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full text-xs
+                  ring-2 ring-white dark:ring-gray-900
                   ${done ? 'bg-primary-500 text-white' : 'bg-gray-100 text-gray-400 dark:bg-gray-800'}`}>
                   <i className={`fa ${STEP_ICONS[step]}`} />
                   {current && (
-                    <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-primary-400 ring-2 ring-white" />
+                    <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-primary-400 ring-2 ring-white dark:ring-gray-900" />
                   )}
                 </div>
                 <p className={`mt-1 text-center text-[9px] ${done ? 'font-semibold text-primary-600 dark:text-primary-400' : 'text-gray-400'}`}>
@@ -120,17 +136,6 @@ export default async function OrderDetailPage({ params }: Props) {
               </div>
             );
           })}
-        </div>
-
-        {/* Connecting line */}
-        <div className="relative -mt-12 mb-8 flex">
-          {STEPS.slice(0, -1).map((_, i) => (
-            <div
-              key={i}
-              className={`flex-1 h-0.5 self-center translate-y-[-12px]
-                ${i < stepIndex ? 'bg-primary-500' : 'bg-gray-200 dark:bg-gray-700'}`}
-            />
-          ))}
         </div>
       </div>
 
