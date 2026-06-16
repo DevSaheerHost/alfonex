@@ -1186,6 +1186,8 @@ tbody td{padding:12px 16px;vertical-align:middle}
       <button class="sb-link" data-section="push-notifications" onclick="showSection('push-notifications')"><span class="sb-ic"><i class="fa-solid fa-bell-ring"></i></span>Push Notifications</button>
       <button class="sb-link" data-section="labels" onclick="showSection('labels')"><span class="sb-ic"><i class="fa-solid fa-barcode"></i></span>Labels & Barcodes</button>
       <button class="sb-link" data-section="invoices" onclick="showSection('invoices')"><span class="sb-ic"><i class="fa-solid fa-file-invoice"></i></span>Invoices</button>
+      <button class="sb-link" data-section="custom-invoice" onclick="showSection('custom-invoice')"><span class="sb-ic"><i class="fa-solid fa-pen-ruler"></i></span>Custom Invoice</button>
+      <button class="sb-link" data-section="bulk-pricelist" onclick="showSection('bulk-pricelist')"><span class="sb-ic"><i class="fa-solid fa-layer-group"></i></span>Bulk Pricelist</button>
       <!-- Team -->
       <div class="sb-section-label">Team</div>
       <button class="sb-link" data-section="comms" onclick="showSection('comms')"><span class="sb-ic"><i class="fa-solid fa-comments"></i></span>Team Comms</button>
@@ -1633,7 +1635,15 @@ tbody td{padding:12px 16px;vertical-align:middle}
         </div>
       </div>
 
-      <!-- ── Custom Invoice Builder ── -->
+    </section>
+
+    <!-- ══════════════════════════════════════
+         CUSTOM INVOICE BUILDER
+    ══════════════════════════════════════ -->
+    <section id="section-custom-invoice" class="content-section">
+      <div class="sec-header">
+        <div><div class="sec-title">Custom Invoice Builder</div><div class="sec-sub">Build a custom invoice for any client and download as PDF</div></div>
+      </div>
       <div class="table-card" style="padding:0;overflow:hidden">
         <div class="table-topbar" style="flex-wrap:wrap;gap:8px">
           <div class="table-topbar-title"><i class="fa-solid fa-pen-ruler" style="color:var(--green)"></i> Custom Invoice Builder</div>
@@ -1698,9 +1708,16 @@ tbody td{padding:12px 16px;vertical-align:middle}
           </div>
         </div>
       </div>
+    </section>
 
-      <!-- ── Bulk Pricelist Generator ── -->
-      <div class="table-card" style="padding:0;overflow:hidden;margin-top:20px">
+    <!-- ══════════════════════════════════════
+         BULK PRICELIST GENERATOR
+    ══════════════════════════════════════ -->
+    <section id="section-bulk-pricelist" class="content-section">
+      <div class="sec-header">
+        <div><div class="sec-title">Bulk Pricelist Generator</div><div class="sec-sub">Build a multi-product bulk quote — download PDF or copy as WhatsApp text</div></div>
+      </div>
+      <div class="table-card" style="padding:0;overflow:hidden">
         <div class="table-topbar" style="flex-wrap:wrap;gap:8px">
           <div class="table-topbar-title"><i class="fa-solid fa-layer-group" style="color:var(--green)"></i> Bulk Pricelist Generator</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -3934,7 +3951,7 @@ function showSection(name, fromPopstate = false){
     dealers:'Dealer Management', customers:'Customer Management',
     warehouse:'Multi-Warehouse System', international:'International Business',
     marketing:'Marketing Tools', labels:'Labels & Barcodes',
-    invoices:'Customer Invoices', comms:'Team Communication',
+    invoices:'Customer Invoices', 'custom-invoice':'Custom Invoice Builder', 'bulk-pricelist':'Bulk Pricelist Generator', comms:'Team Communication',
     meetings:'Meeting Scheduler', pricehistory:'Price Change History', reservations:'Device Reservations', pricelist:'Price List',
     audit:'Audit Trail', reviews:'Product Reviews', loyalty:'Loyalty & Referrals', 'search-analytics':'Search Analytics',
     analytics:'Analytics', 'push-notifications':'Push Notifications', security:'Security'
@@ -3960,7 +3977,9 @@ function showSection(name, fromPopstate = false){
   setTimeout(() => {
     if (name==='marketing')     { populatePosterProducts(); updatePoster(); }
     if (name==='labels')        { populateBarcodeProducts(); }
-    if (name==='invoices')      { populateInvoiceOrders(); buildCustomInvClients(); bpInit(); }
+    if (name==='invoices')        { populateInvoiceOrders(); }
+    if (name==='custom-invoice') { buildCustomInvClients(); }
+    if (name==='bulk-pricelist') { bpInit(); }
     if (name==='audit')         { renderAuditLog(); }
     if (name==='warranty')      { renderWarrantyTable(); }
     if (name==='customers')     { renderCustomerTable(); }
