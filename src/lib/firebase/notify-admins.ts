@@ -22,7 +22,7 @@ export async function notifyAdmins(
     data: { title, body, ...(data ?? {}) },
     webpush: {
       headers: { Urgency: 'high' },
-      fcmOptions: { link: '/admin' },
+      fcmOptions: { link: data?.orderId ? `/admin?order=${data.orderId}` : '/admin' },
     },
   });
 

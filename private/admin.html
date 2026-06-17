@@ -4197,6 +4197,16 @@ function attachOrdersListener(){
     APP.orders=snap.val()||{};
     renderOrdersTable(); renderOverviewStats(); updateTabCounts();
     if(APP.activeOrderId&&APP.orders[APP.activeOrderId]) renderOrderDetailBody(APP.activeOrderId);
+    // Deep-link: notification click passes ?order=ID — open that order's detail once
+    if(!APP._deepLinkHandled){
+      const urlOrder=new URLSearchParams(location.search).get('order');
+      if(urlOrder&&APP.orders[urlOrder]){
+        APP._deepLinkHandled=true;
+        history.replaceState({},'',location.pathname);  // clean ?order= from URL
+        showSection('orders');
+        openOrderDetail(urlOrder);
+      }
+    }
   });
 }
 function attachAdminsListener(){

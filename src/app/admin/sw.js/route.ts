@@ -120,14 +120,21 @@ self.addEventListener('fetch', (e) => {
   }
 });
 
-// ── Notification click → focus or open the admin tab ─────────────────────────
+// ── Notification click → open order detail (or focus admin tab) ───────────────
 self.addEventListener('notificationclick', (e) => {
   e.notification.close();
+  const orderId = (e.notification.data ?? {}).orderId;
+  const target  = orderId ? '/admin?order=' + orderId : '/admin';
   e.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
       const adminClient = clients.find(c => c.url.includes('/admin'));
-      if (adminClient) return adminClient.focus();
-      return self.clients.openWindow('/admin');
+      if (adminClient) {
+        // Admin tab is already open — navigate it to the order URL so the
+        // page picks up the ?order= param and opens the detail modal.
+        adminClient.navigate(target).catch(() => adminClient.focus());
+        return adminClient.focus();
+      }
+      return self.clients.openWindow(target);
     })
   );
 });
