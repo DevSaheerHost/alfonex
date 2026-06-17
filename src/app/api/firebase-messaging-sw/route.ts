@@ -45,10 +45,13 @@ messaging.onBackgroundMessage((payload) => {
 // Tap on notification → open/focus the app and navigate to the target URL
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const data     = event.notification.data ?? {};
-  const url      = data.url || (data.orderId ? '/orders/' + data.orderId : '/');
-  const notifId  = data.notifId || '';
-  const trackUrl = notifId ? url + (url.includes('?') ? '&' : '?') + '_pnid=' + notifId : url;
+  const data    = event.notification.data ?? {};
+  const url     = data.url || (data.orderId ? '/orders/' + data.orderId : '/');
+  const notifId = data.notifId || '';
+  const qs = [];
+  if (notifId) qs.push('_pnid=' + notifId);
+  qs.push('way=notification');
+  const trackUrl = url + (url.includes('?') ? '&' : '?') + qs.join('&');
 
   event.waitUntil(
     clients

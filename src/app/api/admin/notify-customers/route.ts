@@ -55,13 +55,10 @@ export async function POST(req: NextRequest) {
     sentAt: Date.now(), sentCount: 0, failedCount: 0,
   });
 
-  // fcmOptions.link requires an absolute URL; relative paths (from product selector) need the origin prepended
-  const siteBase = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://alfonex.com').replace(/\s.*$/, '').replace(/\/$/, '');
-  const absClickUrl = clickUrl
-    ? (clickUrl.startsWith('http') ? clickUrl : `${siteBase}${clickUrl.startsWith('/') ? '' : '/'}${clickUrl}`)
-    : undefined;
-
-  // Data-only message — service worker shows exactly one notification; no FCM auto-display
+  // Data-only message — service worker shows exactly one notification; no FCM auto-display.
+  // Do NOT set fcmOptions.link: it causes Chrome to show a second "fallback" notification
+  // on top of the SW's onBackgroundMessage notification, creating a duplicate.
+  // The click URL is passed via data.url; the SW notificationclick handler reads it.
   const msgData: Record<string, string> = { notifId, title, body };
   if (clickUrl)  msgData.url      = clickUrl;
   if (imageUrl)  msgData.imageUrl = imageUrl;
@@ -71,7 +68,6 @@ export async function POST(req: NextRequest) {
     data: msgData,
     webpush: {
       headers: { Urgency: 'high' },
-      ...(absClickUrl ? { fcmOptions: { link: absClickUrl } } : {}),
     },
   });
 
