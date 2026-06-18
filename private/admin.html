@@ -1171,6 +1171,7 @@ tbody td{padding:12px 16px;vertical-align:middle}
       <button class="sb-link active" data-section="overview" onclick="showSection('overview')"><span class="sb-ic"><i class="fa-solid fa-gauge-high"></i></span>Overview</button>
       <button class="sb-link" data-section="analytics" onclick="showSection('analytics')"><span class="sb-ic"><i class="fa-solid fa-chart-column"></i></span>Analytics</button>
       <button class="sb-link" data-section="warranty" onclick="showSection('warranty')"><span class="sb-ic"><i class="fa-solid fa-shield-halved"></i></span>Warranty<span class="sb-badge" id="sb-warranty-count" style="display:none;background:#f59e0b">0</span></button>
+      <button class="sb-link" data-section="returns" onclick="showSection('returns')"><span class="sb-ic"><i class="fa-solid fa-box-open"></i></span>Returns<span class="sb-badge" id="sb-returns-count" style="display:none;background:#ef4444">0</span></button>
       <button class="sb-link" data-section="products" onclick="showSection('products')"><span class="sb-ic"><i class="fa-solid fa-box-open"></i></span>Products<span class="sb-badge" id="sb-prod-count">0</span></button>
       <button class="sb-link" data-section="orders" onclick="showSection('orders')"><span class="sb-ic"><i class="fa-solid fa-clipboard-list"></i></span>Orders<span class="sb-badge" id="sb-order-count">0</span></button>
       <button class="sb-link" data-section="offline-orders" onclick="showSection('offline-orders')"><span class="sb-ic"><i class="fa-solid fa-store"></i></span>Offline Orders<span class="sb-badge" id="sb-offorder-count" style="display:none;background:#8b5cf6">0</span></button>
@@ -1371,6 +1372,39 @@ tbody td{padding:12px 16px;vertical-align:middle}
                 <i class="fa-solid fa-shield-halved" style="font-size:28px;display:block;margin-bottom:8px;opacity:.3"></i>Loading…</td></tr>
             </tbody>
           </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- RETURNS / RMA -->
+    <section id="section-returns" class="content-section">
+      <div class="sec-header">
+        <div><div class="sec-title">Returns &amp; RMA</div><div class="sec-sub">Review and manage customer return requests</div></div>
+        <div class="sec-header-right">
+          <select id="rma-filter" class="mf-input" style="width:auto" onchange="rmaRender()">
+            <option value="">All Statuses</option>
+            <option value="submitted">Submitted</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="received">Received</option>
+            <option value="refunded">Refunded</option>
+            <option value="replaced">Replaced</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-card" style="padding:0">
+        <table class="data-table" id="rma-table">
+          <thead><tr>
+            <th>Date</th><th>Order</th><th>Product</th><th>Reason</th><th>Status</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="rma-tbody"><tr><td colspan="6" style="text-align:center;padding:32px;color:var(--muted)">Loading…</td></tr></tbody>
+        </table>
+      </div>
+      <!-- RMA Detail Modal -->
+      <div id="rma-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeRmaModal()">
+        <div class="modal-box" style="max-width:520px">
+          <div class="modal-header"><h3 class="modal-title">Return Request</h3><button class="modal-close" onclick="closeRmaModal()"><i class="fa-solid fa-xmark"></i></button></div>
+          <div id="rma-modal-body" style="padding:18px"></div>
         </div>
       </div>
     </section>
@@ -4009,7 +4043,7 @@ function showSection(name, fromPopstate = false){
     invoices:'Customer Invoices', 'custom-invoice':'Custom Invoice Builder', 'bulk-pricelist':'Bulk Pricelist Generator', 'offline-orders':'Offline Orders', comms:'Team Communication',
     meetings:'Meeting Scheduler', pricehistory:'Price Change History', reservations:'Device Reservations', pricelist:'Price List',
     audit:'Audit Trail', reviews:'Product Reviews', loyalty:'Loyalty & Referrals', 'search-analytics':'Search Analytics',
-    analytics:'Analytics', 'push-notifications':'Push Notifications', security:'Security'
+    analytics:'Analytics', 'push-notifications':'Push Notifications', security:'Security', returns:'Returns & RMA'
   };
   document.getElementById('header-page-title').innerHTML=`<span>${T[name]||name}</span>`;
   closeSidebar();
@@ -4048,6 +4082,7 @@ function showSection(name, fromPopstate = false){
     if (name==='reviews')      { renderReviewsSection(); }
     if (name==='loyalty')      { renderLoyaltySection(); }
     if (name==='search-analytics') { renderSearchAnalytics(); }
+    if (name==='returns')     { rmaLoad(); }
     if (name==='pricehistory')  { renderPriceHistory(); }
     if (name==='pricelist')     { attachDealerListener(); renderPriceList(); }
     if (name==='analytics')     { renderAnalyticsCharts(); }
@@ -11411,6 +11446,98 @@ async function secLogout() {
   await fetch('/api/admin-auth', { method: 'DELETE' });
   window.location.replace('/admin');
 }
+
+/* ═══════════════════════════════════════════════
+   RETURNS / RMA
+═══════════════════════════════════════════════ */
+const RMA_STATUS_LABELS = {
+  submitted:'Submitted', approved:'Approved', rejected:'Rejected',
+  received:'Received', refunded:'Refunded', replaced:'Replaced'
+};
+const RMA_REASON_LABELS = {
+  defective:'Defective', wrong_item:'Wrong Item', not_as_described:'Not As Described',
+  changed_mind:'Changed Mind', other:'Other'
+};
+let _rmaData = {};
+
+async function rmaLoad() {
+  const tbody = document.getElementById('rma-tbody');
+  if(!tbody) return;
+  tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--muted)"><div class="spin-ring"></div></td></tr>';
+  try {
+    const snap = await db.ref('return_requests').once('value');
+    _rmaData = snap.val() || {};
+    document.getElementById('sb-returns-count').textContent = Object.keys(_rmaData).filter(k=>_rmaData[k].status==='submitted').length;
+    document.getElementById('sb-returns-count').style.display = Object.keys(_rmaData).filter(k=>_rmaData[k].status==='submitted').length ? '' : 'none';
+    rmaRender();
+  } catch(e) { tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--danger)">${e.message}</td></tr>`; }
+}
+
+function rmaRender() {
+  const tbody = document.getElementById('rma-tbody');
+  if(!tbody) return;
+  const filter = document.getElementById('rma-filter')?.value || '';
+  const rows = Object.entries(_rmaData)
+    .map(([id,v])=>({...v,id}))
+    .filter(r=>!filter||r.status===filter)
+    .sort((a,b)=>b.createdAt-a.createdAt);
+  if(!rows.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--muted)">No return requests</td></tr>';return;}
+  const STATUS_COLORS={submitted:'#f59e0b',approved:'#3b82f6',rejected:'#ef4444',received:'#8b5cf6',refunded:'#22c55e',replaced:'#22c55e'};
+  tbody.innerHTML = rows.map(r=>`
+    <tr>
+      <td style="white-space:nowrap;font-size:12px">${new Date(r.createdAt).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}</td>
+      <td style="font-family:monospace;font-size:12px">${esc((r.orderId||'').slice(-8))}</td>
+      <td style="max-width:160px"><div style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.productName||'—')}</div></td>
+      <td style="font-size:12px">${RMA_REASON_LABELS[r.reason]||r.reason||'—'}</td>
+      <td><span style="background:${STATUS_COLORS[r.status]||'#6b7280'}22;color:${STATUS_COLORS[r.status]||'#6b7280'};padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600">${RMA_STATUS_LABELS[r.status]||r.status}</span></td>
+      <td><button class="act-btn" onclick="rmaOpenDetail('${esc(r.id)}')"><i class="fa-solid fa-eye"></i></button></td>
+    </tr>`).join('');
+}
+
+function rmaOpenDetail(id) {
+  const r = _rmaData[id]; if(!r) return;
+  const STATUS_COLORS={submitted:'#f59e0b',approved:'#3b82f6',rejected:'#ef4444',received:'#8b5cf6',refunded:'#22c55e',replaced:'#22c55e'};
+  document.getElementById('rma-modal-body').innerHTML=`
+    <div style="display:grid;gap:10px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span style="background:${STATUS_COLORS[r.status]||'#6b7280'}22;color:${STATUS_COLORS[r.status]||'#6b7280'};padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">${RMA_STATUS_LABELS[r.status]||r.status}</span>
+        <span style="font-size:12px;color:var(--muted)">${new Date(r.createdAt).toLocaleString('en-GB')}</span>
+      </div>
+      <div style="background:var(--surface2);border-radius:10px;padding:12px;font-size:13px">
+        <b>${esc(r.productName||'—')}</b><br>
+        <span style="color:var(--muted)">Order: ${esc(r.orderId||'—')}</span><br>
+        <span style="color:var(--muted)">Reason: ${RMA_REASON_LABELS[r.reason]||r.reason}</span>
+      </div>
+      ${r.description?`<div style="font-size:13px;color:var(--text-secondary)">${esc(r.description)}</div>`:''}
+      <div>
+        <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Update Status</label>
+        <select class="mf-input" id="rma-new-status" style="margin-bottom:8px">
+          ${Object.entries(RMA_STATUS_LABELS).map(([v,l])=>`<option value="${v}"${r.status===v?' selected':''}>${l}</option>`).join('')}
+        </select>
+        <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Admin Notes</label>
+        <textarea class="mf-input" id="rma-admin-notes" rows="2" style="resize:none;width:100%">${esc(r.adminNotes||'')}</textarea>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-primary" style="flex:1" onclick="rmaSave('${esc(id)}')">Save</button>
+        <button class="btn-secondary" onclick="closeRmaModal()">Cancel</button>
+      </div>
+    </div>`;
+  document.getElementById('rma-modal').style.display='flex';
+}
+
+async function rmaSave(id) {
+  const status = document.getElementById('rma-new-status')?.value;
+  const adminNotes = document.getElementById('rma-admin-notes')?.value||'';
+  try {
+    await db.ref(`return_requests/${id}`).update({ status, adminNotes, updatedAt: Date.now() });
+    _rmaData[id] = { ..._rmaData[id], status, adminNotes, updatedAt: Date.now() };
+    showToast('Return request updated','success');
+    closeRmaModal();
+    rmaRender();
+  } catch(e) { showToast('Save failed: '+e.message,'error'); }
+}
+
+function closeRmaModal() { document.getElementById('rma-modal').style.display='none'; }
 
 </script>
 

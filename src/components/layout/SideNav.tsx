@@ -14,6 +14,7 @@ const NAV = [
   { href: '/profile',   icon: 'fa-circle-user',  label: 'Account' },
   { href: '/compare',   icon: 'fa-scale-balanced', label: 'Compare' },
   { href: '/trade-in',  icon: 'fa-rotate',         label: 'Trade In',  authRequired: true },
+  { href: '/returns',   icon: 'fa-box-open',       label: 'Returns',   authRequired: true },
   { href: '/converter', icon: 'fa-coins',         label: 'Converter' },
   { href: '/about',     icon: 'fa-circle-info',  label: 'About' },
 ];
