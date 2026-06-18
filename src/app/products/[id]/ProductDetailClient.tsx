@@ -6,6 +6,7 @@ import { cldUrl } from '@/lib/cldUrl';
 import { useState, Suspense, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { recordProductView } from '@/actions/products';
+import { subscribeStockAlert, unsubscribeStockAlert, getStockAlertStatus } from '@/actions/stockAlerts';
 import { useApp, useProductPrice } from '@/contexts/AppContext';
 import { useCart }                  from '@/contexts/CartContext';
 import { useWishlist }              from '@/contexts/WishlistContext';
@@ -183,6 +184,15 @@ export default function ProductDetailClient({ product, similar, reviews, initial
   const { toggle, has } = useWishlist();
   const wished          = has(product.id);
   const [reserveOpen, setReserveOpen] = useState(false);
+  const [alertSubbed, setAlertSubbed]  = useState<boolean | null>(null); // null = loading
+  const [alertLoading, setAlertLoading] = useState(false);
+
+  // Load stock alert subscription status when product is OOS
+  useEffect(() => {
+    if (!product.isOOS && product.stock !== 0) return;
+    getStockAlertStatus(product.id).then(setAlertSubbed).catch(() => setAlertSubbed(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product.id]);
 
   // Track this view — deduplicated per session so colour/variant changes
   // (which remount the component) don't count as extra visits.
@@ -534,8 +544,45 @@ export default function ProductDetailClient({ product, similar, reviews, initial
           {/* Add to cart + Reserve — sticky on mobile, static on desktop */}
           <div className="sticky bottom-20 bg-gray-100 pb-2 pt-2 dark:bg-[#111] lg:static lg:bg-transparent lg:pb-0 lg:pt-0 lg:dark:bg-transparent">
             {isOOS ? (
-              <div className="rounded-2xl bg-gray-200 py-4 text-center text-sm font-semibold text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-                Out of Stock
+              <div className="space-y-2">
+                <div className="rounded-2xl bg-gray-200 py-3 text-center text-sm font-semibold text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                  Out of Stock
+                </div>
+                <button
+                  disabled={alertLoading || alertSubbed === null}
+                  onClick={async () => {
+                    setAlertLoading(true);
+                    try {
+                      if (alertSubbed) {
+                        await unsubscribeStockAlert(product.id);
+                        setAlertSubbed(false);
+                      } else {
+                        await subscribeStockAlert(product.id, product.title, product.imageUrl);
+                        setAlertSubbed(true);
+                      }
+                    } catch (e: unknown) {
+                      const msg = e instanceof Error ? e.message : '';
+                      if (msg.toLowerCase().includes('unauthenticated')) {
+                        router.push('/login');
+                      }
+                    } finally {
+                      setAlertLoading(false);
+                    }
+                  }}
+                  className={`w-full rounded-2xl border-2 py-3 text-sm font-semibold transition active:scale-95 ${
+                    alertSubbed
+                      ? 'border-green-500 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+                      : 'border-primary-500 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20'
+                  }`}
+                >
+                  {alertLoading ? (
+                    <i className="fa fa-spinner fa-spin" />
+                  ) : alertSubbed ? (
+                    <><i className="fa fa-bell-slash mr-2" />Remove Alert</>
+                  ) : (
+                    <><i className="fa fa-bell mr-2" />Notify Me When Available</>
+                  )}
+                </button>
               </div>
             ) : (
               <div className="flex gap-2">
