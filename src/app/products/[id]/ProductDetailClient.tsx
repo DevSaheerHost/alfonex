@@ -13,6 +13,7 @@ import { useCart }                  from '@/contexts/CartContext';
 import { useWishlist }              from '@/contexts/WishlistContext';
 import ReserveModal                 from '@/components/products/ReserveModal';
 import ProductScrollRow             from '@/components/products/ProductScrollRow';
+import EmiCalculator                from '@/components/products/EmiCalculator';
 import ProductReviews               from '@/components/reviews/ProductReviews';
 import Product3DViewer              from '@/components/products/Product3DViewer';
 import SearchTracker                from '@/components/analytics/SearchTracker';
@@ -550,6 +551,8 @@ export default function ProductDetailClient({ product, similar, reviews, initial
               </>
             );
           })()}
+
+          <EmiCalculator price={price} symbol={symbol} />
 
           {/* Add to cart + Reserve — sticky on mobile, static on desktop */}
           <div className="sticky bottom-20 bg-gray-100 pb-2 pt-2 dark:bg-[#111] lg:static lg:bg-transparent lg:pb-0 lg:pt-0 lg:dark:bg-transparent">
