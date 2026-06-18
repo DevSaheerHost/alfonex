@@ -1,9 +1,10 @@
 import { redirect } from 'next/navigation';
 import { getMyReturns } from '@/actions/returns';
+import type { ReturnRequest } from '@/actions/returns';
 import ReturnsClient from './ReturnsClient';
 
 export default async function ReturnsPage() {
-  let returns;
+  let returns: ReturnRequest[];
   try {
     returns = await getMyReturns();
   } catch (e: unknown) {
