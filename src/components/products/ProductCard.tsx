@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useApp, useProductPrice } from '@/contexts/AppContext';
 import { useCart }                  from '@/contexts/CartContext';
 import { useWishlist }              from '@/contexts/WishlistContext';
+import { useCompare }              from '@/contexts/CompareContext';
 import type { Product }             from '@/lib/types';
 import { CURRENCY_SYMBOLS }         from '@/lib/types';
 import { productHref }              from '@/lib/slug';
@@ -27,6 +28,8 @@ export default function ProductCard({ product, searchQuery }: Props) {
   const { addToCart } = useCart();
   const { toggle, has } = useWishlist();
   const wished = has(product.id);
+  const { toggle: compareToggle, has: compareHas, ids: compareIds } = useCompare();
+  const inCompare = compareHas(product.id);
 
   const price     = getProdPrice(product);
   const symbol    = CURRENCY_SYMBOLS[currency];
@@ -84,6 +87,24 @@ export default function ProductCard({ product, searchQuery }: Props) {
             className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 shadow-sm backdrop-blur-sm transition hover:scale-110 active:scale-95 dark:bg-gray-900/80"
           >
             <i className={`fa-heart text-sm ${wished ? 'fa-solid text-red-500' : 'fa-regular text-gray-400'}`} />
+          </button>
+
+          {/* Compare */}
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              if (!inCompare && compareIds.length >= 3) return;
+              compareToggle(product.id);
+            }}
+            aria-label={inCompare ? 'Remove from compare' : 'Add to compare'}
+            title={!inCompare && compareIds.length >= 3 ? 'Max 3 products' : undefined}
+            className={`absolute right-2 top-10 flex h-7 w-7 items-center justify-center rounded-full shadow-sm backdrop-blur-sm transition hover:scale-110 active:scale-95 ${
+              inCompare
+                ? 'bg-primary-500 text-white'
+                : 'bg-white/80 text-gray-400 dark:bg-gray-900/80'
+            }`}
+          >
+            <i className="fa fa-scale-balanced text-[10px]" />
           </button>
         </div>
 

@@ -4,11 +4,13 @@ import { AuthProvider }  from '@/contexts/AuthContext';
 import { CartProvider }  from '@/contexts/CartContext';
 import { AppProvider }   from '@/contexts/AppContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';
+import { CompareProvider }  from '@/contexts/CompareContext';
 import { NotificationsProvider } from '@/contexts/NotificationsContext';
 import Header            from '@/components/layout/Header';
 import BottomNav         from '@/components/layout/BottomNav';
 import SideNav           from '@/components/layout/SideNav';
 import PageTransition    from '@/components/layout/PageTransition';
+import CompareBar        from '@/components/products/CompareBar';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://alfonex.com'),
@@ -74,6 +76,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <AuthProvider>
             <CartProvider>
             <WishlistProvider>
+            <CompareProvider>
             <NotificationsProvider>
               <div className="min-h-screen bg-gray-100 dark:bg-[#111]">
                 <Header />
@@ -84,8 +87,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   </main>
                 </div>
                 <BottomNav />
+                <CompareBar />
               </div>
             </NotificationsProvider>
+            </CompareProvider>
             </WishlistProvider>
             </CartProvider>
           </AuthProvider>
