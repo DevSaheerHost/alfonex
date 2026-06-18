@@ -1,6 +1,7 @@
 import StarRating from './StarRating';
 import type { Review } from '@/lib/types';
 import Image from 'next/image';
+import { cldUrl } from '@/lib/cldUrl';
 
 function timeAgo(ts: number): string {
   const d = Math.floor((Date.now() - ts) / 86400000);
@@ -46,7 +47,7 @@ export default function ReviewCard({ review }: { review: Review }) {
           {images.map((url, i) => (
             <a key={i} href={url} target="_blank" rel="noopener noreferrer">
               <div className="relative h-20 w-20 overflow-hidden rounded-xl border border-gray-100 dark:border-gray-700">
-                <Image src={url} alt={`Review image ${i + 1}`} fill className="object-cover" sizes="80px" />
+                <Image src={cldUrl(url, 'f_auto,q_auto,w_200')} alt={`Review image ${i + 1}`} fill className="object-cover" sizes="80px" />
               </div>
             </a>
           ))}

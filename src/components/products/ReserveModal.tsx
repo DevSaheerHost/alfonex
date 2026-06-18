@@ -3,6 +3,7 @@
 import { useState, useTransition, useEffect } from 'react';
 import Image from 'next/image';
 import { createReservation } from '@/actions/reservations';
+import { cldUrl } from '@/lib/cldUrl';
 import { useAuth }  from '@/contexts/AuthContext';
 import { useApp }   from '@/contexts/AppContext';
 import { CURRENCY_SYMBOLS } from '@/lib/types';
@@ -114,7 +115,7 @@ export default function ReserveModal({ product, price, variantLabel, open, onClo
             {/* Product strip */}
             <div className="mb-4 flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-900/50">
               <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg bg-white dark:bg-gray-800">
-                <Image src={product.imageUrl} alt={product.title} fill className="object-contain p-1" sizes="56px" />
+                <Image src={cldUrl(product.imageUrl, 'f_auto,q_auto,w_120')} alt={product.title} fill className="object-contain p-1" sizes="56px" />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold dark:text-gray-100">{product.title}</p>

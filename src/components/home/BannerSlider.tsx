@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link  from 'next/link';
 import type { Banner } from '@/lib/types';
+import { cldUrl } from '@/lib/cldUrl';
 
 function getBannerHref(b: Banner): string {
   switch (b.actionType) {
@@ -71,7 +72,7 @@ export default function BannerSlider({ banners }: { banners: Banner[] }) {
           {banner.imageUrl && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={banner.imageUrl}
+              src={cldUrl(banner.imageUrl, 'f_auto,q_auto,w_1200')}
               alt=""
               className="absolute inset-0 h-full w-full object-cover opacity-30"
             />

@@ -8,6 +8,7 @@ import { useWishlist }              from '@/contexts/WishlistContext';
 import type { Product }             from '@/lib/types';
 import { CURRENCY_SYMBOLS }         from '@/lib/types';
 import { productHref }              from '@/lib/slug';
+import { cldUrl }                   from '@/lib/cldUrl';
 
 const GRADE_LABELS: Record<string, { label: string; color: string }> = {
   'a1+': { label: 'Excellent',  color: 'bg-green-100 text-green-700' },
@@ -61,7 +62,7 @@ export default function ProductCard({ product, searchQuery }: Props) {
         {/* Image — fixed square, never shrinks */}
         <div className="relative aspect-square w-full flex-shrink-0 overflow-hidden bg-gray-50 dark:bg-gray-800">
           <Image
-            src={product.imageUrl}
+            src={cldUrl(product.imageUrl, 'f_auto,q_auto,w_400')}
             alt={product.title}
             fill
             className="object-contain p-3 transition-transform duration-300 group-hover:scale-105"

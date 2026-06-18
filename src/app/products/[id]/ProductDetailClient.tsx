@@ -2,6 +2,7 @@
 
 import Image   from 'next/image';
 import Link    from 'next/link';
+import { cldUrl } from '@/lib/cldUrl';
 import { useState, Suspense, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { recordProductView } from '@/actions/products';
@@ -314,7 +315,7 @@ export default function ProductDetailClient({ product, similar, reviews, initial
               />
             ) : (
               <Image
-                src={displayImage}
+                src={cldUrl(displayImage, 'f_auto,q_auto,w_900')}
                 alt={product.title}
                 fill
                 className="object-contain p-4"
@@ -413,7 +414,7 @@ export default function ProductDetailClient({ product, similar, reviews, initial
                                 : `border-gray-200 dark:border-gray-700 ${!oos ? 'hover:border-primary-300' : ''}`
                             }`}>
                               <Image
-                                src={v.imageUrl!}
+                                src={cldUrl(v.imageUrl!, 'f_auto,q_auto,w_120')}
                                 alt={v.label}
                                 fill
                                 className="object-contain p-1"
