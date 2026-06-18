@@ -114,8 +114,17 @@ export default function ProductCard({ product, searchQuery }: Props) {
             {product.title}
           </p>
 
-          {/* Grade badge — fixed min-height so cards without a grade still align */}
-          <div className="mt-1 min-h-[20px]">
+          {/* Rating + Grade row */}
+          <div className="mt-1 flex min-h-[20px] flex-wrap items-center gap-1.5">
+            {!!product.ratingCount && product.ratingCount > 0 && (
+              <span className="inline-flex items-center gap-1 text-[10px] text-gray-500 dark:text-gray-400">
+                <span className="inline-flex items-center gap-0.5 rounded bg-green-600 px-1.5 py-0.5 font-bold text-white">
+                  {product.ratingAvg?.toFixed(1)}
+                  <i className="fa fa-star text-[7px]" />
+                </span>
+                ({product.ratingCount})
+              </span>
+            )}
             {grade && (
               <span className={`inline-block rounded-md px-1.5 py-0.5 text-[10px] font-semibold ${grade.color}`}>
                 {grade.label}

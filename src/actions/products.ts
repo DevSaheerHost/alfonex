@@ -24,9 +24,31 @@ function toProducts(snapshot: Record<string, unknown>): Product[] {
 
 export const getProducts = cache(async function getProducts(): Promise<Product[]> {
   try {
-    const snap = await adminRtdb().ref('products').get();
-    if (!snap.exists()) return [];
-    return toProducts(snap.val());
+    const [prodSnap, reviewsSnap] = await Promise.all([
+      adminRtdb().ref('products').get(),
+      adminRtdb().ref('reviews').get(),
+    ]);
+    if (!prodSnap.exists()) return [];
+
+    const products = toProducts(prodSnap.val());
+
+    // Merge review aggregates (avg rating + count) onto each product
+    if (reviewsSnap.exists()) {
+      const byProduct = reviewsSnap.val() as Record<string, Record<string, { rating?: number }>>;
+      for (const p of products) {
+        const node = byProduct[p.id];
+        if (!node) continue;
+        const ratings = Object.values(node)
+          .map((r) => r.rating)
+          .filter((n): n is number => typeof n === 'number' && n > 0);
+        if (ratings.length) {
+          p.ratingCount = ratings.length;
+          p.ratingAvg   = ratings.reduce((a, b) => a + b, 0) / ratings.length;
+        }
+      }
+    }
+
+    return products;
   } catch {
     return [];
   }

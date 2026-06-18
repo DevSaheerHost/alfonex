@@ -48,6 +48,8 @@ export interface Product {
   isHidden: boolean;
   createdAt: string;
   purchaseCount?: number;
+  ratingAvg?: number;    // computed from reviews at read time
+  ratingCount?: number;  // number of reviews
 }
 
 // ─── Cart ─────────────────────────────────────────────────────────────────────
