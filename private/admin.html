@@ -5596,10 +5596,19 @@ async function advanceOrderStatus(){
       headers:{'Content-Type':'application/json','Authorization':`Bearer ${idToken}`},
       body:JSON.stringify({status:nextStatus}),
     });
-    if(!res.ok)throw new Error((await res.json()).error||'Update failed');
+    const resData = await res.json().catch(()=>({}));
+    if(!res.ok)throw new Error(resData.error||'Update failed');
     showToast(`Marked as ${nextStatus}!`,'success');
     auditLog('EDIT', `Order ${shortId(id)} status: ${o.status} → ${nextStatus}`, { detail:`Customer: ${o.customerName||'—'} | Total: $${o.total||0}`, orderId:id, category:'Orders' });
     awardPoints(5,'Advanced order status');
+    // Offer WhatsApp notification to customer
+    if(resData.whatsappUrl){
+      setTimeout(()=>{
+        if(confirm(`Send WhatsApp update to ${o.customerName||'customer'} about "${nextStatus}" status?`)){
+          window.open(resData.whatsappUrl,'_blank');
+        }
+      },300);
+    }
     // Update button for the NEXT step immediately (don't wait for listener)
     const afterIdx=curIdx+2;
     if(afterIdx<ORDER_STATUSES.length){

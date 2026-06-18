@@ -1,6 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth, adminRtdb, adminMessaging } from '@/lib/firebase/admin';
 
+// WhatsApp message templates per status
+const WA_MESSAGES: Record<string, (name: string, orderId: string) => string> = {
+  Packed:       (n) => `Hi ${n}! 📦 Your Alfonex order has been packed and is ready to ship. We'll update you once dispatched!`,
+  Dispatched:   (n) => `Hi ${n}! 🚚 Your Alfonex order has been dispatched and is on its way to you!`,
+  Shipped:      (n, id) => `Hi ${n}! ✈️ Your Alfonex order #${id.slice(-6)} has been shipped. You can track it in the app under My Orders.`,
+  'In Transit': (n) => `Hi ${n}! 📍 Your Alfonex order is in transit and arriving soon. Stay tuned!`,
+  Delivered:    (n) => `Hi ${n}! ✅ Your Alfonex order has been delivered. Thank you for shopping with us! 🙏 We'd love a review in the app.`,
+};
+
+function buildWhatsAppUrl(phone: string, message: string): string {
+  const digits = phone.replace(/\D/g, '');
+  const withCountry = digits.startsWith('0') ? `971${digits.slice(1)}` : digits;
+  return `https://wa.me/${withCountry}?text=${encodeURIComponent(message)}`;
+}
+
 // Messages sent for each status transition
 const STATUS_MESSAGES: Record<string, { title: string; body: string }> = {
   Packed:       { title: 'Order Packed',     body: 'Your order has been packed and is ready to ship.' },
@@ -76,9 +91,11 @@ export async function POST(
   }
 
   const order = orderSnap.val() as {
-    userId:     string;
-    status:     string;
-    trackingNo: string;
+    userId:        string;
+    status:        string;
+    trackingNo:    string;
+    customerName:  string;
+    customerPhone: string;
   };
 
   const now     = new Date().toISOString();
@@ -113,5 +130,14 @@ export async function POST(
     await sendNotification(uid, id, 'Tracking Added', trackBody);
   }
 
-  return NextResponse.json({ ok: true });
+  // Build WhatsApp link for admin to send manually (no external API needed)
+  let whatsappUrl: string | null = null;
+  if (body.status && body.status !== order.status && order.customerPhone) {
+    const waMsg = WA_MESSAGES[body.status];
+    if (waMsg) {
+      whatsappUrl = buildWhatsAppUrl(order.customerPhone, waMsg(order.customerName || 'Customer', id));
+    }
+  }
+
+  return NextResponse.json({ ok: true, whatsappUrl });
 }
