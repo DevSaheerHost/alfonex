@@ -76,7 +76,7 @@ export default function ComparePage() {
       const oos = product.isOOS || product.stock === 0;
       return oos ? 'Out of Stock' : 'In Stock';
     }
-    const val = (product as Record<string, unknown>)[key];
+    const val = (product as unknown as Record<string, unknown>)[key];
     if (val === undefined || val === null || val === '') return '—';
     return String(val);
   }
