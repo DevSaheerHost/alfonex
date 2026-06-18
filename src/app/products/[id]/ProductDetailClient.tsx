@@ -276,8 +276,8 @@ export default function ProductDetailClient({ product, similar, reviews, initial
       {/* Desktop: side-by-side | Mobile: stacked */}
       <div className="lg:flex lg:gap-8">
 
-        {/* Image / 3D viewer */}
-        <div className="mb-4 lg:mb-0 lg:w-[420px] lg:flex-shrink-0">
+        {/* Image / 3D viewer — sticky on desktop so it stays visible while scrolling details */}
+        <div className="mb-4 lg:mb-0 lg:w-[420px] lg:flex-shrink-0 lg:sticky lg:top-20 lg:self-start">
           {/* 2D / 3D tab toggle — only shown when the product has a 3D model */}
           {product.modelUrl && (
             <div className="mb-2 flex gap-1 rounded-xl bg-gray-100 p-1 dark:bg-gray-800">
