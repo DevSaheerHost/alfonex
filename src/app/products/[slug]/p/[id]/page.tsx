@@ -66,6 +66,12 @@ export default async function ProductPage({ params }: Props) {
   ]);
 
   const canonical = `${BASE}/products/${slug}/p/${id}`;
+
+  const ratingCount = reviews.length;
+  const avgRating   = ratingCount > 0
+    ? reviews.reduce((s, r) => s + r.rating, 0) / ratingCount
+    : null;
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type':    'Product',
@@ -73,6 +79,7 @@ export default async function ProductPage({ params }: Props) {
     description: product.description || product.title,
     image:       product.imageUrl,
     url:         canonical,
+    sku:         product.id,
     brand: { '@type': 'Brand', name: 'Apple' },
     offers: {
       '@type':       'Offer',
@@ -83,6 +90,22 @@ export default async function ProductPage({ params }: Props) {
         : 'https://schema.org/InStock',
       seller: { '@type': 'Organization', name: 'Alfonex', url: BASE },
     },
+    ...(avgRating !== null && {
+      aggregateRating: {
+        '@type':       'AggregateRating',
+        ratingValue:   avgRating.toFixed(1),
+        reviewCount:   ratingCount,
+        bestRating:    5,
+        worstRating:   1,
+      },
+      review: reviews.slice(0, 5).map((r) => ({
+        '@type':       'Review',
+        reviewRating:  { '@type': 'Rating', ratingValue: r.rating, bestRating: 5 },
+        author:        { '@type': 'Person', name: r.userName },
+        reviewBody:    r.text || '',
+        datePublished: new Date(r.createdAt).toISOString().slice(0, 10),
+      })),
+    }),
   };
 
   return (
