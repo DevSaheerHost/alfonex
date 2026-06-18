@@ -50,22 +50,37 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     setPushPermission(Notification.permission);
   }, []);
 
-  // Track notification click — reads ?_pnid from URL, writes to RTDB, removes param
+  // Track notification click/visit — reads ?_pnid and ?way from URL, writes to RTDB, cleans params
   useEffect(() => {
     if (!user || typeof window === 'undefined') return;
     const params  = new URLSearchParams(window.location.search);
     const notifId = params.get('_pnid');
-    if (!notifId) return;
+    const way     = params.get('way');
+    if (!notifId && way !== 'notification') return;
+
+    // Clean both params in one replaceState
     params.delete('_pnid');
+    params.delete('way');
     const qs = params.toString();
     history.replaceState(null, '', window.location.pathname + (qs ? `?${qs}` : '') + window.location.hash);
-    const db       = getDatabase(getApp());
-    const clickRef = ref(db, `notification_clicks/${notifId}/${user.uid}`);
-    get(clickRef).then((snap) => {
-      if (snap.exists()) return;
-      set(clickRef, Date.now());
-      runTransaction(ref(db, `notification_customer_clicks/${user.uid}`), (n) => (n ?? 0) + 1);
-    });
+
+    const db = getDatabase(getApp());
+
+    // Per-notification click (deduped per user)
+    if (notifId) {
+      const clickRef = ref(db, `notification_clicks/${notifId}/${user.uid}`);
+      get(clickRef).then((snap) => {
+        if (snap.exists()) return;
+        set(clickRef, Date.now());
+        runTransaction(ref(db, `notification_customer_clicks/${user.uid}`), (n) => (n ?? 0) + 1);
+      });
+    }
+
+    // Daily total notification-driven visits counter
+    if (way === 'notification') {
+      const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+      runTransaction(ref(db, `notification_visits/${today}`), (n) => (n ?? 0) + 1);
+    }
   }, [user]);
 
   // Real-time RTDB bell
