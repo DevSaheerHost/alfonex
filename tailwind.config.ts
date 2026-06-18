@@ -51,11 +51,16 @@ const config: Config = {
           '0%':   { opacity: '0', transform: 'translateY(60px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
+        'banner-fade': {
+          '0%':   { opacity: '0', transform: 'translateY(6px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
       },
       animation: {
         'slide-up':    'slide-up 0.25s ease-out both',
         'page-enter':  'page-enter 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94) both',
         'sheet-enter': 'sheet-enter 0.35s cubic-bezier(0.32, 0.72, 0, 1) both',
+        'banner-fade': 'banner-fade 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both',
       },
     },
   },
