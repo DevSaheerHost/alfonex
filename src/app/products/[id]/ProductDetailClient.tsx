@@ -7,6 +7,7 @@ import { useState, Suspense, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { recordProductView } from '@/actions/products';
 import { subscribeStockAlert, unsubscribeStockAlert, getStockAlertStatus } from '@/actions/stockAlerts';
+import { subscribePriceAlert, unsubscribePriceAlert, getPriceAlertStatus } from '@/actions/priceAlerts';
 import { useApp, useProductPrice } from '@/contexts/AppContext';
 import { useCart }                  from '@/contexts/CartContext';
 import { useWishlist }              from '@/contexts/WishlistContext';
@@ -186,11 +187,20 @@ export default function ProductDetailClient({ product, similar, reviews, initial
   const [reserveOpen, setReserveOpen] = useState(false);
   const [alertSubbed, setAlertSubbed]  = useState<boolean | null>(null); // null = loading
   const [alertLoading, setAlertLoading] = useState(false);
+  const [priceSubbed, setPriceSubbed]   = useState<boolean | null>(null);
+  const [priceLoading, setPriceLoading] = useState(false);
 
   // Load stock alert subscription status when product is OOS
   useEffect(() => {
     if (!product.isOOS && product.stock !== 0) return;
     getStockAlertStatus(product.id).then(setAlertSubbed).catch(() => setAlertSubbed(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product.id]);
+
+  // Load price alert subscription status for in-stock products
+  useEffect(() => {
+    if (product.isOOS || product.stock === 0) return;
+    getPriceAlertStatus(product.id).then(setPriceSubbed).catch(() => setPriceSubbed(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.id]);
 
@@ -585,26 +595,65 @@ export default function ProductDetailClient({ product, similar, reviews, initial
                 </button>
               </div>
             ) : (
-              <div className="flex gap-2">
-                <button
-                  onClick={handleAddToCart}
-                  disabled={!canAddToCart}
-                  className="btn-primary flex-1 lg:flex-none lg:px-10"
-                >
-                  <i className="fa fa-shopping-bag" />
-                  {canAddToCart
-                    ? 'Add to Cart'
-                    : product.variants?.length
-                    ? 'Select options'
-                    : 'Add to Cart'}
-                </button>
-                <button
-                  onClick={() => setReserveOpen(true)}
-                  className="flex items-center gap-2 rounded-xl border-2 border-primary-500 px-4 py-3 text-sm font-semibold text-primary-600 transition hover:bg-primary-50 active:scale-95 dark:hover:bg-primary-900/20"
-                >
-                  <i className="fa fa-bookmark" />
-                  <span className="hidden sm:inline">Reserve</span>
-                </button>
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleAddToCart}
+                    disabled={!canAddToCart}
+                    className="btn-primary flex-1 lg:flex-none lg:px-10"
+                  >
+                    <i className="fa fa-shopping-bag" />
+                    {canAddToCart
+                      ? 'Add to Cart'
+                      : product.variants?.length
+                      ? 'Select options'
+                      : 'Add to Cart'}
+                  </button>
+                  <button
+                    onClick={() => setReserveOpen(true)}
+                    className="flex items-center gap-2 rounded-xl border-2 border-primary-500 px-4 py-3 text-sm font-semibold text-primary-600 transition hover:bg-primary-50 active:scale-95 dark:hover:bg-primary-900/20"
+                  >
+                    <i className="fa fa-bookmark" />
+                    <span className="hidden sm:inline">Reserve</span>
+                  </button>
+                </div>
+                {priceSubbed !== null && (
+                  <button
+                    disabled={priceLoading}
+                    onClick={async () => {
+                      setPriceLoading(true);
+                      try {
+                        if (priceSubbed) {
+                          await unsubscribePriceAlert(product.id);
+                          setPriceSubbed(false);
+                        } else {
+                          await subscribePriceAlert(product.id, product.title, product.imageUrl, price);
+                          setPriceSubbed(true);
+                        }
+                      } catch (e: unknown) {
+                        const msg = e instanceof Error ? e.message : '';
+                        if (msg.toLowerCase().includes('unauthenticated')) {
+                          router.push('/login');
+                        }
+                      } finally {
+                        setPriceLoading(false);
+                      }
+                    }}
+                    className={`w-full rounded-2xl border py-2.5 text-sm font-medium transition active:scale-95 ${
+                      priceSubbed
+                        ? 'border-amber-400 bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400'
+                        : 'border-gray-300 text-gray-500 hover:border-amber-400 hover:text-amber-600 dark:border-gray-600 dark:text-gray-400 dark:hover:border-amber-500 dark:hover:text-amber-400'
+                    }`}
+                  >
+                    {priceLoading ? (
+                      <i className="fa fa-spinner fa-spin" />
+                    ) : priceSubbed ? (
+                      <><i className="fa fa-tag mr-2" />Price Alert On — Tap to Remove</>
+                    ) : (
+                      <><i className="fa fa-tag mr-2" />Notify Me if Price Drops</>
+                    )}
+                  </button>
+                )}
               </div>
             )}
           </div>
