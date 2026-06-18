@@ -3992,6 +3992,31 @@ const CLD = {
    Change this if your app is deployed at a different domain.                            */
 const SITE_BASE = '%%SITE_BASE%%';
 
+/* ── What's New changelog ─────────────────────────────────────────────────── */
+const CHANGELOG_VERSION = '2.6';
+const CHANGELOG_ENTRIES = [
+  {
+    version: '2.6',
+    date: 'June 2026',
+    title: "What's New in Alfonex Admin",
+    items: [
+      { icon: '🔍', title: 'Smarter Search Page',       desc: 'Customers can now search products with instant suggestions, filter by sort order, and get results by pressing Enter — just like Flipkart.' },
+      { icon: '⭐', title: 'Product Ratings on Cards',   desc: 'Each product card now shows the average star rating and number of reviews at a glance.' },
+      { icon: '🎨', title: 'Improved Banner Design',     desc: 'Homepage banners now feature a modern split layout with the product image displayed prominently on the right side.' },
+      { icon: '🔔', title: 'Back-in-Stock Alerts',       desc: 'Customers can subscribe to get notified automatically when an out-of-stock product becomes available again.' },
+      { icon: '💸', title: 'Price Drop Alerts',          desc: 'Customers can set a target price and receive a notification when the product drops to that price.' },
+      { icon: '📊', title: 'EMI Calculator',             desc: 'Product pages now include an EMI calculator so customers can see monthly instalment options before buying.' },
+      { icon: '⚖️', title: 'Compare Products',           desc: 'Customers can compare up to 3 products side-by-side to see specs, prices, and ratings together.' },
+      { icon: '📱', title: 'Trade-In Requests',          desc: 'A new "Trade In Your Device" section lets customers submit their old device for evaluation directly from the app.' },
+      { icon: '💬', title: 'WhatsApp Order Updates',     desc: 'You can now send order status updates to customers via WhatsApp directly from the Orders section.' },
+      { icon: '↩️', title: 'Returns & RMA',              desc: 'Customers can submit return or repair requests from the app. All requests appear in the new Returns & RMA section.' },
+      { icon: '📉', title: 'Low Stock Admin Alerts',     desc: 'You will automatically receive a push notification when any product has 3 or fewer units remaining.' },
+      { icon: '💰', title: 'Profit & Margin Dashboard',  desc: 'A new dashboard shows your revenue, cost, and profit for any date range — with a per-product breakdown.' },
+      { icon: '🌐', title: 'Arabic & RTL Support',       desc: 'The storefront now supports Arabic. Customers can switch language and the layout flips to right-to-left automatically.' },
+    ],
+  },
+];
+
 /* ── Delete old Cloudinary assets after a product is updated ──────────────────
    Compares old and new image/model URLs; calls the secure API route to delete
    any URLs that were removed. Fire-and-forget: errors are logged but never
@@ -8641,7 +8666,32 @@ window.addEventListener('DOMContentLoaded', () => {
   renderTasks();
   renderAuditLog();
   convertCurrency();
+  checkChangelog();
 });
+
+function checkChangelog() {
+  try {
+    const seen = localStorage.getItem('alfonex_admin_changelog');
+    if (seen === CHANGELOG_VERSION) return;
+    const entry = CHANGELOG_ENTRIES[0];
+    document.getElementById('wn-title').textContent = entry.title;
+    document.getElementById('wn-meta').textContent  = 'Version ' + entry.version + ' · ' + entry.date;
+    document.getElementById('wn-list').innerHTML = entry.items.map(function(i) {
+      return '<div style="display:flex;gap:12px;margin-bottom:14px">' +
+        '<span style="font-size:20px;flex-shrink:0;line-height:1.4">' + i.icon + '</span>' +
+        '<div>' +
+          '<p style="margin:0 0 3px;font-size:13px;font-weight:600;color:var(--text)">' + i.title + '</p>' +
+          '<p style="margin:0;font-size:12px;color:var(--muted);line-height:1.55">' + i.desc + '</p>' +
+        '</div></div>';
+    }).join('');
+    document.getElementById('modal-whats-new').classList.add('open');
+  } catch(e) { /* never block page load */ }
+}
+
+function closeChangelog() {
+  try { localStorage.setItem('alfonex_admin_changelog', CHANGELOG_VERSION); } catch(e) {}
+  document.getElementById('modal-whats-new').classList.remove('open');
+}
 
 /* Product audit is logged directly in saveProduct/deleteProduct functions.
    No Firebase listeners needed — those cause false logs on every page load. */
@@ -11779,6 +11829,26 @@ function closeRmaModal() { document.getElementById('rma-modal').style.display='n
         </div>
       </div>
     </div>
+
+  <!-- ── What's New Changelog Popup ──────────────────────────────────────── -->
+  <div id="modal-whats-new" class="modal-backdrop" style="z-index:10001;align-items:center">
+    <div style="background:var(--card);border-radius:20px;width:90%;max-width:520px;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.3)">
+      <!-- Header -->
+      <div style="padding:20px 24px 16px;border-bottom:1px solid var(--border);flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+          <span style="font-size:24px">🎉</span>
+          <h2 id="wn-title" style="margin:0;font-size:18px;font-weight:700;color:var(--text)">What's New</h2>
+        </div>
+        <p id="wn-meta" style="margin:0;font-size:12px;color:var(--muted)"></p>
+      </div>
+      <!-- Feature list -->
+      <div id="wn-list" style="overflow-y:auto;padding:16px 24px;flex:1"></div>
+      <!-- Footer -->
+      <div style="padding:14px 24px;border-top:1px solid var(--border);flex-shrink:0;display:flex;justify-content:flex-end">
+        <button onclick="closeChangelog()" style="background:var(--green,#22c55e);color:#fff;border:none;border-radius:10px;padding:10px 28px;font-size:14px;font-weight:600;cursor:pointer">Got it! 👍</button>
+      </div>
+    </div>
+  </div>
 
 </body>
 </html>
