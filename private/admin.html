@@ -2028,7 +2028,10 @@ tbody td{padding:12px 16px;vertical-align:middle}
 
           <!-- Send History -->
           <div class="table-card" style="padding:0;overflow:hidden">
-            <div class="table-topbar"><div class="table-topbar-title"><i class="fa-solid fa-clock-rotate-left" style="color:var(--green)"></i> Send History</div></div>
+            <div class="table-topbar">
+              <div class="table-topbar-title"><i class="fa-solid fa-clock-rotate-left" style="color:var(--green)"></i> Send History</div>
+              <span id="pn-total-visits" style="font-size:11px;font-weight:700;color:#3b82f6;background:rgba(59,130,246,.1);padding:3px 10px;border-radius:20px;display:none"><i class="fa-solid fa-arrow-up-right-from-square" style="font-size:9px"></i> — total opens</span>
+            </div>
             <div id="pn-history-list" style="padding:0">
               <div style="padding:32px;text-align:center;color:var(--muted);font-size:13px"><i class="fa-solid fa-bell" style="font-size:24px;display:block;margin-bottom:8px;opacity:.25"></i>No notifications sent yet</div>
             </div>
@@ -10873,6 +10876,16 @@ function pnLoadHistory() {
         <div style="font-size:11px;color:var(--muted);white-space:nowrap;flex-shrink:0">${dateStr}</div>
       </div>`;
     }).join('');
+  });
+  // Total notification-driven visits (all-time sum of daily counters)
+  db.ref('notification_visits').once('value', snap => {
+    const chip = document.getElementById('pn-total-visits');
+    if (!chip) return;
+    if (!snap.exists()) { chip.style.display = 'none'; return; }
+    let total = 0;
+    snap.forEach(d => { total += d.val() || 0; });
+    chip.style.display = '';
+    chip.innerHTML = `<i class="fa-solid fa-arrow-up-right-from-square" style="font-size:9px"></i> ${total.toLocaleString()} total opens`;
   });
 }
 
