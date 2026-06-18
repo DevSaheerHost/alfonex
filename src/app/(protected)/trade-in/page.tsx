@@ -1,9 +1,10 @@
 import { redirect } from 'next/navigation';
 import { getMyTradeIns } from '@/actions/tradeIn';
+import type { TradeInRequest } from '@/actions/tradeIn';
 import TradeInClient from './TradeInClient';
 
 export default async function TradeInPage() {
-  let requests;
+  let requests: TradeInRequest[];
   try {
     requests = await getMyTradeIns();
   } catch (e: unknown) {
