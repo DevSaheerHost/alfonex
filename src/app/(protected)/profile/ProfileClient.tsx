@@ -107,6 +107,7 @@ export default function ProfileClient({ initialProfile }: Props) {
           { href: '/addresses', icon: 'fa-location-dot',  label: 'Saved Addresses' },
           { href: '/wishlist',  icon: 'fa-heart',         label: 'Wishlist' },
           { href: '/loyalty',   icon: 'fa-star',           label: 'Loyalty & Rewards' },
+          { href: '/trade-in',  icon: 'fa-rotate',         label: 'Trade In / Exchange' },
           { href: '/warranty',  icon: 'fa-shield-halved', label: 'Warranty Claims' },
           { href: '/converter', icon: 'fa-coins',          label: 'AED ↔ INR Converter' },
           { href: '/about',     icon: 'fa-circle-info',    label: 'About Alfonex' },
