@@ -11,6 +11,7 @@ import BottomNav         from '@/components/layout/BottomNav';
 import SideNav           from '@/components/layout/SideNav';
 import PageTransition    from '@/components/layout/PageTransition';
 import CompareBar        from '@/components/products/CompareBar';
+import { LangProvider } from '@/contexts/LangContext';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://alfonex.com'),
@@ -62,7 +63,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
         <link
@@ -72,6 +73,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="icon" href="/assets/meta/icon/logo.png" />
       </head>
       <body>
+        <LangProvider>
         <AppProvider>
           <AuthProvider>
             <CartProvider>
@@ -95,6 +97,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </CartProvider>
           </AuthProvider>
         </AppProvider>
+        </LangProvider>
       </body>
     </html>
   );

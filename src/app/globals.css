@@ -24,6 +24,16 @@
   .dark body {
     @apply bg-[#111] text-gray-100;
   }
+
+  /* Arabic / RTL overrides */
+  html[dir="rtl"] body {
+    font-family: 'Noto Sans Arabic', 'DM Sans', sans-serif;
+    text-align: right;
+  }
+
+  html[dir="rtl"] .font-heading {
+    font-family: 'Noto Sans Arabic', 'Sora', sans-serif;
+  }
 }
 
 /* ─── Component shortcuts ─────────────────────────────────────────────────── */

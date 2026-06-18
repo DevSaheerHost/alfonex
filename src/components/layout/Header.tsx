@@ -7,6 +7,7 @@ import { useCart }   from '@/contexts/CartContext';
 import { useApp }    from '@/contexts/AppContext';
 import { useAuth }   from '@/contexts/AuthContext';
 import { useNotifications } from '@/contexts/NotificationsContext';
+import { useLang }          from '@/contexts/LangContext';
 import { useState, useRef, useEffect }  from 'react';
 import type { AppNotification } from '@/lib/types';
 
@@ -35,6 +36,7 @@ const NOTIF_ICONS: Record<AppNotification['type'], string> = {
 export default function Header() {
   const { totalQty }           = useCart();
   const { currency, setCurrency, theme, toggleTheme } = useApp();
+  const { lang, toggle: toggleLang }                  = useLang();
   const { user }               = useAuth();
   const { notifications, unreadCount, pushPermission, pushError, markRead, markAllRead, enablePush } = useNotifications();
   const router                 = useRouter();
@@ -236,6 +238,15 @@ export default function Header() {
           >
             <i className={`fa ${user ? 'fa-circle-user' : 'fa-user'} text-[15px]`} />
           </Link>
+
+          {/* Language toggle */}
+          <button
+            onClick={toggleLang}
+            aria-label="Toggle language"
+            className="rounded-full px-2 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+          >
+            {lang === 'en' ? 'ع' : 'EN'}
+          </button>
 
           {/* Theme toggle */}
           <button
