@@ -32,7 +32,7 @@ export default function ProductCard({ product, searchQuery, sourceRef, position,
   const getProdPrice = useProductPrice();
   const { addToCart } = useCart();
   const { toggle, has } = useWishlist();
-  const wished = has(product.id);
+  const wished = has(variantLabel ? `${product.id}::${variantLabel}` : product.id);
   const { toggle: compareToggle, has: compareHas, ids: compareIds } = useCompare();
   const inCompare = compareHas(product.id);
 
@@ -96,7 +96,7 @@ export default function ProductCard({ product, searchQuery, sourceRef, position,
 
           {/* Wishlist */}
           <button
-            onClick={(e) => { e.preventDefault(); toggle(product.id); }}
+            onClick={(e) => { e.preventDefault(); toggle(variantLabel ? `${product.id}::${variantLabel}` : product.id); }}
             aria-label={wished ? 'Remove from wishlist' : 'Add to wishlist'}
             className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 shadow-sm backdrop-blur-sm transition hover:scale-110 active:scale-95 dark:bg-gray-900/80"
           >

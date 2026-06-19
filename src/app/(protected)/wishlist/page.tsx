@@ -6,32 +6,57 @@ import Link   from 'next/link';
 import { useApp, useProductPrice } from '@/contexts/AppContext';
 import { useCart }                  from '@/contexts/CartContext';
 import { useWishlist }              from '@/contexts/WishlistContext';
-import { clientAuth }               from '@/lib/firebase/client';
+import { clientAuth, getFirebaseApp } from '@/lib/firebase/client';
 import { getDatabase, ref, get }    from 'firebase/database';
-import { getApp }                   from 'firebase/app';
 import type { Product }             from '@/lib/types';
 import { CURRENCY_SYMBOLS }         from '@/lib/types';
 import { productHref }              from '@/lib/slug';
 
+interface WishItem {
+  wishId:       string;        // the full key stored in wishlist (may be "id::variantLabel")
+  product:      Product;
+  variantLabel: string | undefined;
+  displayImage: string;
+}
+
+function parseWishId(wishId: string): { productId: string; variantLabel: string | undefined } {
+  const parts = wishId.split('::');
+  return { productId: parts[0], variantLabel: parts[1] };
+}
+
 export default function WishlistPage() {
-  const { ids, toggle }         = useWishlist();
-  const [products, setProducts] = useState<Product[]>([]);
-  const { currency }            = useApp();
-  const getProdPrice            = useProductPrice();
-  const { addToCart }           = useCart();
-  const symbol                  = CURRENCY_SYMBOLS[currency];
+  const { ids, toggle }       = useWishlist();
+  const [items, setItems]     = useState<WishItem[]>([]);
+  const { currency }          = useApp();
+  const getProdPrice          = useProductPrice();
+  const { addToCart }         = useCart();
+  const symbol                = CURRENCY_SYMBOLS[currency];
 
   useEffect(() => {
-    if (!ids.length) { setProducts([]); return; }
+    if (!ids.length) { setItems([]); return; }
     clientAuth();
-    const db = getDatabase(getApp());
+    const db = getDatabase(getFirebaseApp());
     Promise.all(
-      ids.map((id) =>
-        get(ref(db, `products/${id}`)).then((snap) =>
-          snap.exists() ? ({ id: snap.key, ...snap.val() } as Product) : null,
-        ),
-      ),
-    ).then((ps) => setProducts(ps.filter(Boolean) as Product[]));
+      ids.map((wishId) => {
+        const { productId, variantLabel } = parseWishId(wishId);
+        return get(ref(db, `products/${productId}`)).then((snap) => {
+          if (!snap.exists()) return null;
+          const product = { id: snap.key, ...snap.val() } as Product;
+          // Find variant-specific image when wishlisted from an expanded color card
+          const variantImage = variantLabel
+            ? product.variants
+                ?.flatMap((g) => g.values)
+                .find((v) => v.label === variantLabel)?.imageUrl
+            : undefined;
+          return {
+            wishId,
+            product,
+            variantLabel,
+            displayImage: variantImage || product.imageUrl,
+          } as WishItem;
+        });
+      }),
+    ).then((list) => setItems(list.filter(Boolean) as WishItem[]));
   }, [ids]);
 
   if (!ids.length) {
@@ -50,31 +75,34 @@ export default function WishlistPage() {
         Wishlist ({ids.length})
       </h1>
       <div className="flex flex-col gap-3">
-        {products.map((p) => {
+        {items.map(({ wishId, product: p, variantLabel, displayImage }) => {
           const price = getProdPrice(p);
           const isOOS = p.isOOS || p.stock === 0;
           return (
-            <div key={p.id} className="card flex gap-3 p-3">
+            <div key={wishId} className="card flex gap-3 p-3">
               <Link href={productHref(p)} className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-gray-50 dark:bg-gray-800">
-                <Image src={p.imageUrl} alt={p.title} fill className="object-contain p-1" sizes="80px" />
+                <Image src={displayImage} alt={p.title} fill className="object-contain p-1" sizes="80px" />
               </Link>
               <div className="flex flex-1 flex-col justify-between overflow-hidden">
                 <div>
                   <Link href={productHref(p)}>
                     <p className="truncate text-sm font-semibold dark:text-gray-100">{p.title}</p>
                   </Link>
+                  {variantLabel && (
+                    <p className="text-[11px] text-gray-400 dark:text-gray-500">{variantLabel}</p>
+                  )}
                   <p className="mt-0.5 text-sm font-bold text-primary-600">{symbol}{price.toLocaleString()}</p>
                 </div>
                 <div className="flex gap-2">
                   <button
                     disabled={isOOS || !!p.variants?.length}
-                    onClick={() => addToCart({ id: p.id, productId: p.id, name: p.title, price, costPrice: p.costPrice, imageUrl: p.imageUrl, qty: 1, variantLabel: '' })}
+                    onClick={() => addToCart({ id: p.id, productId: p.id, name: p.title, price, costPrice: p.costPrice, imageUrl: displayImage, qty: 1, variantLabel: variantLabel ?? '' })}
                     className="btn-primary flex-1 py-1.5 text-xs disabled:opacity-40"
                   >
                     {isOOS ? 'Out of Stock' : p.variants?.length ? 'Choose Options' : 'Add to Cart'}
                   </button>
                   <button
-                    onClick={() => toggle(p.id)}
+                    onClick={() => toggle(wishId)}
                     aria-label="Remove from wishlist"
                     className="flex items-center justify-center rounded-xl border border-gray-200 px-3 text-red-400 hover:border-red-300 hover:text-red-500 dark:border-gray-700"
                   >
