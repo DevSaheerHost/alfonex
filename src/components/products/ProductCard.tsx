@@ -18,14 +18,15 @@ const GRADE_LABELS: Record<string, { label: string; color: string }> = {
 };
 
 interface Props {
-  product:      Product;
-  searchQuery?: string; // ?q= — search query for analytics
-  sourceRef?:   string; // ?ref= — source section (e.g. "search", "home_featured", "similar")
-  position?:    number; // ?pos= — 0-based grid position for click-rank analytics
-  variantLabel?: string; // color/variant label for expanded search listings
+  product:       Product;
+  searchQuery?:  string;  // ?q= — search query for analytics
+  sourceRef?:    string;  // ?ref= — source section (e.g. "search", "home_featured", "similar")
+  position?:     number;  // ?pos= — 0-based grid position for click-rank analytics
+  variantLabel?: string;  // color/variant label for expanded search listings
+  hrefOverride?: string;  // pre-computed variant URL (overrides productHref)
 }
 
-export default function ProductCard({ product, searchQuery, sourceRef, position, variantLabel }: Props) {
+export default function ProductCard({ product, searchQuery, sourceRef, position, variantLabel, hrefOverride }: Props) {
   const { currency } = useApp();
   const getProdPrice = useProductPrice();
   const { addToCart } = useCart();
@@ -45,8 +46,9 @@ export default function ProductCard({ product, searchQuery, sourceRef, position,
   if (searchQuery?.trim()) qs.set('q', searchQuery.trim());
   if (sourceRef)           qs.set('ref', sourceRef);
   if (position !== undefined) qs.set('pos', String(position));
-  const qStr = qs.toString();
-  const href = qStr ? `${productHref(product)}?${qStr}` : productHref(product);
+  const qStr     = qs.toString();
+  const baseHref = hrefOverride ?? productHref(product);
+  const href     = qStr ? `${baseHref}?${qStr}` : baseHref;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
