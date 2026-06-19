@@ -107,7 +107,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       } else {
         const payload: Record<string, object> = {};
         state.items.forEach((item) => {
-          payload[item.id] = { name: item.name, qty: item.qty, updatedAt: Date.now() };
+          payload[item.id] = { name: item.name, qty: item.qty, productId: item.productId, updatedAt: Date.now() };
         });
         set(cartRef, payload).catch(() => {});
       }

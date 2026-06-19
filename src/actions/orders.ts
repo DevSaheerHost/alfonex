@@ -215,6 +215,10 @@ export async function placeOrder(
     // Push failure must not fail the order
   }
 
+  // Clear abandoned cart tracking so they can be reminded again on future carts
+  adminRtdb().ref(`carts/${user.uid}`).remove().catch(() => {});
+  adminRtdb().ref(`users/${user.uid}/abandonedCartNotifiedAt`).remove().catch(() => {});
+
   // Notify all admin devices of the new order (works even when their PWA is closed)
   try {
     const { notifyAdmins } = await import('@/lib/firebase/notify-admins');
