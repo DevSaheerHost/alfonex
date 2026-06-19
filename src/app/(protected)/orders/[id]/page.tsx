@@ -1,6 +1,7 @@
 import { getOrder }    from '@/actions/orders';
 import { notFound }    from 'next/navigation';
 import Link            from 'next/link';
+import ReorderButton   from '@/components/orders/ReorderButton';
 import type { Order, OrderStatus } from '@/lib/types';
 
 const GRADE_LABELS: Record<string, { label: string; color: string }> = {
@@ -93,6 +94,8 @@ export default async function OrderDetailPage({ params }: Props) {
         Download Invoice
         <i className="fa fa-chevron-right ml-auto text-xs text-gray-400" />
       </Link>
+
+      <ReorderButton items={order.items} />
 
       {/* Timeline */}
       <div className="card mb-4 p-4">

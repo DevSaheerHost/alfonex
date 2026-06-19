@@ -11,6 +11,7 @@ import BottomNav         from '@/components/layout/BottomNav';
 import SideNav           from '@/components/layout/SideNav';
 import PageTransition    from '@/components/layout/PageTransition';
 import CompareBar        from '@/components/products/CompareBar';
+import WhatsAppWidget   from '@/components/layout/WhatsAppWidget';
 import { LangProvider } from '@/contexts/LangContext';
 
 export const metadata: Metadata = {
@@ -90,6 +91,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </div>
                 <BottomNav />
                 <CompareBar />
+                <WhatsAppWidget />
               </div>
             </NotificationsProvider>
             </CompareProvider>

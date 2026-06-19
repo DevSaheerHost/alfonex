@@ -16,6 +16,7 @@ import ProductScrollRow             from '@/components/products/ProductScrollRow
 import EmiCalculator                from '@/components/products/EmiCalculator';
 import ProductReviews               from '@/components/reviews/ProductReviews';
 import ProductQA                   from '@/components/products/ProductQA';
+import RecentlyViewed, { saveRecentlyViewed } from '@/components/products/RecentlyViewed';
 import Product3DViewer              from '@/components/products/Product3DViewer';
 import SaleCountdown               from '@/components/products/SaleCountdown';
 import SearchTracker                from '@/components/analytics/SearchTracker';
@@ -246,6 +247,11 @@ export default function ProductDetailClient({ product, similar, reviews, initial
     sessionStorage.setItem(ssKey, String(Date.now()));
     recordProductView(product.id).catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product.id]);
+
+  // Save this product to recently viewed in localStorage
+  useEffect(() => {
+    saveRecentlyViewed(product.id);
   }, [product.id]);
   // Toggle between the 2D product image and the interactive 3D viewer
   const [view3d, setView3d] = useState(false);
@@ -722,6 +728,8 @@ export default function ProductDetailClient({ product, similar, reviews, initial
       <ProductReviews reviews={reviews} />
 
       <ProductQA productId={product.id} />
+
+      <RecentlyViewed excludeId={product.id} />
 
       <div className="mt-6">
         <ProductScrollRow title="Similar Products" products={similar} sourceRef="similar" />
