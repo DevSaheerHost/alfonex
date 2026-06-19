@@ -1091,7 +1091,14 @@ tbody td{padding:12px 16px;vertical-align:middle}
 .staff-tab.active{color:var(--green);border-bottom-color:var(--green)}
 .staff-perm-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;font-size:13px;color:var(--text);background:var(--surface);border:1px solid var(--border);cursor:pointer}
 .staff-perm-row input{accent-color:var(--green);width:15px;height:15px;cursor:pointer}
-.staff-card{background:var(--card);border-radius:14px;padding:18px;border:1px solid var(--border);display:flex;flex-direction:column;gap:10px}
+.staff-card{background:var(--card);border-radius:16px;padding:0;border:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:box-shadow .15s}
+.staff-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.08)}
+.staff-stat-chip{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 16px;flex:1;min-width:100px}
+.staff-upload-zone{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:2px dashed var(--border);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:all .15s;background:var(--surface)}
+.staff-upload-zone:hover{border-color:var(--green);background:rgba(34,197,94,.05)}
+.staff-upload-zone.uploaded{border-style:solid;border-color:var(--green);background:rgba(34,197,94,.05)}
+.photo-overlay{opacity:0;transition:.15s}
+div:hover>.photo-overlay{opacity:1}
 </style>
 </head>
 <body>
@@ -2882,9 +2889,9 @@ tbody td{padding:12px 16px;vertical-align:middle}
         <button class="filter-tab" onclick="setStaffFilter('inactive',this)">Inactive</button>
       </div>
       <!-- Stats row -->
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:16px" id="staff-stats-row"></div>
+      <div id="staff-stats-row" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px"></div>
       <!-- Staff cards grid -->
-      <div id="staff-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px">
+      <div id="staff-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px">
         <div class="empty-state"><div class="empty-icon">👥</div><p>No staff yet.</p></div>
       </div>
     </section>
@@ -9079,18 +9086,18 @@ function staffRenderStats() {
   all.forEach(s => { const d = s.designation || 'Other'; byDesig[d] = (byDesig[d] || 0) + 1; });
   const active = all.filter(s => s.status !== 'inactive').length;
   document.getElementById('staff-tc-all').textContent = all.length;
-  const icons = { Sales:'fa-tag', Admin:'fa-gear', Technician:'fa-wrench', Delivery:'fa-truck', Manager:'fa-briefcase', Accountant:'fa-calculator', Other:'fa-user' };
-  const stats = [
-    { label:'Total Staff', value: all.length, icon:'fa-users', color:'#8b5cf6' },
-    { label:'Active', value: active, icon:'fa-circle-check', color:'#22c55e' },
-    { label:'Inactive', value: all.length - active, icon:'fa-circle-xmark', color:'#f59e0b' },
-    ...Object.entries(byDesig).map(([d,c])=>({ label:d, value:c, icon:icons[d]||'fa-user', color:'#3b82f6' })),
+  const chips = [
+    { label:'Total', value: all.length, color:'#8b5cf6', bg:'#8b5cf611' },
+    { label:'Active', value: active, color:'#22c55e', bg:'#22c55e11' },
+    { label:'Inactive', value: all.length - active, color:'#f59e0b', bg:'#f59e0b11' },
+    ...Object.entries(byDesig).map(([d,c])=>({ label:d, value:c, color:'#3b82f6', bg:'#3b82f611' })),
   ];
-  document.getElementById('staff-stats-row').innerHTML = stats.map(s =>
-    `<div class="table-card" style="padding:14px;text-align:center">
-      <i class="fa-solid ${esc(s.icon)}" style="font-size:20px;color:${esc(s.color)};margin-bottom:6px;display:block"></i>
-      <div style="font-size:22px;font-weight:800;color:var(--text)">${s.value}</div>
-      <div style="font-size:11px;color:var(--muted)">${esc(s.label)}</div>
+  document.getElementById('staff-stats-row').innerHTML = chips.map(c =>
+    `<div class="staff-stat-chip">
+      <div style="width:36px;height:36px;border-radius:10px;background:${c.bg};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span style="font-size:18px;font-weight:800;color:${c.color}">${c.value}</span>
+      </div>
+      <span style="font-size:12px;color:var(--muted);font-weight:600">${esc(c.label)}</span>
     </div>`
   ).join('');
 }
@@ -9124,24 +9131,37 @@ function staffRender() {
       s.visaUrl       ? '<i class="fa-solid fa-file-circle-check" title="Visa" style="color:var(--green)"></i>' : '<i class="fa-regular fa-file" title="Visa missing" style="color:var(--muted)"></i>',
     ].join(' ');
     return `<div class="staff-card">
-      <div style="display:flex;align-items:center;gap:12px">
-        ${photoHtml}
-        <div style="flex:1;min-width:0">
-          <div style="font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(s.name||'—')}</div>
-          <div style="font-size:12px;color:${color};font-weight:600">${esc(s.designation||'—')}</div>
-          <div style="font-size:11px;color:var(--muted)">${esc(s.employeeId||'')}</div>
+      <!-- Card top accent bar -->
+      <div style="height:4px;background:${color}"></div>
+      <!-- Card body -->
+      <div style="padding:16px">
+        <!-- Header row: avatar + name + status -->
+        <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:12px">
+          ${photoHtml}
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+              <div style="font-size:15px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1">${esc(s.name||'—')}</div>
+              ${statusDot}
+            </div>
+            <span style="display:inline-block;font-size:11px;font-weight:700;color:${color};background:${color}18;padding:2px 10px;border-radius:20px">${esc(s.designation||'Staff')}</span>
+            ${s.employeeId ? `<div style="font-size:11px;color:var(--muted);margin-top:3px">${esc(s.employeeId)}</div>` : ''}
+          </div>
         </div>
-        <div style="display:flex;align-items:center;gap:4px">${statusDot}</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-        ${accessBadge}
-        ${s.mobile ? `<span style="font-size:11px;color:var(--muted)"><i class="fa-solid fa-phone" style="font-size:9px"></i> ${esc(s.mobile)}</span>` : ''}
-      </div>
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <div style="display:flex;gap:8px;font-size:13px">${docIcons}</div>
-        <div style="display:flex;gap:6px">
-          <button class="btn-ghost btn-sm" onclick="openStaffModal('${id}')"><i class="fa-solid fa-pen"></i></button>
-          <button class="btn-ghost btn-sm" style="color:#ef4444;border-color:#ef444433" onclick="deleteStaff('${id}','${esc(s.name||id)}')"><i class="fa-solid fa-trash"></i></button>
+        <!-- Contact row -->
+        <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
+          ${s.mobile ? `<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><i class="fa-solid fa-phone" style="width:12px;text-align:center;color:var(--green)"></i>${esc(s.mobile)}</div>` : ''}
+          ${s.email  ? `<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><i class="fa-solid fa-envelope" style="width:12px;text-align:center;color:var(--green)"></i>${esc(s.email)}</div>` : ''}
+        </div>
+        <!-- Footer: access badge + doc icons + actions -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:8px">
+            ${accessBadge}
+            <span style="display:flex;gap:6px;font-size:13px">${docIcons}</span>
+          </div>
+          <div style="display:flex;gap:4px">
+            <button class="btn-ghost btn-sm" onclick="openStaffModal('${id}')"><i class="fa-solid fa-pen"></i></button>
+            <button class="btn-ghost btn-sm" style="color:#ef4444;border-color:#ef444433" onclick="deleteStaff('${id}','${esc(s.name||id)}')"><i class="fa-solid fa-trash"></i></button>
+          </div>
         </div>
       </div>
     </div>`;
@@ -9160,10 +9180,18 @@ function openStaffModal(id = null) {
   document.getElementById('staff-edit-id').value = id || '';
   document.getElementById('staff-modal-title').textContent = id ? 'Edit Staff Member' : 'Add Staff Member';
   // Reset photo
-  document.getElementById('staff-photo-preview').innerHTML = '<i class="fa-solid fa-user" style="font-size:28px;color:var(--muted)"></i>';
+  document.getElementById('staff-photo-preview').innerHTML = '<i class="fa-solid fa-user" style="font-size:32px;color:var(--muted)"></i>';
+  document.getElementById('staff-photo-label').textContent = 'Tap to upload photo';
   // Reset doc statuses
+  const docLabels = { eid:'Tap to upload Emirates ID', passport:'Tap to upload Passport', visa:'Tap to upload Visa' };
   ['eid','passport','visa'].forEach(doc => {
-    document.getElementById(`staff-${doc}-status`).textContent = 'No file';
+    const statusEl = document.getElementById(`staff-${doc}-status`);
+    statusEl.textContent = docLabels[doc];
+    statusEl.style.color = '';
+    const iconEl = document.getElementById(`staff-${doc}-icon`);
+    if (iconEl) { iconEl.className = 'fa-solid fa-cloud-arrow-up'; iconEl.style.color = 'var(--muted)'; }
+    const zoneEl = document.getElementById(`staff-${doc}-zone`);
+    if (zoneEl) zoneEl.classList.remove('uploaded');
     const view = document.getElementById(`staff-${doc}-view`);
     view.style.display = 'none'; view.href = '#';
   });
@@ -9187,6 +9215,7 @@ function openStaffModal(id = null) {
     if (s.photoUrl) {
       document.getElementById('staff-photo-url').value = s.photoUrl;
       document.getElementById('staff-photo-preview').innerHTML = `<img src="${esc(s.photoUrl)}" style="width:100%;height:100%;object-fit:cover">`;
+      document.getElementById('staff-photo-label').textContent = 'Tap to change photo';
     }
     // Docs
     ['eid','passport','visa'].forEach(doc => {
@@ -9194,7 +9223,13 @@ function openStaffModal(id = null) {
       if (s[key]) {
         document.getElementById(`staff-${doc}-url`).value = s[key];
         const label = doc === 'eid' ? 'Emirates ID' : doc === 'passport' ? 'Passport' : 'Visa';
-        document.getElementById(`staff-${doc}-status`).textContent = label + ' uploaded ✓';
+        const statusEl = document.getElementById(`staff-${doc}-status`);
+        statusEl.textContent = label + ' uploaded ✓';
+        statusEl.style.color = 'var(--green)';
+        const iconEl = document.getElementById(`staff-${doc}-icon`);
+        if (iconEl) { iconEl.className = 'fa-solid fa-circle-check'; iconEl.style.color = 'var(--green)'; }
+        const zoneEl = document.getElementById(`staff-${doc}-zone`);
+        if (zoneEl) zoneEl.classList.add('uploaded');
         const view = document.getElementById(`staff-${doc}-view`);
         view.href = s[key]; view.style.display = '';
       }
@@ -9253,6 +9288,7 @@ async function staffUploadPhoto(file) {
     const url = await uploadToCloudinary(file);
     document.getElementById('staff-photo-url').value = url;
     document.getElementById('staff-photo-preview').innerHTML = `<img src="${esc(url)}" style="width:100%;height:100%;object-fit:cover">`;
+    document.getElementById('staff-photo-label').textContent = 'Tap to change photo';
     showToast('Photo uploaded!','success');
   } catch (err) { showToast('Photo upload failed: ' + err.message, 'error'); }
 }
@@ -9265,7 +9301,14 @@ async function staffUploadDoc(docType, file) {
     const url = await uploadToCloudinary(file);
     document.getElementById(`staff-${docType}-url`).value = url;
     const labels = { eid:'Emirates ID', passport:'Passport', visa:'Visa' };
-    document.getElementById(`staff-${docType}-status`).textContent = (labels[docType]||docType) + ' uploaded ✓';
+    const label = labels[docType] || docType;
+    const statusEl = document.getElementById(`staff-${docType}-status`);
+    statusEl.textContent = label + ' uploaded ✓';
+    statusEl.style.color = 'var(--green)';
+    const iconEl = document.getElementById(`staff-${docType}-icon`);
+    if (iconEl) { iconEl.className = 'fa-solid fa-circle-check'; iconEl.style.color = 'var(--green)'; }
+    const zoneEl = document.getElementById(`staff-${docType}-zone`);
+    if (zoneEl) zoneEl.classList.add('uploaded');
     const view = document.getElementById(`staff-${docType}-view`);
     view.href = url; view.style.display = '';
     showToast('Document uploaded!','success');
@@ -12698,35 +12741,32 @@ function closeRmaModal() { document.getElementById('rma-modal').style.display='n
 
         <!-- ── Personal Details ── -->
         <div id="staff-pane-personal">
-          <!-- Photo -->
-          <div class="mf-group" style="display:flex;align-items:center;gap:16px">
-            <div id="staff-photo-preview" style="width:72px;height:72px;border-radius:50%;background:var(--sidebar-bg);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;border:2px solid var(--border)">
-              <i class="fa-solid fa-user" style="font-size:28px;color:var(--muted)"></i>
+          <!-- Photo — centered clickable circle -->
+          <div class="mf-group" style="display:flex;flex-direction:column;align-items:center;gap:8px">
+            <div onclick="document.getElementById('staff-photo-file').click()" title="Click to upload photo"
+              style="position:relative;width:88px;height:88px;border-radius:50%;overflow:hidden;cursor:pointer;border:3px solid var(--border);flex-shrink:0;background:var(--sidebar-bg)">
+              <div id="staff-photo-preview" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
+                <i class="fa-solid fa-user" style="font-size:32px;color:var(--muted)"></i>
+              </div>
+              <div style="position:absolute;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;opacity:0;transition:.15s" class="photo-overlay">
+                <i class="fa-solid fa-camera" style="color:#fff;font-size:18px"></i>
+              </div>
             </div>
-            <div>
-              <label class="mf-label">Photo</label>
-              <input type="file" id="staff-photo-file" accept="image/*" style="display:none" onchange="staffUploadPhoto(this.files[0])">
-              <button class="btn-secondary btn-sm" onclick="document.getElementById('staff-photo-file').click()"><i class="fa-solid fa-camera"></i> Upload Photo</button>
-              <input type="hidden" id="staff-photo-url">
-            </div>
+            <input type="file" id="staff-photo-file" accept="image/*" style="display:none" onchange="staffUploadPhoto(this.files[0])">
+            <input type="hidden" id="staff-photo-url">
+            <span id="staff-photo-label" style="font-size:11px;color:var(--muted)">Tap to upload photo</span>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
-            <div class="mf-group">
-              <label class="mf-label">Staff Name *</label>
-              <input type="text" id="staff-name" class="mf-input" placeholder="Full name">
-            </div>
-            <div class="mf-group">
-              <label class="mf-label">Employee ID *</label>
-              <input type="text" id="staff-emp-id" class="mf-input" placeholder="e.g. EMP-001">
-            </div>
-            <div class="mf-group">
-              <label class="mf-label">Mobile Number</label>
-              <input type="tel" id="staff-mobile" class="mf-input" placeholder="+971 50 000 0000">
-            </div>
-            <div class="mf-group">
-              <label class="mf-label">Email</label>
-              <input type="email" id="staff-email" class="mf-input" placeholder="staff@alfonex.com">
-            </div>
+          <!-- Name + Employee ID -->
+          <div class="mf-group">
+            <label class="mf-label">Full Name *</label>
+            <input type="text" id="staff-name" class="mf-input" placeholder="e.g. Sarah Al Mansoori">
+          </div>
+          <div class="mf-group">
+            <label class="mf-label">Employee ID *</label>
+            <input type="text" id="staff-emp-id" class="mf-input" placeholder="e.g. EMP-001">
+          </div>
+          <!-- Designation + Joining Date side-by-side -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 12px">
             <div class="mf-group">
               <label class="mf-label">Designation *</label>
               <select id="staff-designation" class="mf-select">
@@ -12745,6 +12785,15 @@ function closeRmaModal() { document.getElementById('rma-modal').style.display='n
               <input type="date" id="staff-joining-date" class="mf-input">
             </div>
           </div>
+          <!-- Mobile + Email -->
+          <div class="mf-group">
+            <label class="mf-label">Mobile Number</label>
+            <input type="tel" id="staff-mobile" class="mf-input" placeholder="+971 50 000 0000">
+          </div>
+          <div class="mf-group">
+            <label class="mf-label">Email</label>
+            <input type="email" id="staff-email" class="mf-input" placeholder="staff@alfonex.com">
+          </div>
           <div class="mf-group">
             <label class="mf-label">Address</label>
             <textarea id="staff-address" class="mf-textarea" rows="2" placeholder="Residential address"></textarea>
@@ -12754,49 +12803,49 @@ function closeRmaModal() { document.getElementById('rma-modal').style.display='n
             <input type="text" id="staff-emergency" class="mf-input" placeholder="Name — +971 50 000 0000">
           </div>
           <div class="mf-group">
-            <label class="mf-label">Status</label>
+            <label class="mf-label">Employment Status</label>
             <select id="staff-status" class="mf-select">
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
+              <option value="active">✅ Active</option>
+              <option value="inactive">⏸ Inactive</option>
             </select>
           </div>
         </div>
 
         <!-- ── Documents ── -->
         <div id="staff-pane-documents" style="display:none">
-          <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Upload official documents. Files are stored securely on Cloudinary.</p>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:16px"><i class="fa-solid fa-lock" style="color:var(--green)"></i> Files are stored securely on Cloudinary.</p>
           <!-- Emirates ID -->
           <div class="mf-group">
-            <label class="mf-label">Emirates ID</label>
-            <div style="display:flex;align-items:center;gap:10px">
-              <input type="file" id="staff-eid-file" accept="image/*,.pdf" style="display:none" onchange="staffUploadDoc('eid',this.files[0])">
-              <button class="btn-secondary btn-sm" onclick="document.getElementById('staff-eid-file').click()"><i class="fa-solid fa-cloud-arrow-up"></i> Upload</button>
-              <span id="staff-eid-status" style="font-size:12px;color:var(--muted)">No file</span>
-              <a id="staff-eid-view" href="#" target="_blank" style="display:none;font-size:12px;color:var(--primary)"><i class="fa-solid fa-eye"></i> View</a>
-              <input type="hidden" id="staff-eid-url">
+            <label class="mf-label"><i class="fa-solid fa-id-card" style="color:#3b82f6;margin-right:5px"></i>Emirates ID</label>
+            <div class="staff-upload-zone" id="staff-eid-zone" onclick="document.getElementById('staff-eid-file').click()">
+              <i class="fa-solid fa-cloud-arrow-up" style="font-size:22px;color:var(--muted)" id="staff-eid-icon"></i>
+              <span id="staff-eid-status" style="font-size:12px;color:var(--muted)">Tap to upload Emirates ID</span>
+              <a id="staff-eid-view" href="#" target="_blank" onclick="event.stopPropagation()" style="display:none;font-size:12px;color:var(--primary);font-weight:600"><i class="fa-solid fa-eye"></i> View Document</a>
             </div>
+            <input type="file" id="staff-eid-file" accept="image/*,.pdf" style="display:none" onchange="staffUploadDoc('eid',this.files[0])">
+            <input type="hidden" id="staff-eid-url">
           </div>
           <!-- Passport -->
           <div class="mf-group">
-            <label class="mf-label">Passport Copy</label>
-            <div style="display:flex;align-items:center;gap:10px">
-              <input type="file" id="staff-passport-file" accept="image/*,.pdf" style="display:none" onchange="staffUploadDoc('passport',this.files[0])">
-              <button class="btn-secondary btn-sm" onclick="document.getElementById('staff-passport-file').click()"><i class="fa-solid fa-cloud-arrow-up"></i> Upload</button>
-              <span id="staff-passport-status" style="font-size:12px;color:var(--muted)">No file</span>
-              <a id="staff-passport-view" href="#" target="_blank" style="display:none;font-size:12px;color:var(--primary)"><i class="fa-solid fa-eye"></i> View</a>
-              <input type="hidden" id="staff-passport-url">
+            <label class="mf-label"><i class="fa-solid fa-passport" style="color:#8b5cf6;margin-right:5px"></i>Passport Copy</label>
+            <div class="staff-upload-zone" id="staff-passport-zone" onclick="document.getElementById('staff-passport-file').click()">
+              <i class="fa-solid fa-cloud-arrow-up" style="font-size:22px;color:var(--muted)" id="staff-passport-icon"></i>
+              <span id="staff-passport-status" style="font-size:12px;color:var(--muted)">Tap to upload Passport</span>
+              <a id="staff-passport-view" href="#" target="_blank" onclick="event.stopPropagation()" style="display:none;font-size:12px;color:var(--primary);font-weight:600"><i class="fa-solid fa-eye"></i> View Document</a>
             </div>
+            <input type="file" id="staff-passport-file" accept="image/*,.pdf" style="display:none" onchange="staffUploadDoc('passport',this.files[0])">
+            <input type="hidden" id="staff-passport-url">
           </div>
           <!-- Visa -->
           <div class="mf-group">
-            <label class="mf-label">Visa Copy</label>
-            <div style="display:flex;align-items:center;gap:10px">
-              <input type="file" id="staff-visa-file" accept="image/*,.pdf" style="display:none" onchange="staffUploadDoc('visa',this.files[0])">
-              <button class="btn-secondary btn-sm" onclick="document.getElementById('staff-visa-file').click()"><i class="fa-solid fa-cloud-arrow-up"></i> Upload</button>
-              <span id="staff-visa-status" style="font-size:12px;color:var(--muted)">No file</span>
-              <a id="staff-visa-view" href="#" target="_blank" style="display:none;font-size:12px;color:var(--primary)"><i class="fa-solid fa-eye"></i> View</a>
-              <input type="hidden" id="staff-visa-url">
+            <label class="mf-label"><i class="fa-solid fa-file-circle-check" style="color:#22c55e;margin-right:5px"></i>Visa Copy</label>
+            <div class="staff-upload-zone" id="staff-visa-zone" onclick="document.getElementById('staff-visa-file').click()">
+              <i class="fa-solid fa-cloud-arrow-up" style="font-size:22px;color:var(--muted)" id="staff-visa-icon"></i>
+              <span id="staff-visa-status" style="font-size:12px;color:var(--muted)">Tap to upload Visa</span>
+              <a id="staff-visa-view" href="#" target="_blank" onclick="event.stopPropagation()" style="display:none;font-size:12px;color:var(--primary);font-weight:600"><i class="fa-solid fa-eye"></i> View Document</a>
             </div>
+            <input type="file" id="staff-visa-file" accept="image/*,.pdf" style="display:none" onchange="staffUploadDoc('visa',this.files[0])">
+            <input type="hidden" id="staff-visa-url">
           </div>
         </div>
 
