@@ -58,7 +58,7 @@ export default function BannerSlider({ banners }: { banners: Banner[] }) {
         className="relative overflow-hidden rounded-2xl"
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
-        style={{ background: banner.gradient || 'linear-gradient(135deg,#16a34a,#15803d)', transition: 'background 0.6s ease' }}
+        style={{ background: banner.gradient || 'linear-gradient(135deg,#16a34a,#15803d)' }}
       >
         {/* Decorative circles */}
         <div className="pointer-events-none absolute -right-10 -top-10 h-44 w-44 rounded-full bg-white/10 blur-sm" />
