@@ -1178,6 +1178,7 @@ tbody td{padding:12px 16px;vertical-align:middle}
       <button class="sb-link" data-section="profit-margin" onclick="showSection('profit-margin')"><span class="sb-ic"><i class="fa-solid fa-sack-dollar"></i></span>P&amp;L Dashboard</button>
       <button class="sb-link" data-section="warranty" onclick="showSection('warranty')"><span class="sb-ic"><i class="fa-solid fa-shield-halved"></i></span>Warranty<span class="sb-badge" id="sb-warranty-count" style="display:none;background:#f59e0b">0</span></button>
       <button class="sb-link" data-section="returns" onclick="showSection('returns')"><span class="sb-ic"><i class="fa-solid fa-box-open"></i></span>Returns<span class="sb-badge" id="sb-returns-count" style="display:none;background:#ef4444">0</span></button>
+      <button class="sb-link" data-section="trade-in" onclick="showSection('trade-in')"><span class="sb-ic"><i class="fa-solid fa-rotate-left"></i></span>Trade-In<span class="sb-badge" id="sb-tradein-count" style="display:none;background:#f59e0b">0</span></button>
       <button class="sb-link" data-section="products" onclick="showSection('products')"><span class="sb-ic"><i class="fa-solid fa-box-open"></i></span>Products<span class="sb-badge" id="sb-prod-count">0</span></button>
       <button class="sb-link" data-section="orders" onclick="showSection('orders')"><span class="sb-ic"><i class="fa-solid fa-clipboard-list"></i></span>Orders<span class="sb-badge" id="sb-order-count">0</span></button>
       <button class="sb-link" data-section="offline-orders" onclick="showSection('offline-orders')"><span class="sb-ic"><i class="fa-solid fa-store"></i></span>Offline Orders<span class="sb-badge" id="sb-offorder-count" style="display:none;background:#8b5cf6">0</span></button>
@@ -1385,6 +1386,33 @@ tbody td{padding:12px 16px;vertical-align:middle}
     </section>
 
     <!-- RETURNS / RMA -->
+    <!-- ══════════════════════════════════════
+         TRADE-IN REQUESTS
+    ══════════════════════════════════════ -->
+    <section id="section-trade-in" class="content-section">
+      <div class="sec-header">
+        <div><div class="sec-title">Trade-In Requests</div><div class="sec-sub">Review customer device exchange submissions</div></div>
+        <div class="sec-header-right" style="display:flex;gap:8px">
+          <select id="tradein-filter" class="mf-input" style="width:auto" onchange="tradeInRender()">
+            <option value="">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="reviewed">Under Review</option>
+            <option value="accepted">Accepted</option>
+            <option value="rejected">Rejected</option>
+          </select>
+          <button class="btn-secondary btn-sm" onclick="tradeInExportCsv()"><i class="fa-solid fa-download"></i> Export CSV</button>
+        </div>
+      </div>
+      <div class="table-card" style="padding:0">
+        <table class="data-table">
+          <thead><tr>
+            <th>Date</th><th>Customer</th><th>Device</th><th>Condition</th><th>Wants</th><th>Status</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="tradein-tbody"><tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted)">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
     <section id="section-returns" class="content-section">
       <div class="sec-header">
         <div><div class="sec-title">Returns &amp; RMA</div><div class="sec-sub">Review and manage customer return requests</div></div>
@@ -4170,7 +4198,7 @@ function showSection(name, fromPopstate = false){
     meetings:'Meeting Scheduler', pricehistory:'Price Change History', reservations:'Device Reservations', pricelist:'Price List',
     audit:'Audit Trail', reviews:'Product Reviews', loyalty:'Loyalty & Referrals', 'search-analytics':'Search Analytics',
     analytics:'Analytics', 'push-notifications':'Push Notifications', security:'Security', returns:'Returns & RMA', 'profit-margin':'Profit & Margin Dashboard',
-    'product-qa':'Product Q&A',
+    'product-qa':'Product Q&A', 'trade-in':'Trade-In Requests',
     'staff':'Staff Management'
   };
   document.getElementById('header-page-title').innerHTML=`<span>${T[name]||name}</span>`;
@@ -4211,6 +4239,7 @@ function showSection(name, fromPopstate = false){
     if (name==='loyalty')      { renderLoyaltySection(); }
     if (name==='search-analytics') { renderSearchAnalytics(); }
     if (name==='returns')       { rmaLoad(); }
+    if (name==='trade-in')      { tradeInLoad(); }
     if (name==='profit-margin') { plLoad(); }
     if (name==='pricehistory')  { renderPriceHistory(); }
     if (name==='pricelist')     { attachDealerListener(); renderPriceList(); }
@@ -8728,6 +8757,177 @@ const _origProdRef = db.ref('products');
 /* ─── SECTION INIT handled inside showSection() above ────── */
 
 /* ════════════════════════════════════════════════════════════
+   TRADE-IN REQUESTS
+════════════════════════════════════════════════════════════ */
+let _tradeInData = {};
+let _tradeInCurrent = null;
+
+const TI_STATUS = {
+  pending:  { label:'Pending',      cls:'background:#fef9c3;color:#ca8a04' },
+  reviewed: { label:'Under Review', cls:'background:#dbeafe;color:#1d4ed8' },
+  accepted: { label:'Accepted',     cls:'background:#dcfce7;color:#16a34a' },
+  rejected: { label:'Rejected',     cls:'background:#fee2e2;color:#dc2626' },
+};
+
+const TI_COND = {
+  excellent:'✨ Excellent', good:'👍 Good', fair:'⚠️ Fair', poor:'💔 Poor'
+};
+
+function tradeInLoad() {
+  document.getElementById('tradein-tbody').innerHTML =
+    '<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted)">Loading…</td></tr>';
+  db.ref('trade_in_requests').orderByChild('createdAt').on('value', snap => {
+    _tradeInData = snap.val() || {};
+    const pending = Object.values(_tradeInData).filter(r => r.status === 'pending').length;
+    const badge = document.getElementById('sb-tradein-count');
+    if (badge) { badge.textContent = pending; badge.style.display = pending ? '' : 'none'; }
+    tradeInRender();
+  });
+}
+
+function tradeInRender() {
+  const filterVal = document.getElementById('tradein-filter')?.value || '';
+  let rows = Object.entries(_tradeInData).map(([id, r]) => ({ id, ...r }));
+  if (filterVal) rows = rows.filter(r => r.status === filterVal);
+  rows.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+  if (!rows.length) {
+    document.getElementById('tradein-tbody').innerHTML =
+      '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🔄</div><p>No trade-in requests.</p></div></td></tr>';
+    return;
+  }
+
+  document.getElementById('tradein-tbody').innerHTML = rows.map(r => {
+    const st = TI_STATUS[r.status] || TI_STATUS.pending;
+    return `<tr>
+      <td style="white-space:nowrap">${fmtDate(r.createdAt)}</td>
+      <td>
+        <div style="font-weight:600;font-size:13px">${esc(r.customerName||'—')}</div>
+        <div style="font-size:11px;color:var(--muted)">${esc(r.customerPhone||'')}</div>
+      </td>
+      <td>
+        <div style="font-weight:600;font-size:13px">${esc(r.deviceModel||'—')}</div>
+        <div style="font-size:11px;color:var(--muted)">${esc(r.deviceStorage||'')}</div>
+      </td>
+      <td><span style="font-size:12px">${TI_COND[r.deviceCondition]||r.deviceCondition||'—'}</span></td>
+      <td style="font-size:12px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.desiredProduct||'—')}</td>
+      <td><span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;${st.cls}">${st.label}</span></td>
+      <td><button class="btn-ghost btn-sm" onclick="openTradeInModal('${r.id}')"><i class="fa-solid fa-eye"></i> View</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function openTradeInModal(id) {
+  const r = { id, ..._tradeInData[id] };
+  _tradeInCurrent = r;
+  const st = TI_STATUS[r.status] || TI_STATUS.pending;
+  document.getElementById('tradein-modal-body').innerHTML = `
+    <!-- Status badges row -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px">
+      ${Object.entries(TI_STATUS).map(([k,v])=>`
+        <label style="cursor:pointer;display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;border:2px solid ${r.status===k?'var(--green)':'var(--border)'};background:${r.status===k?'rgba(46,160,86,.08)':'var(--surface)'};font-size:12px;font-weight:600;transition:all .15s">
+          <input type="radio" name="ti-status" value="${k}" ${r.status===k?'checked':''} style="display:none" onchange="tradeInPickStatus('${k}')">
+          ${v.label}
+        </label>`).join('')}
+    </div>
+    <!-- Info grid -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Customer</div>
+        <div style="font-size:14px;font-weight:600;color:var(--text)">${esc(r.customerName||'—')}</div>
+        <div style="font-size:12px;color:var(--muted)">${esc(r.customerPhone||'')}</div>
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Date</div>
+        <div style="font-size:13px;color:var(--text)">${fmtDate(r.createdAt)}</div>
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Device</div>
+        <div style="font-size:14px;font-weight:600;color:var(--text)">${esc(r.deviceModel||'—')}</div>
+        <div style="font-size:12px;color:var(--muted)">${esc(r.deviceStorage||'')}</div>
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Condition</div>
+        <div style="font-size:13px;color:var(--text)">${TI_COND[r.deviceCondition]||r.deviceCondition||'—'}</div>
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">IMEI</div>
+        <div style="font-size:13px;color:var(--text);font-family:monospace">${esc(r.imei||'—')}</div>
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Accessories</div>
+        <div style="font-size:12px;color:var(--text)">${r.hasCharger?'✓ Charger':'✗ No charger'} · ${r.hasBox?'✓ Box':'✗ No box'}</div>
+      </div>
+    </div>
+    <div style="margin-bottom:14px">
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Wants in exchange</div>
+      <div style="font-size:13px;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px">${esc(r.desiredProduct||'—')}</div>
+    </div>
+    ${r.notes ? `<div style="margin-bottom:14px">
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Customer Notes</div>
+      <div style="font-size:13px;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px">${esc(r.notes)}</div>
+    </div>` : ''}
+    <!-- Admin offer / notes -->
+    <div class="mf-group" style="margin-bottom:0">
+      <label class="mf-label">Admin Offer / Notes (visible to customer if you contact them)</label>
+      <textarea id="ti-admin-notes" class="mf-textarea" rows="3" placeholder="e.g. We can offer AED 800 trade-in value for your device…">${esc(r.adminNotes||'')}</textarea>
+    </div>
+  `;
+  document.getElementById('modal-tradein').classList.add('open');
+}
+
+function tradeInPickStatus(val) {
+  if (_tradeInCurrent) _tradeInCurrent._pendingStatus = val;
+  // Update visual selection
+  document.querySelectorAll('[name="ti-status"]').forEach(rb => {
+    const lbl = rb.parentElement;
+    const selected = rb.value === val;
+    lbl.style.borderColor = selected ? 'var(--green)' : 'var(--border)';
+    lbl.style.background  = selected ? 'rgba(46,160,86,.08)' : 'var(--surface)';
+  });
+}
+
+function closeTradeInModal() {
+  document.getElementById('modal-tradein').classList.remove('open');
+  _tradeInCurrent = null;
+}
+
+async function tradeInSaveStatus() {
+  if (!_tradeInCurrent) return;
+  const id     = _tradeInCurrent.id;
+  const status = _tradeInCurrent._pendingStatus || _tradeInCurrent.status;
+  const notes  = document.getElementById('ti-admin-notes')?.value?.trim() || null;
+  const btn    = setBtnLoading('btn-tradein-save');
+  try {
+    await db.ref(`trade_in_requests/${id}`).update({ status, adminNotes: notes || null, updatedAt: Date.now() });
+    auditLog('EDIT', `Trade-In status → ${status}`, { detail: _tradeInCurrent.deviceModel, category:'Trade-In' });
+    showToast('Trade-in updated!', 'success');
+    closeTradeInModal();
+  } catch (err) {
+    showToast('Save failed: ' + err.message, 'error');
+  } finally {
+    resetBtn(document.getElementById('btn-tradein-save'), '<i class="fa-solid fa-floppy-disk"></i> Save');
+  }
+}
+
+function tradeInExportCsv() {
+  const rows = [['Date','Customer','Phone','Device','Storage','Condition','IMEI','Has Charger','Has Box','Wants','Notes','Admin Notes','Status']];
+  Object.values(_tradeInData).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).forEach(r => {
+    rows.push([
+      fmtDate(r.createdAt), r.customerName||'', r.customerPhone||'',
+      r.deviceModel||'', r.deviceStorage||'', r.deviceCondition||'',
+      r.imei||'', r.hasCharger?'Yes':'No', r.hasBox?'Yes':'No',
+      r.desiredProduct||'', r.notes||'', r.adminNotes||'', r.status||''
+    ]);
+  });
+  const csv = rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'trade_in_requests_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+
+/* ════════════════════════════════════════════════════════════
    PRODUCT Q&A
 ════════════════════════════════════════════════════════════ */
 let _qaAll = [];    // all flat {productId, id, ...} objects
@@ -12645,6 +12845,22 @@ function closeRmaModal() { document.getElementById('rma-modal').style.display='n
       <div class="modal-footer">
         <button class="btn-ghost" onclick="closeStaffModal()">Cancel</button>
         <button class="btn-primary" id="btn-save-staff" onclick="saveStaff()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Trade-In Detail Modal ── -->
+  <div id="modal-tradein" class="modal-backdrop">
+    <div class="modal-sheet" style="max-width:520px;width:100%">
+      <div class="modal-header">
+        <div class="modal-hicon"><i class="fa-solid fa-rotate-left"></i></div>
+        <div class="modal-title">Trade-In Request</div>
+        <button class="modal-close" onclick="closeTradeInModal()">&times;</button>
+      </div>
+      <div id="tradein-modal-body" style="padding:20px;overflow-y:auto;max-height:70vh"></div>
+      <div class="modal-footer">
+        <button class="btn-ghost" onclick="closeTradeInModal()">Close</button>
+        <button class="btn-primary" id="btn-tradein-save" onclick="tradeInSaveStatus()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
       </div>
     </div>
   </div>
