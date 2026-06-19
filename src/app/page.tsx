@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import { getProducts, getFeaturedProducts, getRecommendedProducts } from '@/actions/products';
+import { getProducts, getFeaturedProducts, getRecommendedProducts, getRecentlyViewed } from '@/actions/products';
 import { getBanners } from '@/actions/banners';
 import { adminAuth } from '@/lib/firebase/admin';
 import ShopClientShell from './ShopClientShell';
@@ -20,11 +20,12 @@ export default async function ShopPage() {
     // guest or invalid session — continue without personalisation
   }
 
-  const [products, featured, banners, recommended] = await Promise.all([
+  const [products, featured, banners, recommended, recentlyViewed] = await Promise.all([
     getProducts().catch(() => []),
     getFeaturedProducts().catch(() => []),
     getBanners().catch(() => []),
     getRecommendedProducts(uid).catch(() => []),
+    uid ? getRecentlyViewed(uid).catch(() => []) : Promise.resolve([]),
   ]);
 
   const orgJsonLd = {
@@ -48,6 +49,7 @@ export default async function ShopPage() {
         featured={featured}
         banners={banners}
         recommended={recommended}
+        recentlyViewed={recentlyViewed}
       />
     </>
   );

@@ -86,6 +86,9 @@ export default function ProductCard({ product, searchQuery, sourceRef, position,
             {product.isNewArrival && <span className="badge badge-green">New</span>}
             {product.isFeatured   && <span className="badge badge-yellow">Featured</span>}
             {isOOS                && <span className="badge badge-gray">Out of Stock</span>}
+            {!isOOS && product.stock > 0 && product.stock <= 3 && (
+              <span className="badge badge-red">Only {product.stock} left!</span>
+            )}
           </div>
 
           {/* Wishlist */}

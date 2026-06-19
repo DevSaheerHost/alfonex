@@ -16,13 +16,14 @@ const FILTERS: { id: Filter; label: string }[] = [
 ];
 
 interface Props {
-  products:    Product[];
-  featured:    Product[];
-  banners:     Banner[];
-  recommended: Product[];
+  products:       Product[];
+  featured:       Product[];
+  banners:        Banner[];
+  recommended:    Product[];
+  recentlyViewed: Product[];
 }
 
-export default function ShopClientShell({ products, featured, banners, recommended }: Props) {
+export default function ShopClientShell({ products, featured, banners, recommended, recentlyViewed }: Props) {
   const [filter, setFilter] = useState<Filter>('all');
 
   const displayed = useMemo(() => {
@@ -45,6 +46,9 @@ export default function ShopClientShell({ products, featured, banners, recommend
           <p className="mt-1 text-sm text-white/80">iPhones · MacBooks · AirPods · Watches</p>
         </div>
       )}
+
+      {/* Recently viewed */}
+      <ProductScrollRow title="Recently Viewed" products={recentlyViewed} sourceRef="home_recent" />
 
       {/* Personalised recommendations */}
       <ProductScrollRow title="Picked for You" products={recommended} sourceRef="home_reco" />

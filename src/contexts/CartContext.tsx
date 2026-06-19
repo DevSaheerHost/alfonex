@@ -3,6 +3,10 @@
 import React, {
   createContext, useContext, useEffect, useReducer, useCallback,
 } from 'react';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { getDatabase, ref, set, remove } from 'firebase/database';
+import { getApp } from 'firebase/app';
+import { clientAuth } from '@/lib/firebase/client';
 import type { CartItem } from '@/lib/types';
 
 // ─── State & Actions ──────────────────────────────────────────────────────────
@@ -88,6 +92,28 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // Persist to localStorage whenever items change
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state.items));
+  }, [state.items]);
+
+  // Sync to RTDB for abandoned-cart detection (only when logged in)
+  useEffect(() => {
+    clientAuth();
+    const auth = getAuth(getApp());
+    const unsub = onAuthStateChanged(auth, (user) => {
+      if (!user) return;
+      const db      = getDatabase(getApp());
+      const cartRef = ref(db, `carts/${user.uid}`);
+      if (state.items.length === 0) {
+        remove(cartRef).catch(() => {});
+      } else {
+        const payload: Record<string, object> = {};
+        state.items.forEach((item) => {
+          payload[item.id] = { name: item.name, qty: item.qty, updatedAt: Date.now() };
+        });
+        set(cartRef, payload).catch(() => {});
+      }
+    });
+    return () => unsub();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.items]);
 
   const addToCart    = useCallback((item: CartItem) => dispatch({ type: 'ADD', item }), []);

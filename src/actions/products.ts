@@ -115,6 +115,34 @@ export async function getSimilarProducts(productId: string, category: string): P
   }
 }
 
+export async function getRecentlyViewed(userId: string): Promise<Product[]> {
+  try {
+    const [viewsSnap, all] = await Promise.all([
+      adminRtdb().ref(`product_views/${userId}`).get(),
+      getProducts(),
+    ]);
+    if (!viewsSnap.exists()) return [];
+
+    // For each product node, find the most recent visit timestamp
+    const recency: { productId: string; lastSeen: number }[] = [];
+    viewsSnap.forEach((node) => {
+      const visits: number[] = Object.values((node.val()?.visits ?? {}) as Record<string, number>);
+      const lastSeen = visits.length ? Math.max(...visits) : 0;
+      recency.push({ productId: node.key!, lastSeen });
+    });
+
+    recency.sort((a, b) => b.lastSeen - a.lastSeen);
+
+    const byId = new Map(all.map((p) => [p.id, p]));
+    return recency
+      .slice(0, 8)
+      .map((r) => byId.get(r.productId))
+      .filter((p): p is Product => !!p && !p.isHidden);
+  } catch {
+    return [];
+  }
+}
+
 // ─── Stock decrement (inside a transaction) ───────────────────────────────────
 
 export async function decrementProductStock(
