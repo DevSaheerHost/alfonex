@@ -5,6 +5,6 @@
     { "path": "/api/cron/stock-alerts",     "schedule": "0 7 * * *" },
     { "path": "/api/cron/price-alerts",     "schedule": "0 9 * * *" },
     { "path": "/api/cron/low-stock",        "schedule": "0 8 * * *" },
-    { "path": "/api/cron/abandoned-cart",   "schedule": "0 */2 * * *" }
+    { "path": "/api/cron/abandoned-cart",   "schedule": "0 14 * * *" }
   ]
 }
