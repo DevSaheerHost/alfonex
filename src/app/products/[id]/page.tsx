@@ -11,5 +11,5 @@ export default async function ProductRedirectPage({ params }: Props) {
   const { id }  = await params;
   const product = await getProduct(id).catch(() => null);
   if (!product) notFound();
-  redirect(`/products/${slugify(product.title)}/p/${id}`);
+  redirect(`/${slugify(product.title)}/p/${id}`);
 }

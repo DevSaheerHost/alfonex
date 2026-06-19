@@ -10839,7 +10839,7 @@ function pnOnProductSelect(productId) {
     pnSwitchImgTab('url');
   }
   const slug = adminSlugify(p.title || productId);
-  document.getElementById('pn-click-url').value = `/products/${slug}/p/${productId}`;
+  document.getElementById('pn-click-url').value = `/${slug}/p/${productId}`;
   pnUpdatePreview();
 }
 

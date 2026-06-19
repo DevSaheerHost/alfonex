@@ -35,28 +35,30 @@ export default function SearchTracker({ productId, productTitle }: Props) {
   const params = useSearchParams();
 
   useEffect(() => {
-    const query = params.get('q')?.trim();
-    if (!query) return; // not a search-driven visit — skip
+    const query  = params.get('q')?.trim() || null;
+    const ref_   = params.get('ref') || null;
+    const posRaw = params.get('pos');
+    const pos    = posRaw !== null ? Number(posRaw) : null;
 
-    // Fire-and-forget: analytics must never affect page behaviour
+    // Skip if no attribution data at all
+    if (!query && !ref_) return;
+
     (async () => {
       try {
-        // clientAuth() ensures Firebase is initialised
         const auth = clientAuth();
         const db   = getDatabase(getApp());
 
         await push(ref(db, 'search_analytics'), {
-          query,
+          ...(query  && { query }),
+          ...(ref_   && { ref: ref_ }),
+          ...(pos !== null && { pos }),
           productId,
           productTitle,
           uid:       auth.currentUser?.uid ?? null,
           timestamp: Date.now(),
         });
-      } catch {
-        // Silently ignore — analytics failure must never surface to the user
-      }
+      } catch { /* silently ignore */ }
     })();
-  // Run once per page load; params reference is stable between re-renders
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

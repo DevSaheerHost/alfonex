@@ -64,8 +64,8 @@ export default async function SearchPage({ searchParams }: Props) {
         <>
           <SearchToolbar query={q} sort={sort} count={results.length} />
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-            {results.map((p) => (
-              <ProductCard key={p.id} product={p} searchQuery={q} />
+            {results.map((p, i) => (
+              <ProductCard key={p.id} product={p} searchQuery={q} sourceRef="search" position={i} />
             ))}
           </div>
         </>

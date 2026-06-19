@@ -193,7 +193,7 @@ export async function recordProductView(productId: string): Promise<void> {
   const customerName = userData.name || userData.displayName || 'Customer';
 
   const siteBase   = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://alfonex.com';
-  const productUrl = `${siteBase}/products/${slugify(product.title)}/p/${productId}`;
+  const productUrl = `${siteBase}/${slugify(product.title)}/p/${productId}`;
   const sendAt     = Date.now() + NOTIFY_DELAY_MS;
 
   // Write scheduled_at on the view record (dedup guard)
