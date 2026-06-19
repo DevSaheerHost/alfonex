@@ -9099,6 +9099,118 @@ async function qaDelete(productId, questionId) {
   }
 }
 
+/* ═══════════════════════════════════ DISCOUNT CODES ═══════════════════════════════════ */
+let _dcData = {};
+
+function dcLoad() {
+  db.ref('discount_codes').on('value', snap => {
+    _dcData = snap.val() || {};
+    dcRender();
+  });
+}
+
+function dcRender() {
+  const entries = Object.entries(_dcData).sort(([,a],[,b]) => (b.createdAt||0) - (a.createdAt||0));
+  if (!entries.length) {
+    document.getElementById('dc-tbody').innerHTML =
+      '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🏷️</div><p>No discount codes yet.</p></div></td></tr>';
+    return;
+  }
+  document.getElementById('dc-tbody').innerHTML = entries.map(([code, dc]) => {
+    const isExpired = dc.expiresAt && Date.now() > dc.expiresAt;
+    const isFull    = dc.maxUses   && dc.usedCount >= dc.maxUses;
+    const status    = !dc.isActive ? { label:'Inactive', cls:'background:#f3f4f6;color:#6b7280' }
+      : isExpired                  ? { label:'Expired',  cls:'background:#fee2e2;color:#ef4444' }
+      : isFull                     ? { label:'Full',     cls:'background:#fef3c7;color:#d97706' }
+      :                              { label:'Active',   cls:'background:#dcfce7;color:#16a34a' };
+    const valueLabel = dc.type === 'percent' ? `${dc.value}%` : `${dc.value}`;
+    const expires    = dc.expiresAt ? new Date(dc.expiresAt).toLocaleDateString() : '—';
+    const used       = `${dc.usedCount || 0} / ${dc.maxUses || '∞'}`;
+    const minOrder   = dc.minOrder ? dc.minOrder : '—';
+    return `<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:12px 14px;font-weight:700;font-size:13px;font-family:monospace">${esc(code)}</td>
+      <td style="padding:12px 14px;font-size:12px;color:var(--muted)">${dc.type === 'percent' ? 'Percentage' : 'Fixed'}</td>
+      <td style="padding:12px 14px;font-size:13px;font-weight:600">${esc(valueLabel)}</td>
+      <td style="padding:12px 14px;font-size:12px;color:var(--muted)">${used}</td>
+      <td style="padding:12px 14px;font-size:12px;color:var(--muted)">${minOrder}</td>
+      <td style="padding:12px 14px;font-size:12px;color:var(--muted)">${expires}</td>
+      <td style="padding:12px 14px"><span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;${status.cls}">${status.label}</span></td>
+      <td style="padding:12px 14px;white-space:nowrap;display:flex;gap:6px">
+        <button class="btn-ghost btn-sm" onclick="openDcModal('${esc(code)}')"><i class="fa-solid fa-pen"></i></button>
+        <button class="btn-ghost btn-sm" style="color:#ef4444;border-color:#ef444433" onclick="deleteDc('${esc(code)}')"><i class="fa-solid fa-trash"></i></button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openDcModal(code = null) {
+  document.getElementById('dc-edit-code').value   = code || '';
+  document.getElementById('dc-modal-title').textContent = code ? 'Edit Code' : 'New Discount Code';
+  if (code && _dcData[code]) {
+    const dc = _dcData[code];
+    document.getElementById('dc-code').value      = code;
+    document.getElementById('dc-code').disabled   = true;
+    document.getElementById('dc-type').value      = dc.type     || 'percent';
+    document.getElementById('dc-value').value     = dc.value    || '';
+    document.getElementById('dc-min-order').value = dc.minOrder || '';
+    document.getElementById('dc-max-uses').value  = dc.maxUses  || '';
+    document.getElementById('dc-active').checked  = dc.isActive !== false;
+    document.getElementById('dc-expires').value   = dc.expiresAt
+      ? new Date(dc.expiresAt).toISOString().slice(0,10) : '';
+  } else {
+    document.getElementById('dc-code').value      = '';
+    document.getElementById('dc-code').disabled   = false;
+    document.getElementById('dc-type').value      = 'percent';
+    document.getElementById('dc-value').value     = '';
+    document.getElementById('dc-min-order').value = '';
+    document.getElementById('dc-max-uses').value  = '';
+    document.getElementById('dc-active').checked  = true;
+    document.getElementById('dc-expires').value   = '';
+  }
+  document.getElementById('modal-dc').classList.add('open');
+}
+
+function closeDcModal() {
+  document.getElementById('modal-dc').classList.remove('open');
+}
+
+async function saveDc() {
+  const editCode = document.getElementById('dc-edit-code').value;
+  const code     = document.getElementById('dc-code').value.trim().toUpperCase();
+  const type     = document.getElementById('dc-type').value;
+  const value    = parseFloat(document.getElementById('dc-value').value);
+  const minOrder = parseFloat(document.getElementById('dc-min-order').value) || 0;
+  const maxUses  = parseInt(document.getElementById('dc-max-uses').value)   || 0;
+  const isActive = document.getElementById('dc-active').checked;
+  const expiresStr = document.getElementById('dc-expires').value;
+  const expiresAt  = expiresStr ? new Date(expiresStr).setHours(23,59,59,999) : null;
+
+  if (!code)          { showToast('Code is required','error'); return; }
+  if (isNaN(value) || value <= 0) { showToast('Value must be a positive number','error'); return; }
+  if (type === 'percent' && value > 100) { showToast('Percentage cannot exceed 100','error'); return; }
+
+  const btn = setBtnLoading('btn-dc-save');
+  try {
+    const payload = { code, type, value, minOrder, maxUses, isActive, expiresAt,
+      usedCount: _dcData[code]?.usedCount || 0,
+      createdAt: _dcData[editCode || code]?.createdAt || Date.now() };
+    if (editCode && editCode !== code) {
+      await db.ref(`discount_codes/${editCode}`).remove();
+    }
+    await db.ref(`discount_codes/${code}`).set(payload);
+    auditLog('discount_code_save', { code });
+    closeDcModal();
+    showToast('Discount code saved!','success');
+  } catch (err) { showToast('Error: ' + err.message,'error'); }
+  finally { resetBtn(btn, '<i class="fa-solid fa-floppy-disk"></i> Save'); }
+}
+
+async function deleteDc(code) {
+  if (!confirm(`Delete code "${code}"?`)) return;
+  await db.ref(`discount_codes/${code}`).remove();
+  showToast('Code deleted','success');
+}
+
 /* ════════════════════════════════════════════════════════════
    STAFF MANAGEMENT
 ════════════════════════════════════════════════════════════ */
