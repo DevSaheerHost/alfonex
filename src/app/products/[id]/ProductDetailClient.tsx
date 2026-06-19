@@ -4,7 +4,7 @@ import Image   from 'next/image';
 import Link    from 'next/link';
 import { cldUrl } from '@/lib/cldUrl';
 import { useState, Suspense, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { recordProductView } from '@/actions/products';
 import { subscribeStockAlert, unsubscribeStockAlert, getStockAlertStatus } from '@/actions/stockAlerts';
 import { subscribePriceAlert, unsubscribePriceAlert, getPriceAlertStatus } from '@/actions/priceAlerts';
@@ -171,6 +171,36 @@ function applyVariantPrice(product: Product, variantPriceAED: number): Product {
   };
 }
 
+function BackLink() {
+  const params = useSearchParams();
+  const ref    = params.get('ref');
+  const q      = params.get('q');
+
+  let href  = '/';
+  let label = 'Back';
+
+  if (ref === 'search') {
+    href  = q ? `/search?q=${encodeURIComponent(q)}` : '/search';
+    label = q ? `Results for "${q}"` : 'Search results';
+  } else if (ref === 'wishlist') {
+    href  = '/wishlist';
+    label = 'Wishlist';
+  } else if (ref === 'banner' || ref?.startsWith('home_')) {
+    href  = '/';
+    label = 'Home';
+  }
+
+  return (
+    <Link
+      href={href}
+      className="mb-4 flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400"
+    >
+      <i className="fa fa-chevron-left text-[10px]" />
+      {label}
+    </Link>
+  );
+}
+
 interface Props {
   product:         Product;
   similar:         Product[];
@@ -290,10 +320,10 @@ export default function ProductDetailClient({ product, similar, reviews, initial
       <Suspense fallback={null}>
         <SearchTracker productId={product.id} productTitle={product.title} />
       </Suspense>
-      {/* Back */}
-      <Link href="/" className="mb-4 flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary-600">
-        <i className="fa fa-arrow-left" /> Back
-      </Link>
+      {/* Back — contextual nav based on ?ref= */}
+      <Suspense fallback={<div className="mb-4 h-5" />}>
+        <BackLink />
+      </Suspense>
 
       {/* Desktop: side-by-side | Mobile: stacked */}
       <div className="lg:flex lg:gap-8">
