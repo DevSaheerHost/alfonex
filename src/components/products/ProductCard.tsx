@@ -18,13 +18,14 @@ const GRADE_LABELS: Record<string, { label: string; color: string }> = {
 };
 
 interface Props {
-  product:     Product;
+  product:      Product;
   searchQuery?: string; // ?q= — search query for analytics
-  sourceRef?:  string;  // ?ref= — source section (e.g. "search", "home_featured", "similar")
-  position?:   number;  // ?pos= — 0-based grid position for click-rank analytics
+  sourceRef?:   string; // ?ref= — source section (e.g. "search", "home_featured", "similar")
+  position?:    number; // ?pos= — 0-based grid position for click-rank analytics
+  variantLabel?: string; // color/variant label for expanded search listings
 }
 
-export default function ProductCard({ product, searchQuery, sourceRef, position }: Props) {
+export default function ProductCard({ product, searchQuery, sourceRef, position, variantLabel }: Props) {
   const { currency } = useApp();
   const getProdPrice = useProductPrice();
   const { addToCart } = useCart();
@@ -118,6 +119,9 @@ export default function ProductCard({ product, searchQuery, sourceRef, position 
           <p className="line-clamp-2 text-[13px] font-semibold leading-snug text-gray-800 dark:text-gray-100">
             {product.title}
           </p>
+          {variantLabel && (
+            <p className="mt-0.5 truncate text-[10px] text-gray-400 dark:text-gray-500">{variantLabel}</p>
+          )}
 
           {/* Rating + Grade row */}
           <div className="mt-1 flex min-h-[20px] flex-wrap items-center gap-1.5">
