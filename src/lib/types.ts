@@ -95,6 +95,7 @@ export interface OrderItem {
   costPrice: number;
   lineTotal: number;
   grade?: string;
+  imageUrl?: string;
 }
 
 export interface Order {

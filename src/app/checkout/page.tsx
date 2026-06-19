@@ -8,6 +8,7 @@ import { useApp }    from '@/contexts/AppContext';
 import { placeOrder } from '@/actions/orders';
 import { getAddresses } from '@/actions/users';
 import { getMyLoyalty } from '@/actions/loyalty';
+import { validateDiscountCode, redeemDiscountCode } from '@/actions/discounts';
 import { CURRENCY_SYMBOLS } from '@/lib/types';
 import type { CheckoutFormData, PayMethod, Address } from '@/lib/types';
 import Link from 'next/link';
@@ -55,13 +56,19 @@ export default function CheckoutPage() {
   const [redeemPoints,     setRedeemPoints]      = useState(0);
   const [redeemInput,      setRedeemInput]       = useState('');
 
+  const [discountCode,    setDiscountCode]    = useState('');
+  const [discountInput,   setDiscountInput]   = useState('');
+  const [discountResult,  setDiscountResult]  = useState<{ code: string; discount: number; label: string } | null>(null);
+  const [discountError,   setDiscountError]   = useState('');
+  const [discountLoading, setDiscountLoading] = useState(false);
+
   useEffect(() => {
     if (!user) return;
     getMyLoyalty().then(({ points }) => setLoyaltyBalance(points)).catch(() => {});
   }, [user]);
 
   const loyaltyDiscount = Math.floor(redeemPoints / 100);
-  const total           = subtotal + shipping - loyaltyDiscount;
+  const total           = subtotal + shipping - loyaltyDiscount - (discountResult?.discount ?? 0);
 
   const [form, setForm] = useState<CheckoutFormData>({
     name:      user?.displayName ?? '',
@@ -116,6 +123,22 @@ export default function CheckoutPage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
+  async function applyDiscount() {
+    if (!discountInput.trim()) return;
+    setDiscountLoading(true);
+    setDiscountError('');
+    setDiscountResult(null);
+    try {
+      const result = await validateDiscountCode(discountInput, subtotal, symbol);
+      setDiscountResult({ code: result.code, discount: result.discount, label: result.label });
+      setDiscountCode(result.code);
+    } catch (e: unknown) {
+      setDiscountError((e as Error).message);
+    } finally {
+      setDiscountLoading(false);
+    }
+  }
+
   const handleSubmit = () => {
     if (!user) { router.push('/login?redirect=/checkout'); return; }
     const required: (keyof CheckoutFormData)[] = ['name', 'phone', 'country', 'state', 'district', 'place'];
@@ -127,6 +150,9 @@ export default function CheckoutPage() {
     startTransition(async () => {
       try {
         const { orderId } = await placeOrder(form, items, currency, redeemPoints);
+        if (discountCode) {
+          redeemDiscountCode(discountCode).catch(() => {});
+        }
         clearCart();
         router.push(`/orders/${orderId}?placed=1`);
       } catch (e: unknown) {
@@ -279,6 +305,49 @@ export default function CheckoutPage() {
         </div>
       )}
 
+      {/* Discount Code */}
+      <div className="card mb-4 p-4">
+        <p className="mb-2 font-semibold dark:text-gray-100">
+          <i className="fa fa-tag mr-1.5 text-primary-500" />
+          Discount Code
+        </p>
+        {discountResult ? (
+          <div className="flex items-center justify-between rounded-xl bg-green-50 px-3 py-2.5 dark:bg-green-950/30">
+            <div>
+              <p className="text-sm font-bold text-green-700 dark:text-green-400">
+                <i className="fa fa-circle-check mr-1.5" />{discountResult.code}
+              </p>
+              <p className="text-xs text-green-600 dark:text-green-500">{discountResult.label} applied</p>
+            </div>
+            <button
+              onClick={() => { setDiscountResult(null); setDiscountCode(''); setDiscountInput(''); }}
+              className="text-xs text-gray-400 hover:text-red-500"
+            >
+              Remove
+            </button>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            <input
+              className="input flex-1 uppercase"
+              placeholder="Enter promo code"
+              value={discountInput}
+              onChange={(e) => { setDiscountInput(e.target.value.toUpperCase()); setDiscountError(''); }}
+              onKeyDown={(e) => e.key === 'Enter' && applyDiscount()}
+            />
+            <button
+              type="button"
+              onClick={applyDiscount}
+              disabled={discountLoading || !discountInput.trim()}
+              className="btn-primary btn-sm px-4"
+            >
+              {discountLoading ? <i className="fa fa-spinner fa-spin" /> : 'Apply'}
+            </button>
+          </div>
+        )}
+        {discountError && <p className="mt-1.5 text-xs text-red-500">{discountError}</p>}
+      </div>
+
       {/* Summary */}
       <div className="card mb-4 p-4">
         <p className="mb-3 font-semibold dark:text-gray-100">Order Summary</p>
@@ -324,6 +393,12 @@ export default function CheckoutPage() {
             <div className="flex justify-between text-green-600 dark:text-green-400">
               <span>Loyalty Discount</span>
               <span>−{symbol}{loyaltyDiscount.toLocaleString()}</span>
+            </div>
+          )}
+          {discountResult && (
+            <div className="flex justify-between text-green-600 dark:text-green-400">
+              <span>Promo ({discountResult.code})</span>
+              <span>−{symbol}{discountResult.discount.toLocaleString()}</span>
             </div>
           )}
           <div className="flex justify-between border-t border-gray-100 pt-2 font-bold dark:border-gray-700 dark:text-gray-100">

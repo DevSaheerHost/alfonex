@@ -1212,6 +1212,7 @@ div:hover>.photo-overlay{opacity:1}
       <button class="sb-link" data-section="pricelist" onclick="showSection('pricelist')"><span class="sb-ic"><i class="fa-solid fa-list-ol"></i></span>Price List</button>
             <button class="sb-link" data-section="reviews" onclick="showSection('reviews')"><span class="sb-ic"><i class="fa-solid fa-star"></i></span>Reviews<span class="sb-badge" id="sb-reviews-count" style="display:none;background:#f59e0b">0</span></button>
       <button class="sb-link" data-section="product-qa" onclick="showSection('product-qa')"><span class="sb-ic"><i class="fa-solid fa-circle-question"></i></span>Q&amp;A<span class="sb-badge" id="sb-qa-count" style="display:none;background:#3b82f6">0</span></button>
+      <button class="sb-link" data-section="discounts" onclick="showSection('discounts')"><span class="sb-ic"><i class="fa-solid fa-tag"></i></span>Discount Codes</button>
       <button class="sb-link" data-section="staff" onclick="showSection('staff')"><span class="sb-ic"><i class="fa-solid fa-id-card"></i></span>Staff<span class="sb-badge" id="sb-staff-count" style="display:none;background:#8b5cf6">0</span></button>
       <button class="sb-link" data-section="loyalty" onclick="showSection('loyalty')"><span class="sb-ic"><i class="fa-solid fa-coins"></i></span>Loyalty & Referrals</button>
       <button class="sb-link" data-section="search-analytics" onclick="showSection('search-analytics')"><span class="sb-ic"><i class="fa-solid fa-magnifying-glass-chart"></i></span>Search Analytics</button>
@@ -2868,6 +2869,38 @@ div:hover>.photo-overlay{opacity:1}
       <div id="reviews-container"><div class="empty-state"><div class="empty-icon">⭐</div><p>No reviews yet.</p></div></div>
     </section>
 
+    <!-- ══ DISCOUNT CODES ══ -->
+    <section id="section-discounts" class="content-section">
+      <div class="sec-header">
+        <div>
+          <div class="sec-title">Discount Codes</div>
+          <div class="sec-sub">Create and manage promo codes for customers</div>
+        </div>
+        <div class="sec-header-right">
+          <button class="btn-primary" onclick="openDcModal()"><i class="fa-solid fa-plus"></i> New Code</button>
+        </div>
+      </div>
+      <div class="table-card" style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border)">
+              <th style="text-align:left;padding:10px 14px;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase">Code</th>
+              <th style="text-align:left;padding:10px 14px;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase">Type</th>
+              <th style="text-align:left;padding:10px 14px;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase">Value</th>
+              <th style="text-align:left;padding:10px 14px;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase">Used / Max</th>
+              <th style="text-align:left;padding:10px 14px;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase">Min Order</th>
+              <th style="text-align:left;padding:10px 14px;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase">Expires</th>
+              <th style="text-align:left;padding:10px 14px;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase">Status</th>
+              <th style="padding:10px 14px"></th>
+            </tr>
+          </thead>
+          <tbody id="dc-tbody">
+            <tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🏷️</div><p>No discount codes yet.</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
     <!-- ══════════════════════════════════════
          STAFF MANAGEMENT
     ══════════════════════════════════════ -->
@@ -4206,7 +4239,8 @@ function showSection(name, fromPopstate = false){
     audit:'Audit Trail', reviews:'Product Reviews', loyalty:'Loyalty & Referrals', 'search-analytics':'Search Analytics',
     analytics:'Analytics', 'push-notifications':'Push Notifications', security:'Security', returns:'Returns & RMA', 'profit-margin':'Profit & Margin Dashboard',
     'product-qa':'Product Q&A', 'trade-in':'Trade-In Requests',
-    'staff':'Staff Management'
+    'staff':'Staff Management',
+    'discounts':'Discount Codes'
   };
   document.getElementById('header-page-title').innerHTML=`<span>${T[name]||name}</span>`;
   closeSidebar();
@@ -4255,6 +4289,7 @@ function showSection(name, fromPopstate = false){
     if (name==='security')           { secLoadInfo(); }
     if (name==='product-qa')         { qaLoad(); }
     if (name==='staff') { staffLoad(); }
+    if (name==='discounts') { dcLoad(); }
   }, 0);
 }
 let _lastSection = null;
@@ -12730,6 +12765,58 @@ function closeRmaModal() { document.getElementById('rma-modal').style.display='n
         </div>
       </div>
     </div>
+
+  <!-- ── Discount Code Modal ── -->
+  <div id="modal-dc" class="modal-backdrop">
+    <div class="modal" style="max-width:480px;width:100%">
+      <div class="modal-header">
+        <div class="modal-hicon"><i class="fa-solid fa-tag"></i></div>
+        <div class="modal-title" id="dc-modal-title">New Discount Code</div>
+        <button class="modal-close" onclick="closeDcModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="dc-edit-code">
+        <div class="mf-group">
+          <label class="mf-label">Code *</label>
+          <input type="text" id="dc-code" class="mf-input" placeholder="e.g. EID10" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Letters and numbers only. Customers enter this at checkout.</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 12px">
+          <div class="mf-group">
+            <label class="mf-label">Discount Type *</label>
+            <select id="dc-type" class="mf-select">
+              <option value="percent">Percentage (%)</option>
+              <option value="flat">Fixed Amount</option>
+            </select>
+          </div>
+          <div class="mf-group">
+            <label class="mf-label">Value *</label>
+            <input type="number" id="dc-value" class="mf-input" placeholder="e.g. 10" min="1" step="1">
+          </div>
+          <div class="mf-group">
+            <label class="mf-label">Minimum Order</label>
+            <input type="number" id="dc-min-order" class="mf-input" placeholder="0 = no minimum" min="0">
+          </div>
+          <div class="mf-group">
+            <label class="mf-label">Max Uses</label>
+            <input type="number" id="dc-max-uses" class="mf-input" placeholder="0 = unlimited" min="0">
+          </div>
+        </div>
+        <div class="mf-group">
+          <label class="mf-label">Expiry Date (optional)</label>
+          <input type="date" id="dc-expires" class="mf-input">
+        </div>
+        <div class="mf-group" style="display:flex;align-items:center;gap:10px">
+          <input type="checkbox" id="dc-active" checked style="accent-color:var(--green);width:16px;height:16px;cursor:pointer">
+          <label for="dc-active" style="font-size:14px;cursor:pointer;color:var(--text)">Active (customers can use this code)</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" onclick="closeDcModal()">Cancel</button>
+        <button class="btn-primary" id="btn-dc-save" onclick="saveDc()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ── What's New Changelog Popup ──────────────────────────────────────── -->
   <!-- ── Staff Modal ── -->
