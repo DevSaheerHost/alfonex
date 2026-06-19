@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { redirect, notFound } from 'next/navigation';
 import { getProduct, getSimilarProducts } from '@/actions/products';
 import { getProductReviews }              from '@/actions/reviews';
-import { getProductQA }                  from '@/actions/qa';
 import ProductDetailClient                from '@/app/products/[id]/ProductDetailClient';
 import { slugify, parseVariantsFromSlug } from '@/lib/slug';
 
@@ -60,10 +59,9 @@ export default async function ProductPage({ params }: Props) {
 
   const initialVariants = parseVariantsFromSlug(slug, product);
 
-  const [similar, reviews, qaItems] = await Promise.all([
+  const [similar, reviews] = await Promise.all([
     getSimilarProducts(id, product.category).catch(() => []),
     getProductReviews(id).catch(() => []),
-    getProductQA(id).catch(() => []),
   ]);
 
   const canonical = `${BASE}/${slug}/p/${id}`;
@@ -119,7 +117,6 @@ export default async function ProductPage({ params }: Props) {
         product={product}
         similar={similar}
         reviews={reviews}
-        qaItems={qaItems}
         initialVariants={initialVariants}
       />
     </>
