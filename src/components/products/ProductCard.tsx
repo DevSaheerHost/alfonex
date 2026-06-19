@@ -9,7 +9,8 @@ import { useCompare }              from '@/contexts/CompareContext';
 import type { Product }             from '@/lib/types';
 import { CURRENCY_SYMBOLS }         from '@/lib/types';
 import { productHref }              from '@/lib/slug';
-import { cldUrl }                   from '@/lib/cldUrl';
+import { cldUrl, IMG_BLUR_PLACEHOLDER } from '@/lib/cldUrl';
+import SaleCountdown from '@/components/products/SaleCountdown';
 
 const GRADE_LABELS: Record<string, { label: string; color: string }> = {
   'a1+': { label: 'Excellent',  color: 'bg-green-100 text-green-700' },
@@ -76,6 +77,8 @@ export default function ProductCard({ product, searchQuery, sourceRef, position,
             src={cldUrl(product.imageUrl, 'f_auto,q_auto,w_400')}
             alt={product.title}
             fill
+            placeholder="blur"
+            blurDataURL={IMG_BLUR_PLACEHOLDER}
             className="object-contain p-3 transition-transform duration-300 group-hover:scale-105"
             sizes="(max-width: 640px) 50vw, 33vw"
           />
@@ -177,6 +180,11 @@ export default function ProductCard({ product, searchQuery, sourceRef, position,
                     ? `${Math.floor(product.purchaseCount / 100) * 100}+ sold`
                     : `${product.purchaseCount} sold`}
               </p>
+            )}
+            {product.isOnSale && !!product.saleEndsAt && (
+              <div className="mt-1">
+                <SaleCountdown endsAt={product.saleEndsAt} compact />
+              </div>
             )}
           </div>
         </div>

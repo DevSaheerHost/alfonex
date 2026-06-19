@@ -12,3 +12,8 @@ export function cldUrl(url: string, transforms = 'f_auto,q_auto'): string {
   if (/\/upload\/[a-z]/.test(url)) return url;
   return url.replace('/upload/', `/upload/${transforms}/`);
 }
+
+// Pre-computed base64 shimmer placeholder (gray 400×400 SVG).
+// Use with next/image: placeholder="blur" blurDataURL={IMG_BLUR_PLACEHOLDER}
+export const IMG_BLUR_PLACEHOLDER =
+  'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iNDAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iI2U1ZTdlYiIvPjwvc3ZnPg==';

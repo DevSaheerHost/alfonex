@@ -2,7 +2,7 @@
 
 import Image   from 'next/image';
 import Link    from 'next/link';
-import { cldUrl } from '@/lib/cldUrl';
+import { cldUrl, IMG_BLUR_PLACEHOLDER } from '@/lib/cldUrl';
 import { useState, Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { recordProductView } from '@/actions/products';
@@ -15,7 +15,10 @@ import ReserveModal                 from '@/components/products/ReserveModal';
 import ProductScrollRow             from '@/components/products/ProductScrollRow';
 import EmiCalculator                from '@/components/products/EmiCalculator';
 import ProductReviews               from '@/components/reviews/ProductReviews';
+import ProductQA                   from '@/components/products/ProductQA';
+import type { QAItem }             from '@/actions/qa';
 import Product3DViewer              from '@/components/products/Product3DViewer';
+import SaleCountdown               from '@/components/products/SaleCountdown';
 import SearchTracker                from '@/components/analytics/SearchTracker';
 import type { Product, VariantGroup, VariantValue, Review } from '@/lib/types';
 import { CURRENCY_SYMBOLS }         from '@/lib/types';
@@ -205,10 +208,11 @@ interface Props {
   product:         Product;
   similar:         Product[];
   reviews:         Review[];
+  qaItems:         QAItem[];
   initialVariants: Record<string, string>;
 }
 
-export default function ProductDetailClient({ product, similar, reviews, initialVariants }: Props) {
+export default function ProductDetailClient({ product, similar, reviews, qaItems, initialVariants }: Props) {
   const router          = useRouter();
   const { currency }    = useApp();
   const getProdPrice    = useProductPrice();
@@ -369,6 +373,8 @@ export default function ProductDetailClient({ product, similar, reviews, initial
                 src={cldUrl(displayImage, 'f_auto,q_auto,w_900')}
                 alt={product.title}
                 fill
+                placeholder="blur"
+                blurDataURL={IMG_BLUR_PLACEHOLDER}
                 className="object-contain p-4"
                 sizes="(max-width: 1024px) 100vw, 420px"
                 priority
@@ -401,6 +407,10 @@ export default function ProductDetailClient({ product, similar, reviews, initial
                 <span className={`text-sm font-semibold ${grade.color}`}>{grade.label}</span>
                 <span className="text-xs text-gray-400">— {grade.desc}</span>
               </div>
+            )}
+
+            {product.isOnSale && !!product.saleEndsAt && (
+              <SaleCountdown endsAt={product.saleEndsAt} />
             )}
 
             <div className="mt-3 flex items-center gap-3">
@@ -712,6 +722,8 @@ export default function ProductDetailClient({ product, similar, reviews, initial
       />
 
       <ProductReviews reviews={reviews} />
+
+      <ProductQA productId={product.id} initialItems={qaItems} />
 
       <div className="mt-6">
         <ProductScrollRow title="Similar Products" products={similar} sourceRef="similar" />
