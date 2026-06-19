@@ -2,6 +2,7 @@
 
 import { cookies } from 'next/headers';
 import { adminAuth, adminRtdb } from '@/lib/firebase/admin';
+import { notifyAdmins } from '@/lib/firebase/notify-admins';
 
 export interface QAItem {
   id:            string;
@@ -31,21 +32,38 @@ export async function getProductQA(productId: string): Promise<QAItem[]> {
   return items.reverse(); // newest first
 }
 
-export async function askQuestion(productId: string, question: string): Promise<void> {
+export async function askQuestion(
+  productId: string,
+  question: string,
+): Promise<{ id: string; askedByName: string; askedAt: number }> {
   const user = await verifySession();
   const q = question.trim();
   if (!q || q.length < 5) throw new Error('Question too short');
   if (q.length > 400) throw new Error('Question too long');
 
-  const userSnap = await adminRtdb().ref(`users/${user.uid}`).get();
+  const [userSnap, productSnap] = await Promise.all([
+    adminRtdb().ref(`users/${user.uid}`).get(),
+    adminRtdb().ref(`products/${productId}/title`).get(),
+  ]);
   const name: string = userSnap.val()?.name || 'Customer';
+  const productTitle: string = productSnap.val() || 'a product';
+  const askedAt = Date.now();
 
-  await adminRtdb().ref(`product_qa/${productId}`).push({
+  const ref = await adminRtdb().ref(`product_qa/${productId}`).push({
     question:    q,
     askedBy:     user.uid,
     askedByName: name,
-    askedAt:     Date.now(),
+    askedAt,
     answer:      null,
     answeredAt:  null,
   });
+
+  // Notify admins — never block the question save
+  notifyAdmins(
+    `❓ New Question — ${productTitle}`,
+    `${name}: ${q.length > 80 ? q.slice(0, 80) + '…' : q}`,
+    { type: 'qa', productId },
+  ).catch(() => {});
+
+  return { id: ref.key!, askedByName: name, askedAt };
 }

@@ -8733,26 +8733,33 @@ const _origProdRef = db.ref('products');
 let _qaAll = [];    // all flat {productId, id, ...} objects
 let _qaFilter = 'all';
 
-async function qaLoad() {
+function qaLoad() {
   document.getElementById('qa-container').innerHTML = '<div class="empty-state"><div class="empty-icon">💬</div><p>Loading…</p></div>';
-  const snap = await db.ref('product_qa').once('value');
-  _qaAll = [];
-  if (snap.exists()) {
-    snap.forEach(productSnap => {
-      const pid = productSnap.key;
-      productSnap.forEach(qSnap => {
-        _qaAll.push({ productId: pid, id: qSnap.key, ...qSnap.val() });
+  // Live listener — updates automatically when new questions arrive or answers are saved
+  db.ref('product_qa').on('value', snap => {
+    _qaAll = [];
+    if (snap.exists()) {
+      snap.forEach(productSnap => {
+        const pid = productSnap.key;
+        productSnap.forEach(qSnap => {
+          _qaAll.push({ productId: pid, id: qSnap.key, ...qSnap.val() });
+        });
       });
-    });
-  }
-  // Sort newest first
-  _qaAll.sort((a, b) => (b.askedAt || 0) - (a.askedAt || 0));
-  // Update badge
-  const pending = _qaAll.filter(q => !q.answer).length;
-  const badge = document.getElementById('sb-qa-count');
-  if (badge) { badge.textContent = pending; badge.style.display = pending ? '' : 'none'; }
-  document.getElementById('qa-tc-pending').textContent = pending;
-  qaRender();
+    }
+    // Sort newest first
+    _qaAll.sort((a, b) => (b.askedAt || 0) - (a.askedAt || 0));
+    // Update pending badge
+    const pending = _qaAll.filter(q => !q.answer).length;
+    const badge = document.getElementById('sb-qa-count');
+    if (badge) { badge.textContent = pending; badge.style.display = pending ? '' : 'none'; }
+    const tcEl = document.getElementById('qa-tc-pending');
+    if (tcEl) tcEl.textContent = pending;
+    qaRender();
+  }, err => {
+    console.error('Q&A load error:', err.message);
+    document.getElementById('qa-container').innerHTML =
+      `<div class="empty-state"><div class="empty-icon">⚠️</div><p>Failed to load: ${esc(err.message)}<br><small>Check Firebase rules — product_qa needs read access for admins.</small></p></div>`;
+  });
 }
 
 function setQaFilter(f, btn) {
