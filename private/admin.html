@@ -2934,7 +2934,7 @@ tbody td{padding:12px 16px;vertical-align:middle}
       <!-- KPI row -->
       <div class="stats-grid" style="margin-bottom:16px">
         <div class="stat-card"><div class="stat-icon green"><i class="fa-solid fa-arrow-trend-up"></i></div><div class="stat-value" id="pl-revenue">—</div><div class="stat-label">Total Revenue</div></div>
-        <div class="stat-card"><div class="stat-icon red"><i class="fa-solid fa-arrow-trend-down"></i></div><div class="stat-value" id="pl-cost">—</div><div class="stat-label">Total Cost</div></div>
+        <div class="stat-card"><div class="stat-icon red"><i class="fa-solid fa-arrow-trend-down"></i></div><div class="stat-value" id="pl-stat-cost">—</div><div class="stat-label">Total Cost</div></div>
         <div class="stat-card"><div class="stat-icon purple"><i class="fa-solid fa-sack-dollar"></i></div><div class="stat-value" id="pl-profit">—</div><div class="stat-label">Gross Profit</div></div>
         <div class="stat-card"><div class="stat-icon amber"><i class="fa-solid fa-percent"></i></div><div class="stat-value" id="pl-margin">—</div><div class="stat-label">Avg. Margin %</div></div>
       </div>
@@ -11607,7 +11607,7 @@ async function plLoad() {
 
     const fmt = v => 'AED '+v.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',');
     document.getElementById('pl-revenue').textContent = fmt(totRevenue);
-    document.getElementById('pl-cost').textContent    = fmt(totCost);
+    document.getElementById('pl-stat-cost').textContent = fmt(totCost);
     document.getElementById('pl-profit').textContent  = fmt(totProfit);
     document.getElementById('pl-margin').textContent  = totMargin.toFixed(1)+'%';
 
