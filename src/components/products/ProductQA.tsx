@@ -26,10 +26,21 @@ export default function ProductQA({ productId, initialItems }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-    if (!question.trim()) return;
+    const q = question.trim();
+    if (!q) return;
     setSubmitting(true);
     try {
-      await askQuestion(productId, question.trim());
+      const { id, askedByName, askedAt } = await askQuestion(productId, q);
+      // Optimistically add the new question to the visible list
+      const newItem: QAItem = {
+        id,
+        productId,
+        question:    q,
+        askedBy:     user!.uid,
+        askedByName,
+        askedAt,
+      };
+      setItems(prev => [newItem, ...prev]);
       setSuccess(true);
       setQuestion('');
       setShowForm(false);
