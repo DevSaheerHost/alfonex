@@ -31,7 +31,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const productPages: MetadataRoute.Sitemap = products
     .filter((p) => !p.isHidden)
     .map((p) => ({
-      url:             `${BASE}/products/${slugify(p.title)}/p/${p.id}`,
+      url:             `${BASE}/${slugify(p.title)}/p/${p.id}`,
       lastModified:    new Date(p.createdAt),
       changeFrequency: 'weekly' as const,
       priority:        p.isFeatured ? 0.95 : 0.85,

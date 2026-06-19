@@ -11,6 +11,12 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: '**.googleusercontent.com' },
     ],
   },
+  async redirects() {
+    return [
+      // 301 redirect old /products/{slug}/p/{id} URLs to new /{slug}/p/{id}
+      { source: '/products/:slug/p/:id', destination: '/:slug/p/:id', permanent: true },
+    ];
+  },
   async rewrites() {
     return [
       { source: '/firebase-messaging-sw.js', destination: '/api/firebase-messaging-sw' },

@@ -18,11 +18,13 @@ const GRADE_LABELS: Record<string, { label: string; color: string }> = {
 };
 
 interface Props {
-  product: Product;
-  searchQuery?: string; // when set, appended as ?q= for analytics tracking
+  product:     Product;
+  searchQuery?: string; // ?q= — search query for analytics
+  sourceRef?:  string;  // ?ref= — source section (e.g. "search", "home_featured", "similar")
+  position?:   number;  // ?pos= — 0-based grid position for click-rank analytics
 }
 
-export default function ProductCard({ product, searchQuery }: Props) {
+export default function ProductCard({ product, searchQuery, sourceRef, position }: Props) {
   const { currency } = useApp();
   const getProdPrice = useProductPrice();
   const { addToCart } = useCart();
@@ -37,10 +39,13 @@ export default function ProductCard({ product, searchQuery }: Props) {
   const isOOS     = product.isOOS || product.stock === 0;
   const hasVariants = product.variants?.length > 0;
 
-  // Build the destination URL — append ?q= only when coming from a search
-  const href = searchQuery
-    ? `${productHref(product)}?q=${encodeURIComponent(searchQuery.trim())}`
-    : productHref(product);
+  // Build destination URL with attribution params
+  const qs = new URLSearchParams();
+  if (searchQuery?.trim()) qs.set('q', searchQuery.trim());
+  if (sourceRef)           qs.set('ref', sourceRef);
+  if (position !== undefined) qs.set('pos', String(position));
+  const qStr = qs.toString();
+  const href = qStr ? `${productHref(product)}?${qStr}` : productHref(product);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();

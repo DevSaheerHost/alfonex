@@ -674,7 +674,7 @@ export default function ProductDetailClient({ product, similar, reviews, initial
       <ProductReviews reviews={reviews} />
 
       <div className="mt-6">
-        <ProductScrollRow title="Similar Products" products={similar} />
+        <ProductScrollRow title="Similar Products" products={similar} sourceRef="similar" />
       </div>
     </div>
   );

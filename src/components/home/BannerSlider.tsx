@@ -7,7 +7,7 @@ import { cldUrl } from '@/lib/cldUrl';
 
 function getBannerHref(b: Banner): string {
   switch (b.actionType) {
-    case 'product':      return b.productId ? `/products/${b.productId}` : '/';
+    case 'product':      return b.productId ? `/products/${b.productId}?ref=banner` : '/';
     case 'category':     return b.category  ? `/search?q=${encodeURIComponent(b.category)}` : '/';
     case 'new_arrivals': return '/';
     case 'featured':     return '/';

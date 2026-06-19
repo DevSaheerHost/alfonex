@@ -12,13 +12,13 @@ export function slugify(text: string): string {
 
 // Base product URL — no variant info (used by ProductCard, search results, etc.)
 export function productHref(product: { id: string; title: string }): string {
-  return `/products/${slugify(product.title)}/p/${product.id}`;
+  return `/${slugify(product.title)}/p/${product.id}`;
 }
 
 // Variant-aware URL — colour and storage attributes appended to the slug.
 // Follows the product's variant group order so slugs are always deterministic.
 // e.g. variantHref(product, { Color: "Silver", Storage: "256GB" })
-//   → /products/iphone-17-pro-silver-256gb/p/-OuWQ...
+//   → /iphone-17-pro-silver-256gb/p/-OuWQ...
 export function variantHref(
   product: { id: string; title: string; variants?: Array<{ name: string }> },
   selectedVariants: Record<string, string>,
@@ -29,7 +29,7 @@ export function variantHref(
     .map(slugify)
     .join('-');
   const slug = attrPart ? `${slugify(product.title)}-${attrPart}` : slugify(product.title);
-  return `/products/${slug}/p/${product.id}`;
+  return `/${slug}/p/${product.id}`;
 }
 
 // Recovers { Color: "Silver", Storage: "256GB" } from a variant slug.

@@ -2,6 +2,7 @@ export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { adminRtdb, adminMessaging } from '@/lib/firebase/admin';
+import { slugify } from '@/lib/slug';
 
 export async function GET(req: NextRequest) {
   if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -48,7 +49,7 @@ export async function GET(req: NextRequest) {
               title:    `💰 Price Drop — ${sub.productTitle || product.title || 'Product'}`,
               body:     `Now AED ${currentPrice} (was AED ${sub.targetPrice})`,
               imageUrl: sub.productImage || '',
-              url:      `/products/${productId}`,
+              url:      `/${slugify(product.title || sub.productTitle || productId)}/p/${productId}`,
             },
             webpush: { headers: { Urgency: 'high' } },
           });

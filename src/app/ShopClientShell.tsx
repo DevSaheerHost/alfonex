@@ -47,7 +47,7 @@ export default function ShopClientShell({ products, featured, banners, recommend
       )}
 
       {/* Personalised recommendations */}
-      <ProductScrollRow title="Picked for You" products={recommended} />
+      <ProductScrollRow title="Picked for You" products={recommended} sourceRef="home_reco" />
 
       {/* Filter pills */}
       <div className="mb-4 flex gap-2 overflow-x-auto pb-1 scrollbar-none">
@@ -73,8 +73,11 @@ export default function ShopClientShell({ products, featured, banners, recommend
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-          {displayed.map((p) => (
-            <ProductCard key={p.id} product={p} />
+          {displayed.map((p, i) => (
+            <ProductCard key={p.id} product={p}
+              sourceRef={filter === 'featured' ? 'home_featured' : filter === 'new' ? 'home_new' : filter === 'sale' ? 'home_sale' : 'home_all'}
+              position={i}
+            />
           ))}
         </div>
       )}
