@@ -16,7 +16,6 @@ import ProductScrollRow             from '@/components/products/ProductScrollRow
 import EmiCalculator                from '@/components/products/EmiCalculator';
 import ProductReviews               from '@/components/reviews/ProductReviews';
 import ProductQA                   from '@/components/products/ProductQA';
-import type { QAItem }             from '@/actions/qa';
 import Product3DViewer              from '@/components/products/Product3DViewer';
 import SaleCountdown               from '@/components/products/SaleCountdown';
 import SearchTracker                from '@/components/analytics/SearchTracker';
@@ -208,11 +207,10 @@ interface Props {
   product:         Product;
   similar:         Product[];
   reviews:         Review[];
-  qaItems:         QAItem[];
   initialVariants: Record<string, string>;
 }
 
-export default function ProductDetailClient({ product, similar, reviews, qaItems, initialVariants }: Props) {
+export default function ProductDetailClient({ product, similar, reviews, initialVariants }: Props) {
   const router          = useRouter();
   const { currency }    = useApp();
   const getProdPrice    = useProductPrice();
@@ -723,7 +721,7 @@ export default function ProductDetailClient({ product, similar, reviews, qaItems
 
       <ProductReviews reviews={reviews} />
 
-      <ProductQA productId={product.id} initialItems={qaItems} />
+      <ProductQA productId={product.id} />
 
       <div className="mt-6">
         <ProductScrollRow title="Similar Products" products={similar} sourceRef="similar" />

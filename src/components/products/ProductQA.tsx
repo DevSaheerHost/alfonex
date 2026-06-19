@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
-import { useAuth }  from '@/contexts/AuthContext';
-import { askQuestion } from '@/actions/qa';
-import type { QAItem } from '@/actions/qa';
+import { useState, useEffect } from 'react';
+import { useAuth }             from '@/contexts/AuthContext';
+import { getDatabase, ref, onValue, push, serverTimestamp } from 'firebase/database';
+import { getApp }              from 'firebase/app';
+import { askQuestion }         from '@/actions/qa';
+import type { QAItem }         from '@/actions/qa';
 
 function fmtDate(ts: number) {
   return new Date(ts).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -11,17 +13,35 @@ function fmtDate(ts: number) {
 
 interface Props {
   productId: string;
-  initialItems: QAItem[];
 }
 
-export default function ProductQA({ productId, initialItems }: Props) {
+export default function ProductQA({ productId }: Props) {
   const { user } = useAuth();
-  const [items, setItems] = useState<QAItem[]>(initialItems);
+  const [items, setItems]       = useState<QAItem[]>([]);
+  const [loading, setLoading]   = useState(true);
   const [question, setQuestion] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
+  const [error, setError]       = useState('');
+  const [success, setSuccess]   = useState(false);
   const [showForm, setShowForm] = useState(false);
+
+  // Real-time RTDB listener — updates immediately when admin answers
+  useEffect(() => {
+    const db       = getDatabase(getApp());
+    const qaRef    = ref(db, `product_qa/${productId}`);
+    const unsub    = onValue(qaRef, (snap) => {
+      if (!snap.exists()) { setItems([]); setLoading(false); return; }
+      const list: QAItem[] = [];
+      snap.forEach((child) => {
+        list.push({ id: child.key!, productId, ...child.val() });
+      });
+      // Newest first
+      list.sort((a, b) => b.askedAt - a.askedAt);
+      setItems(list);
+      setLoading(false);
+    }, () => { setLoading(false); }); // on error just stop loading
+    return () => unsub();
+  }, [productId]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -30,17 +50,8 @@ export default function ProductQA({ productId, initialItems }: Props) {
     if (!q) return;
     setSubmitting(true);
     try {
-      const { id, askedByName, askedAt } = await askQuestion(productId, q);
-      // Optimistically add the new question to the visible list
-      const newItem: QAItem = {
-        id,
-        productId,
-        question:    q,
-        askedBy:     user!.uid,
-        askedByName,
-        askedAt,
-      };
-      setItems(prev => [newItem, ...prev]);
+      await askQuestion(productId, q);
+      // Real-time listener will add it automatically
       setSuccess(true);
       setQuestion('');
       setShowForm(false);
@@ -84,9 +95,7 @@ export default function ProductQA({ productId, initialItems }: Props) {
             maxLength={400}
             className="input mb-3 min-h-[80px] resize-none text-sm"
           />
-          {error && (
-            <p className="mb-2 text-xs text-red-500">{error}</p>
-          )}
+          {error && <p className="mb-2 text-xs text-red-500">{error}</p>}
           <div className="flex items-center gap-2">
             <button
               type="submit"
@@ -120,7 +129,9 @@ export default function ProductQA({ productId, initialItems }: Props) {
       )}
 
       {/* Q&A list */}
-      {items.length === 0 ? (
+      {loading ? (
+        <div className="py-6 text-center text-sm text-gray-400">Loading…</div>
+      ) : items.length === 0 ? (
         <div className="rounded-xl border border-dashed border-gray-200 py-8 text-center dark:border-gray-700">
           <i className="fa fa-circle-question text-2xl text-gray-300 dark:text-gray-600" />
           <p className="mt-2 text-sm text-gray-400">No questions yet. Be the first to ask!</p>
@@ -138,8 +149,8 @@ export default function ProductQA({ productId, initialItems }: Props) {
                   </p>
                 </div>
               </div>
-              {item.answer && (
-                <div className="ml-8.5 mt-2 flex items-start gap-2.5">
+              {item.answer ? (
+                <div className="ml-8 mt-2 flex items-start gap-2.5">
                   <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-green-100 text-[10px] font-bold text-green-700 dark:bg-green-900/30 dark:text-green-400">A</span>
                   <div className="flex-1">
                     <p className="text-sm text-gray-700 dark:text-gray-200">{item.answer}</p>
@@ -148,8 +159,7 @@ export default function ProductQA({ productId, initialItems }: Props) {
                     )}
                   </div>
                 </div>
-              )}
-              {!item.answer && (
+              ) : (
                 <div className="ml-8 mt-2">
                   <span className="inline-block rounded-full bg-yellow-100 px-2 py-0.5 text-[10px] font-medium text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
                     Awaiting answer
