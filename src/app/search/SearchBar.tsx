@@ -53,9 +53,15 @@ export default function SearchBar({ initialQuery }: { initialQuery: string }) {
     return () => document.removeEventListener('mousedown', onClick);
   }, [focused]);
 
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedValue(value), 200);
+    return () => clearTimeout(t);
+  }, [value]);
+
   const suggestions = useMemo(
-    () => (value.trim() ? scoreProducts(products, value).slice(0, 6) : []),
-    [products, value],
+    () => (debouncedValue.trim() ? scoreProducts(products, debouncedValue).slice(0, 6) : []),
+    [products, debouncedValue],
   );
 
   const saveHistory = (q: string) => {

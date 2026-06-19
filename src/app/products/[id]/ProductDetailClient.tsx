@@ -415,6 +415,16 @@ export default function ProductDetailClient({ product, similar, reviews, initial
                 <i className={`fa-heart text-sm ${wished ? 'fa-solid text-red-500' : 'fa-regular text-gray-400'}`} />
                 {wished ? 'Saved' : 'Save'}
               </button>
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(`${product.title} — ${symbol}${price.toLocaleString()}\n${typeof window !== 'undefined' ? window.location.href : ''}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Share on WhatsApp"
+                className="flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500 transition hover:border-green-400 hover:text-green-600 dark:border-gray-700 dark:text-gray-300"
+              >
+                <i className="fa-brands fa-whatsapp text-sm" />
+                Share
+              </a>
             </div>
           </div>
 
