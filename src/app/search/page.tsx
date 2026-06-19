@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getProducts } from '@/actions/products';
 import { scoreProducts, sortProducts, type SortOption } from '@/lib/search';
+import { variantHref } from '@/lib/slug';
 import ProductCard from '@/components/products/ProductCard';
 import SearchBar from './SearchBar';
 import SearchToolbar from './SearchToolbar';
@@ -9,7 +10,7 @@ import type { Product } from '@/lib/types';
 
 const POPULAR = ['iPhone 15', 'MacBook Air', 'AirPods Pro', 'Apple Watch', 'iPad'];
 
-type SearchResult = Product & { _variantLabel?: string };
+type SearchResult = Product & { _variantLabel?: string; _variantHref?: string };
 
 function expandByColor(products: Product[]): SearchResult[] {
   const out: SearchResult[] = [];
@@ -19,7 +20,12 @@ function expandByColor(products: Product[]): SearchResult[] {
       const colored = colorGroup.values.filter((v) => v.imageUrl);
       if (colored.length > 1) {
         for (const v of colored) {
-          out.push({ ...p, imageUrl: v.imageUrl!, _variantLabel: v.label });
+          out.push({
+            ...p,
+            imageUrl: v.imageUrl!,
+            _variantLabel: v.label,
+            _variantHref: variantHref(p, { [colorGroup.name]: v.label }),
+          });
         }
         continue;
       }
@@ -94,6 +100,7 @@ export default async function SearchPage({ searchParams }: Props) {
                 sourceRef="search"
                 position={i}
                 variantLabel={p._variantLabel}
+                hrefOverride={p._variantHref}
               />
             ))}
           </div>
