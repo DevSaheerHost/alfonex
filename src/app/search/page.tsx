@@ -9,6 +9,26 @@ import type { Product } from '@/lib/types';
 
 const POPULAR = ['iPhone 15', 'MacBook Air', 'AirPods Pro', 'Apple Watch', 'iPad'];
 
+type SearchResult = Product & { _variantLabel?: string };
+
+function expandByColor(products: Product[]): SearchResult[] {
+  const out: SearchResult[] = [];
+  for (const p of products) {
+    const colorGroup = p.variants?.find((g) => g.values.some((v) => v.imageUrl));
+    if (colorGroup) {
+      const colored = colorGroup.values.filter((v) => v.imageUrl);
+      if (colored.length > 1) {
+        for (const v of colored) {
+          out.push({ ...p, imageUrl: v.imageUrl!, _variantLabel: v.label });
+        }
+        continue;
+      }
+    }
+    out.push(p);
+  }
+  return out;
+}
+
 export const metadata: Metadata = { title: 'Search — Alfonex' };
 
 interface Props {
@@ -21,9 +41,11 @@ export default async function SearchPage({ searchParams }: Props) {
   const sort = (sp.sort ?? 'relevance') as SortOption;
 
   let results: Product[] = [];
+  let expanded: SearchResult[] = [];
   if (q) {
     const all = await getProducts();
-    results = sortProducts(scoreProducts(all, q), sort);
+    results  = sortProducts(scoreProducts(all, q), sort);
+    expanded = expandByColor(results);
   }
 
   return (
@@ -51,7 +73,7 @@ export default async function SearchPage({ searchParams }: Props) {
       )}
 
       {/* Query with no results */}
-      {q && results.length === 0 && (
+      {q && expanded.length === 0 && (
         <div className="flex flex-col items-center gap-2 py-16 text-gray-400">
           <i className="fa fa-magnifying-glass text-3xl" />
           <p className="text-sm">No results for &quot;{q}&quot;</p>
@@ -60,12 +82,19 @@ export default async function SearchPage({ searchParams }: Props) {
       )}
 
       {/* Results */}
-      {q && results.length > 0 && (
+      {q && expanded.length > 0 && (
         <>
-          <SearchToolbar query={q} sort={sort} count={results.length} />
+          <SearchToolbar query={q} sort={sort} count={expanded.length} />
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-            {results.map((p, i) => (
-              <ProductCard key={p.id} product={p} searchQuery={q} sourceRef="search" position={i} />
+            {expanded.map((p, i) => (
+              <ProductCard
+                key={p.id + (p._variantLabel ?? '')}
+                product={p}
+                searchQuery={q}
+                sourceRef="search"
+                position={i}
+                variantLabel={p._variantLabel}
+              />
             ))}
           </div>
         </>

@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { clientAuth } from '@/lib/firebase/client';
 import { getDatabase, ref, onValue } from 'firebase/database';
 import { getApp } from 'firebase/app';
-import { productHref } from '@/lib/slug';
 import { scoreProducts } from '@/lib/search';
 import type { Product } from '@/lib/types';
 
@@ -118,7 +117,7 @@ export default function SearchBar({ initialQuery }: { initialQuery: string }) {
               {suggestions.map((p) => (
                 <li key={p.id}>
                   <button
-                    onClick={() => { saveHistory(value); setFocused(false); router.push(productHref(p)); }}
+                    onClick={() => { submit(p.title); }}
                     className="flex w-full items-center gap-2 px-4 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-gray-800"
                   >
                     <i className="fa fa-magnifying-glass text-xs text-gray-400" />
