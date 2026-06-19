@@ -43,6 +43,7 @@ export interface Product {
   isFeatured: boolean;
   isNewArrival: boolean;
   isOnSale: boolean;
+  saleEndsAt?: number; // Unix ms — shows live countdown when set
   isComingSoon: boolean;
   isOOS: boolean;
   isHidden: boolean;

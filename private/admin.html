@@ -1198,6 +1198,7 @@ tbody td{padding:12px 16px;vertical-align:middle}
       <button class="sb-link" data-section="pricehistory" onclick="showSection('pricehistory')"><span class="sb-ic"><i class="fa-solid fa-chart-line"></i></span>Price History</button>
       <button class="sb-link" data-section="pricelist" onclick="showSection('pricelist')"><span class="sb-ic"><i class="fa-solid fa-list-ol"></i></span>Price List</button>
             <button class="sb-link" data-section="reviews" onclick="showSection('reviews')"><span class="sb-ic"><i class="fa-solid fa-star"></i></span>Reviews<span class="sb-badge" id="sb-reviews-count" style="display:none;background:#f59e0b">0</span></button>
+      <button class="sb-link" data-section="product-qa" onclick="showSection('product-qa')"><span class="sb-ic"><i class="fa-solid fa-circle-question"></i></span>Q&amp;A<span class="sb-badge" id="sb-qa-count" style="display:none;background:#3b82f6">0</span></button>
       <button class="sb-link" data-section="loyalty" onclick="showSection('loyalty')"><span class="sb-ic"><i class="fa-solid fa-coins"></i></span>Loyalty & Referrals</button>
       <button class="sb-link" data-section="search-analytics" onclick="showSection('search-analytics')"><span class="sb-ic"><i class="fa-solid fa-magnifying-glass-chart"></i></span>Search Analytics</button>
       <button class="sb-link" data-section="reservations" onclick="showSection('reservations')"><span class="sb-ic"><i class="fa-solid fa-bookmark"></i></span>Reservations<span class="sb-badge" id="sb-reserv-count" style="display:none">0</span></button>
@@ -1414,7 +1415,10 @@ tbody td{padding:12px 16px;vertical-align:middle}
     <section id="section-products" class="content-section">
       <div class="sec-header">
         <div><div class="sec-title">Products</div><div class="sec-sub">Manage your product catalogue</div></div>
-        <div class="sec-header-right"><button class="btn-primary" onclick="openProductModal()"><i class="fa-solid fa-plus"></i> Add Product</button></div>
+        <div class="sec-header-right" style="display:flex;gap:8px">
+          <button class="btn-secondary" onclick="openCsvImport()"><i class="fa-solid fa-file-csv"></i> Import CSV</button>
+          <button class="btn-primary" onclick="openProductModal()"><i class="fa-solid fa-plus"></i> Add Product</button>
+        </div>
       </div>
       <div class="table-card">
         <div class="table-topbar"><div class="table-topbar-title" id="prod-table-label">All Products</div><div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="search" id="prod-search" placeholder="Search…" oninput="filterProductsTable()"></div></div>
@@ -2824,6 +2828,27 @@ tbody td{padding:12px 16px;vertical-align:middle}
     </section>
 
     <!-- ══════════════════════════════════════
+         PRODUCT Q&A
+    ══════════════════════════════════════ -->
+    <section id="section-product-qa" class="content-section">
+      <div class="sec-header">
+        <div>
+          <div class="sec-title">Product Q&amp;A</div>
+          <div class="sec-sub">Answer customer questions about your products</div>
+        </div>
+        <div class="sec-header-right">
+          <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="qa-search" placeholder="Search questions…" oninput="qaFilter()"></div>
+        </div>
+      </div>
+      <div class="filter-tabs" id="qa-filter-tabs">
+        <button class="filter-tab active" data-status="all"       onclick="setQaFilter('all',this)">All</button>
+        <button class="filter-tab"        data-status="pending"   onclick="setQaFilter('pending',this)">Pending <span class="tab-count" id="qa-tc-pending">0</span></button>
+        <button class="filter-tab"        data-status="answered"  onclick="setQaFilter('answered',this)">Answered</button>
+      </div>
+      <div id="qa-container"><div class="empty-state"><div class="empty-icon">💬</div><p>No questions yet.</p></div></div>
+    </section>
+
+    <!-- ══════════════════════════════════════
          LOYALTY & REFERRALS
     ══════════════════════════════════════ -->
     <section id="section-loyalty" class="content-section">
@@ -4110,7 +4135,8 @@ function showSection(name, fromPopstate = false){
     invoices:'Customer Invoices', 'custom-invoice':'Custom Invoice Builder', 'bulk-pricelist':'Bulk Pricelist Generator', 'offline-orders':'Offline Orders', comms:'Team Communication',
     meetings:'Meeting Scheduler', pricehistory:'Price Change History', reservations:'Device Reservations', pricelist:'Price List',
     audit:'Audit Trail', reviews:'Product Reviews', loyalty:'Loyalty & Referrals', 'search-analytics':'Search Analytics',
-    analytics:'Analytics', 'push-notifications':'Push Notifications', security:'Security', returns:'Returns & RMA', 'profit-margin':'Profit & Margin Dashboard'
+    analytics:'Analytics', 'push-notifications':'Push Notifications', security:'Security', returns:'Returns & RMA', 'profit-margin':'Profit & Margin Dashboard',
+    'product-qa':'Product Q&A'
   };
   document.getElementById('header-page-title').innerHTML=`<span>${T[name]||name}</span>`;
   closeSidebar();
@@ -4156,6 +4182,7 @@ function showSection(name, fromPopstate = false){
     if (name==='analytics')     { renderAnalyticsCharts(); }
     if (name==='push-notifications') { pnLoadHistory(); pnLoadTopClickers(); populatePnProducts(); }
     if (name==='security')           { secLoadInfo(); }
+    if (name==='product-qa')         { qaLoad(); }
   }, 0);
 }
 let _lastSection = null;
@@ -8664,6 +8691,269 @@ const _origProdRef = db.ref('products');
 
 /* ─── SECTION INIT handled inside showSection() above ────── */
 
+/* ════════════════════════════════════════════════════════════
+   PRODUCT Q&A
+════════════════════════════════════════════════════════════ */
+let _qaAll = [];    // all flat {productId, id, ...} objects
+let _qaFilter = 'all';
+
+async function qaLoad() {
+  document.getElementById('qa-container').innerHTML = '<div class="empty-state"><div class="empty-icon">💬</div><p>Loading…</p></div>';
+  const snap = await db.ref('product_qa').once('value');
+  _qaAll = [];
+  if (snap.exists()) {
+    snap.forEach(productSnap => {
+      const pid = productSnap.key;
+      productSnap.forEach(qSnap => {
+        _qaAll.push({ productId: pid, id: qSnap.key, ...qSnap.val() });
+      });
+    });
+  }
+  // Sort newest first
+  _qaAll.sort((a, b) => (b.askedAt || 0) - (a.askedAt || 0));
+  // Update badge
+  const pending = _qaAll.filter(q => !q.answer).length;
+  const badge = document.getElementById('sb-qa-count');
+  if (badge) { badge.textContent = pending; badge.style.display = pending ? '' : 'none'; }
+  document.getElementById('qa-tc-pending').textContent = pending;
+  qaRender();
+}
+
+function setQaFilter(f, btn) {
+  _qaFilter = f;
+  document.querySelectorAll('#qa-filter-tabs .filter-tab').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  qaRender();
+}
+
+function qaFilter() { qaRender(); }
+
+function qaRender() {
+  const q = (document.getElementById('qa-search')?.value || '').toLowerCase();
+  let rows = _qaAll.filter(item => {
+    if (_qaFilter === 'pending' && item.answer) return false;
+    if (_qaFilter === 'answered' && !item.answer) return false;
+    if (q && !item.question.toLowerCase().includes(q) && !item.askedByName?.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  if (!rows.length) {
+    document.getElementById('qa-container').innerHTML = '<div class="empty-state"><div class="empty-icon">💬</div><p>No questions found.</p></div>';
+    return;
+  }
+  const prod = (pid) => (APP.products || {})[pid];
+  document.getElementById('qa-container').innerHTML = rows.map(item => {
+    const p = prod(item.productId);
+    const pTitle = p ? esc(p.title) : esc(item.productId);
+    return `<div class="table-card" style="margin-bottom:12px;padding:16px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <span style="font-size:11px;background:var(--sidebar-bg);color:var(--muted);padding:2px 8px;border-radius:20px;flex-shrink:0">${pTitle}</span>
+        ${item.answer ? '<span style="font-size:11px;background:#d1fae5;color:#059669;padding:2px 8px;border-radius:20px">Answered</span>' : '<span style="font-size:11px;background:#fef9c3;color:#ca8a04;padding:2px 8px;border-radius:20px">Pending</span>'}
+        <span style="font-size:11px;color:var(--muted);margin-left:auto">${fmtDate(item.askedAt)} · ${esc(item.askedByName||'Customer')}</span>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:10px">
+        <span style="width:22px;height:22px;border-radius:50%;background:#dbeafe;color:#1d4ed8;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">Q</span>
+        <p style="margin:0;font-size:13px;font-weight:500;color:var(--text)">${esc(item.question)}</p>
+      </div>
+      ${item.answer ? `<div style="display:flex;align-items:flex-start;gap:8px">
+        <span style="width:22px;height:22px;border-radius:50%;background:#dcfce7;color:#16a34a;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">A</span>
+        <p style="margin:0;font-size:13px;color:var(--text-secondary)">${esc(item.answer)}</p>
+      </div>` : `<div style="display:flex;gap:8px;margin-top:4px">
+        <input type="text" id="qa-ans-${item.productId}-${item.id}" placeholder="Type your answer…" class="mf-input" style="flex:1;font-size:13px">
+        <button class="btn-primary btn-sm" onclick="qaSubmitAnswer('${item.productId}','${item.id}')">Answer</button>
+      </div>`}
+    </div>`;
+  }).join('');
+}
+
+async function qaSubmitAnswer(productId, questionId) {
+  const inp = document.getElementById(`qa-ans-${productId}-${questionId}`);
+  const answer = inp?.value?.trim();
+  if (!answer) { showToast('Answer cannot be empty.', 'error'); return; }
+  try {
+    await db.ref(`product_qa/${productId}/${questionId}`).update({ answer, answeredAt: Date.now() });
+    showToast('Answer saved!', 'success');
+    // Update local cache
+    const item = _qaAll.find(q => q.productId === productId && q.id === questionId);
+    if (item) { item.answer = answer; item.answeredAt = Date.now(); }
+    qaRender();
+    // Update badge
+    const pending = _qaAll.filter(q => !q.answer).length;
+    const badge = document.getElementById('sb-qa-count');
+    if (badge) { badge.textContent = pending; badge.style.display = pending ? '' : 'none'; }
+    document.getElementById('qa-tc-pending').textContent = pending;
+  } catch (err) {
+    showToast('Failed to save answer: ' + err.message, 'error');
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   BULK CSV IMPORT
+════════════════════════════════════════════════════════════ */
+let _csvRows = [];
+
+const CSV_COLUMNS = ['title','description','price','costPrice','stock','category','grade','imageUrl','priceUSD','priceAED','priceINR','isFeatured','isNewArrival','isOnSale','isOOS','isHidden'];
+
+function openCsvImport() {
+  csvReset();
+  document.getElementById('modal-csv-import').classList.add('open');
+}
+function closeCsvImport() {
+  document.getElementById('modal-csv-import').classList.remove('open');
+  csvReset();
+}
+function csvReset() {
+  _csvRows = [];
+  document.getElementById('csv-step-1').style.display = '';
+  document.getElementById('csv-step-2').style.display = 'none';
+  document.getElementById('csv-step-3').style.display = 'none';
+  document.getElementById('csv-step-4').style.display = 'none';
+  document.getElementById('csv-drop-zone').style.borderColor = 'var(--border)';
+  document.getElementById('csv-file-input').value = '';
+}
+
+function csvDownloadTemplate() {
+  const header = CSV_COLUMNS.join(',');
+  const example = [
+    '"iPhone 15 Pro","RAM:: 8GB :: Apple A17 Pro\n---\nExcellent condition"',
+    '"599","480","10","phones","a1+"',
+    '"https://res.cloudinary.com/example/upload/v1/sample.jpg"',
+    '"550","599","48999"',
+    '"true","false","true","false","false"'
+  ].join(',');
+  const csv = header + '\n' + example;
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'alfonex_products_template.csv';
+  a.click();
+}
+
+function csvHandleDrop(e) {
+  e.preventDefault();
+  document.getElementById('csv-drop-zone').style.borderColor = 'var(--border)';
+  const file = e.dataTransfer.files[0];
+  if (file) csvParseFile(file);
+}
+
+function csvParseFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const text = e.target.result;
+    const rows = csvTextToRows(text);
+    if (rows.length < 2) { showToast('CSV has no data rows.', 'error'); return; }
+    const headers = rows[0].map(h => h.trim().toLowerCase());
+    const errors = [];
+    _csvRows = [];
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (row.every(c => !c.trim())) continue; // skip blank rows
+      const obj = {};
+      headers.forEach((h, idx) => { obj[h] = (row[idx] || '').trim(); });
+      if (!obj.title) { errors.push(`Row ${i+1}: title is required`); continue; }
+      if (!obj.price || isNaN(Number(obj.price))) { errors.push(`Row ${i+1}: valid price required`); continue; }
+      _csvRows.push(obj);
+    }
+    document.getElementById('csv-count').textContent = _csvRows.length;
+    const errEl = document.getElementById('csv-errors');
+    if (errors.length) {
+      errEl.style.display = '';
+      errEl.innerHTML = '<strong>' + errors.length + ' row(s) skipped:</strong><br>' + errors.map(esc).join('<br>');
+    } else {
+      errEl.style.display = 'none';
+    }
+    // Render preview (first 5 rows + headers)
+    const previewCols = ['title','price','costPrice','stock','category','grade','isOnSale','isNewArrival'];
+    document.getElementById('csv-preview-head').innerHTML = previewCols.map(c => `<th style="padding:8px 10px;text-align:left;font-weight:600;color:var(--text-secondary);white-space:nowrap">${c}</th>`).join('');
+    document.getElementById('csv-preview-body').innerHTML = _csvRows.slice(0, 8).map(r =>
+      '<tr style="border-top:1px solid var(--border)">' +
+        previewCols.map(c => `<td style="padding:7px 10px;color:var(--text);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r[c] || '—')}</td>`).join('') +
+      '</tr>'
+    ).join('');
+    if (_csvRows.length > 8) {
+      document.getElementById('csv-preview-body').innerHTML +=
+        `<tr><td colspan="${previewCols.length}" style="padding:8px 10px;color:var(--muted);font-size:11px;text-align:center">… and ${_csvRows.length - 8} more rows</td></tr>`;
+    }
+    document.getElementById('csv-step-1').style.display = 'none';
+    document.getElementById('csv-step-2').style.display = '';
+  };
+  reader.readAsText(file);
+}
+
+function csvTextToRows(text) {
+  // Simple CSV parser supporting double-quoted fields with embedded commas/newlines
+  const rows = [];
+  let row = [], field = '', inQuote = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i], next = text[i+1];
+    if (inQuote) {
+      if (ch === '"' && next === '"') { field += '"'; i++; }
+      else if (ch === '"') { inQuote = false; }
+      else { field += ch; }
+    } else {
+      if (ch === '"') { inQuote = true; }
+      else if (ch === ',') { row.push(field); field = ''; }
+      else if (ch === '\n' || (ch === '\r' && next === '\n')) {
+        row.push(field); field = '';
+        if (row.some(c => c.trim())) rows.push(row);
+        row = [];
+        if (ch === '\r') i++;
+      } else { field += ch; }
+    }
+  }
+  if (field || row.length) { row.push(field); if (row.some(c => c.trim())) rows.push(row); }
+  return rows;
+}
+
+async function csvImportConfirm() {
+  if (!_csvRows.length) return;
+  document.getElementById('csv-step-2').style.display = 'none';
+  document.getElementById('csv-step-3').style.display = '';
+  let done = 0, failed = 0;
+  for (const row of _csvRows) {
+    document.getElementById('csv-progress-text').textContent = `Importing ${done + 1} of ${_csvRows.length}…`;
+    try {
+      const bool = (v) => v && v.toLowerCase() === 'true' ? true : null;
+      const payload = {
+        title:        row.title,
+        description:  row.description || '',
+        price:        Number(row.price) || 0,
+        costPrice:    Number(row.costprice || row.costPrice || row['cost price']) || 0,
+        stock:        parseInt(row.stock || '0', 10),
+        category:     row.category || null,
+        grade:        row.grade    || null,
+        imageUrl:     row.imageurl || row.imageUrl || '',
+        priceUSD:     Number(row.priceusd || row.priceUSD) || null,
+        priceAED:     Number(row.priceaed || row.priceAED) || null,
+        priceINR:     Number(row.priceinr || row.priceINR) || null,
+        isFeatured:   bool(row.isfeatured   || row.isFeatured),
+        isNewArrival: bool(row.isnewarrival || row.isNewArrival),
+        isOnSale:     bool(row.isonsale     || row.isOnSale),
+        isOOS:        bool(row.isoos        || row.isOOS),
+        isHidden:     bool(row.ishidden     || row.isHidden),
+        variants:     null,
+        variantSlugs: null,
+        createdAt:    Date.now() + done, // slight offset so each has unique ts
+        updatedAt:    Date.now(),
+      };
+      // Remove null currency prices to keep DB clean
+      if (!payload.priceUSD) delete payload.priceUSD;
+      if (!payload.priceAED) delete payload.priceAED;
+      if (!payload.priceINR) delete payload.priceINR;
+      const ref = await db.ref('products').push(payload);
+      auditLog('ADD', `CSV Import: added "${payload.title}"`, { productId: ref.key, category: 'Products', detail: `Price AED ${payload.price} | Stock: ${payload.stock}` });
+      done++;
+    } catch (err) {
+      console.error('CSV import row error:', err);
+      failed++;
+    }
+  }
+  document.getElementById('csv-step-3').style.display = 'none';
+  document.getElementById('csv-step-4').style.display = '';
+  document.getElementById('csv-done-text').textContent = `✓ ${done} product${done !== 1 ? 's' : ''} imported${failed ? ` · ${failed} failed` : ''}.`;
+  if (failed) showToast(`${failed} rows failed to import. Check console.`, 'error');
+  else showToast(`${done} products imported successfully!`, 'success');
+}
+
 /* ─── INIT ───────────────────────────────────────────────── */
 window.addEventListener('DOMContentLoaded', () => {
   renderTasks();
@@ -11844,6 +12134,60 @@ function closeRmaModal() { document.getElementById('rma-modal').style.display='n
     </div>
 
   <!-- ── What's New Changelog Popup ──────────────────────────────────────── -->
+  <!-- ── Bulk CSV Import Modal ── -->
+  <div id="modal-csv-import" class="modal-backdrop">
+    <div class="modal-sheet" style="max-width:680px;width:100%">
+      <div class="modal-header">
+        <div class="modal-hicon"><i class="fa-solid fa-file-csv"></i></div>
+        <div class="modal-title">Bulk Import Products</div>
+        <button class="modal-close" onclick="closeCsvImport()">&times;</button>
+      </div>
+      <div style="padding:20px;overflow-y:auto;max-height:70vh">
+        <!-- Step 1: upload -->
+        <div id="csv-step-1">
+          <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Upload a CSV file to add multiple products at once. <a href="#" onclick="csvDownloadTemplate();return false" style="color:var(--primary)">Download template</a></p>
+          <div id="csv-drop-zone" style="border:2px dashed var(--border);border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:border-color .2s" onclick="document.getElementById('csv-file-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--primary)'" ondragleave="this.style.borderColor='var(--border)'" ondrop="csvHandleDrop(event)">
+            <i class="fa-solid fa-cloud-arrow-up" style="font-size:28px;color:var(--muted);margin-bottom:8px;display:block"></i>
+            <p style="margin:0;font-size:13px;font-weight:600;color:var(--text)">Click to upload or drag &amp; drop</p>
+            <p style="margin:4px 0 0;font-size:11px;color:var(--muted)">CSV files only</p>
+          </div>
+          <input type="file" id="csv-file-input" accept=".csv,text/csv" style="display:none" onchange="csvParseFile(this.files[0])">
+        </div>
+        <!-- Step 2: preview -->
+        <div id="csv-step-2" style="display:none">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <p style="margin:0;font-size:13px;font-weight:600;color:var(--text)"><span id="csv-count">0</span> products ready to import</p>
+            <button class="btn-ghost btn-sm" onclick="csvReset()"><i class="fa-solid fa-arrow-left"></i> Back</button>
+          </div>
+          <div id="csv-errors" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#dc2626"></div>
+          <div style="overflow-x:auto;border-radius:8px;border:1px solid var(--border)">
+            <table style="width:100%;border-collapse:collapse;font-size:12px">
+              <thead style="background:var(--sidebar-bg)">
+                <tr id="csv-preview-head"></tr>
+              </thead>
+              <tbody id="csv-preview-body"></tbody>
+            </table>
+          </div>
+          <div style="margin-top:16px;display:flex;gap:10px;justify-content:flex-end">
+            <button class="btn-ghost" onclick="closeCsvImport()">Cancel</button>
+            <button class="btn-primary" id="btn-csv-import" onclick="csvImportConfirm()"><i class="fa-solid fa-cloud-arrow-up"></i> Import All</button>
+          </div>
+        </div>
+        <!-- Step 3: progress -->
+        <div id="csv-step-3" style="display:none;text-align:center;padding:20px 0">
+          <div class="spin-ring" style="margin:0 auto 16px;width:32px;height:32px;border-width:3px"></div>
+          <p style="font-size:14px;font-weight:600;color:var(--text)" id="csv-progress-text">Importing…</p>
+        </div>
+        <!-- Step 4: done -->
+        <div id="csv-step-4" style="display:none;text-align:center;padding:20px 0">
+          <i class="fa-solid fa-circle-check" style="font-size:36px;color:var(--green);margin-bottom:12px;display:block"></i>
+          <p style="font-size:15px;font-weight:700;color:var(--text)" id="csv-done-text">Import complete!</p>
+          <button class="btn-primary" style="margin-top:16px" onclick="closeCsvImport()">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="modal-whats-new" class="modal-backdrop" style="z-index:10001;align-items:center">
     <div style="background:var(--card);border-radius:20px;width:90%;max-width:520px;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.3)">
       <!-- Header -->
