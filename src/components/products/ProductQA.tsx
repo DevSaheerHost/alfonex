@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth }             from '@/contexts/AuthContext';
-import { getDatabase, ref, onValue, push, serverTimestamp } from 'firebase/database';
-import { getApp }              from 'firebase/app';
+import { getDatabase, ref, onValue } from 'firebase/database';
+import { getFirebaseApp }           from '@/lib/firebase/client';
 import { askQuestion }         from '@/actions/qa';
 import type { QAItem }         from '@/actions/qa';
 
@@ -27,7 +27,7 @@ export default function ProductQA({ productId }: Props) {
 
   // Real-time RTDB listener — updates immediately when admin answers
   useEffect(() => {
-    const db       = getDatabase(getApp());
+    const db       = getDatabase(getFirebaseApp());
     const qaRef    = ref(db, `product_qa/${productId}`);
     const unsub    = onValue(qaRef, (snap) => {
       if (!snap.exists()) { setItems([]); setLoading(false); return; }

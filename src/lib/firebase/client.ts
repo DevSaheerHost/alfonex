@@ -26,4 +26,4 @@ export function clientAuth(): Auth {
 }
 
 // Re-export getApp so pages can access the client app for RTDB subscriptions
-export { getApp };
+export { getApp, getFirebaseApp };
