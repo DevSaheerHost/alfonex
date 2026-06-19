@@ -34,7 +34,8 @@ export default function ProductCard({ product, searchQuery, sourceRef, position,
   const { toggle, has } = useWishlist();
   const wished = has(variantLabel ? `${product.id}::${variantLabel}` : product.id);
   const { toggle: compareToggle, has: compareHas, ids: compareIds } = useCompare();
-  const inCompare = compareHas(product.id);
+  const compareKey = variantLabel ? `${product.id}::${variantLabel}` : product.id;
+  const inCompare = compareHas(compareKey);
 
   const price     = getProdPrice(product);
   const symbol    = CURRENCY_SYMBOLS[currency];
@@ -108,7 +109,7 @@ export default function ProductCard({ product, searchQuery, sourceRef, position,
             onClick={(e) => {
               e.preventDefault();
               if (!inCompare && compareIds.length >= 3) return;
-              compareToggle(product.id);
+              compareToggle(compareKey);
             }}
             aria-label={inCompare ? 'Remove from compare' : 'Add to compare'}
             title={!inCompare && compareIds.length >= 3 ? 'Max 3 products' : undefined}

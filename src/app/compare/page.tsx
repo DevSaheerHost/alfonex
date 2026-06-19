@@ -30,19 +30,28 @@ export default function ComparePage() {
   const getProdPrice           = useProductPrice();
   const symbol                 = CURRENCY_SYMBOLS[currency];
 
-  const [products, setProducts] = useState<(Product | null)[]>([]);
+  interface CompareEntry { compareId: string; product: Product; variantLabel?: string; displayImage: string }
+  const [entries,  setEntries]  = useState<(CompareEntry | null)[]>([]);
   const [loading,  setLoading]  = useState(true);
 
   useEffect(() => {
-    if (ids.length === 0) { setProducts([]); setLoading(false); return; }
+    if (ids.length === 0) { setEntries([]); setLoading(false); return; }
     setLoading(true);
     Promise.all(
-      ids.map((id) =>
-        fetch(`/api/products/${id}`)
+      ids.map((compareId) => {
+        const [productId, variantLabel] = compareId.split('::');
+        return fetch(`/api/products/${productId}`)
           .then((r) => r.ok ? r.json() : null)
-          .catch(() => null),
-      ),
-    ).then((ps) => { setProducts(ps); setLoading(false); });
+          .then((p: Product | null) => {
+            if (!p) return null;
+            const variantImage = variantLabel
+              ? p.variants?.flatMap((g) => g.values).find((v) => v.label === variantLabel)?.imageUrl
+              : undefined;
+            return { compareId, product: p, variantLabel, displayImage: variantImage || p.imageUrl };
+          })
+          .catch(() => null);
+      }),
+    ).then((es) => { setEntries(es); setLoading(false); });
   }, [ids]);
 
   if (loading) {
@@ -64,7 +73,8 @@ export default function ComparePage() {
     );
   }
 
-  const validProducts = products.filter(Boolean) as Product[];
+  const validEntries = entries.filter(Boolean) as CompareEntry[];
+  const validProducts = validEntries.map((e) => e.product);
 
   function getCellValue(product: Product, key: string): string {
     if (key === 'price') {
@@ -97,11 +107,11 @@ export default function ComparePage() {
           <thead>
             <tr>
               <th className="w-28 pb-3 pr-3 text-left text-xs font-medium text-gray-400" />
-              {validProducts.map((p) => (
-                <th key={p.id} className="pb-3 pr-3 text-left align-top">
+              {validEntries.map(({ compareId, product: p, variantLabel, displayImage }) => (
+                <th key={compareId} className="pb-3 pr-3 text-left align-top">
                   <div className="relative">
                     <button
-                      onClick={() => remove(p.id)}
+                      onClick={() => remove(compareId)}
                       className="absolute -right-1 -top-1 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-gray-200 text-gray-500 hover:bg-red-100 hover:text-red-500 dark:bg-gray-700 dark:text-gray-300"
                     >
                       <i className="fa fa-xmark text-[9px]" />
@@ -109,7 +119,7 @@ export default function ComparePage() {
                     <Link href={productHref(p)}>
                       <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-gray-50 dark:bg-gray-800">
                         <Image
-                          src={cldUrl(p.imageUrl, 'f_auto,q_auto,w_200')}
+                          src={cldUrl(displayImage, 'f_auto,q_auto,w_200')}
                           alt={p.title}
                           fill
                           className="object-contain p-2"
@@ -118,6 +128,9 @@ export default function ComparePage() {
                       <p className="mt-1.5 line-clamp-2 text-[12px] font-semibold leading-snug dark:text-white">
                         {p.title}
                       </p>
+                      {variantLabel && (
+                        <p className="text-[10px] text-gray-400 dark:text-gray-500">{variantLabel}</p>
+                      )}
                     </Link>
                   </div>
                 </th>
