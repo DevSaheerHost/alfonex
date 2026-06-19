@@ -1087,6 +1087,11 @@ tbody td{padding:12px 16px;vertical-align:middle}
 .rs-stat-amber{border-top:3px solid #f59e0b!important}
 .rs-stat-bblue{border-top:3px solid #3b82f6!important}
 .rs-stat-green{border-top:3px solid var(--green)!important}
+.staff-tab{background:none;border:none;padding:10px 16px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+.staff-tab.active{color:var(--green);border-bottom-color:var(--green)}
+.staff-perm-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;font-size:13px;color:var(--text);background:var(--surface);border:1px solid var(--border);cursor:pointer}
+.staff-perm-row input{accent-color:var(--green);width:15px;height:15px;cursor:pointer}
+.staff-card{background:var(--card);border-radius:14px;padding:18px;border:1px solid var(--border);display:flex;flex-direction:column;gap:10px}
 </style>
 </head>
 <body>
@@ -1199,6 +1204,7 @@ tbody td{padding:12px 16px;vertical-align:middle}
       <button class="sb-link" data-section="pricelist" onclick="showSection('pricelist')"><span class="sb-ic"><i class="fa-solid fa-list-ol"></i></span>Price List</button>
             <button class="sb-link" data-section="reviews" onclick="showSection('reviews')"><span class="sb-ic"><i class="fa-solid fa-star"></i></span>Reviews<span class="sb-badge" id="sb-reviews-count" style="display:none;background:#f59e0b">0</span></button>
       <button class="sb-link" data-section="product-qa" onclick="showSection('product-qa')"><span class="sb-ic"><i class="fa-solid fa-circle-question"></i></span>Q&amp;A<span class="sb-badge" id="sb-qa-count" style="display:none;background:#3b82f6">0</span></button>
+      <button class="sb-link" data-section="staff" onclick="showSection('staff')"><span class="sb-ic"><i class="fa-solid fa-id-card"></i></span>Staff<span class="sb-badge" id="sb-staff-count" style="display:none;background:#8b5cf6">0</span></button>
       <button class="sb-link" data-section="loyalty" onclick="showSection('loyalty')"><span class="sb-ic"><i class="fa-solid fa-coins"></i></span>Loyalty & Referrals</button>
       <button class="sb-link" data-section="search-analytics" onclick="showSection('search-analytics')"><span class="sb-ic"><i class="fa-solid fa-magnifying-glass-chart"></i></span>Search Analytics</button>
       <button class="sb-link" data-section="reservations" onclick="showSection('reservations')"><span class="sb-ic"><i class="fa-solid fa-bookmark"></i></span>Reservations<span class="sb-badge" id="sb-reserv-count" style="display:none">0</span></button>
@@ -2828,6 +2834,34 @@ tbody td{padding:12px 16px;vertical-align:middle}
     </section>
 
     <!-- ══════════════════════════════════════
+         STAFF MANAGEMENT
+    ══════════════════════════════════════ -->
+    <section id="section-staff" class="content-section">
+      <div class="sec-header">
+        <div>
+          <div class="sec-title">Staff Management</div>
+          <div class="sec-sub">Manage team members, documents &amp; access control</div>
+        </div>
+        <div class="sec-header-right" style="display:flex;gap:8px">
+          <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="staff-search" placeholder="Search staff…" oninput="staffRender()"></div>
+          <button class="btn-primary" onclick="openStaffModal()"><i class="fa-solid fa-user-plus"></i> Add Staff</button>
+        </div>
+      </div>
+      <!-- Filter tabs -->
+      <div class="filter-tabs">
+        <button class="filter-tab active" onclick="setStaffFilter('all',this)">All <span class="tab-count" id="staff-tc-all">0</span></button>
+        <button class="filter-tab" onclick="setStaffFilter('active',this)">Active</button>
+        <button class="filter-tab" onclick="setStaffFilter('inactive',this)">Inactive</button>
+      </div>
+      <!-- Stats row -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:16px" id="staff-stats-row"></div>
+      <!-- Staff cards grid -->
+      <div id="staff-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px">
+        <div class="empty-state"><div class="empty-icon">👥</div><p>No staff yet.</p></div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════
          PRODUCT Q&A
     ══════════════════════════════════════ -->
     <section id="section-product-qa" class="content-section">
@@ -4136,7 +4170,8 @@ function showSection(name, fromPopstate = false){
     meetings:'Meeting Scheduler', pricehistory:'Price Change History', reservations:'Device Reservations', pricelist:'Price List',
     audit:'Audit Trail', reviews:'Product Reviews', loyalty:'Loyalty & Referrals', 'search-analytics':'Search Analytics',
     analytics:'Analytics', 'push-notifications':'Push Notifications', security:'Security', returns:'Returns & RMA', 'profit-margin':'Profit & Margin Dashboard',
-    'product-qa':'Product Q&A'
+    'product-qa':'Product Q&A',
+    'staff':'Staff Management'
   };
   document.getElementById('header-page-title').innerHTML=`<span>${T[name]||name}</span>`;
   closeSidebar();
@@ -4183,6 +4218,7 @@ function showSection(name, fromPopstate = false){
     if (name==='push-notifications') { pnLoadHistory(); pnLoadTopClickers(); populatePnProducts(); }
     if (name==='security')           { secLoadInfo(); }
     if (name==='product-qa')         { qaLoad(); }
+    if (name==='staff') { staffLoad(); }
   }, 0);
 }
 let _lastSection = null;
@@ -8787,6 +8823,290 @@ async function qaSubmitAnswer(productId, questionId) {
 }
 
 /* ════════════════════════════════════════════════════════════
+   STAFF MANAGEMENT
+════════════════════════════════════════════════════════════ */
+let APP_STAFF = {};  // id → staff object
+let _staffFilter = 'all';
+
+/* ── RTDB listener ── */
+function staffLoad() {
+  db.ref('staff').on('value', snap => {
+    APP_STAFF = snap.val() || {};
+    staffRender();
+    staffRenderStats();
+    // badge count
+    const cnt = Object.keys(APP_STAFF).length;
+    const badge = document.getElementById('sb-staff-count');
+    if (badge) { badge.textContent = cnt; badge.style.display = cnt ? '' : 'none'; }
+  });
+}
+
+function setStaffFilter(f, btn) {
+  _staffFilter = f;
+  document.querySelectorAll('#section-staff .filter-tab').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  staffRender();
+}
+
+function staffRenderStats() {
+  const all = Object.values(APP_STAFF);
+  const byDesig = {};
+  all.forEach(s => { const d = s.designation || 'Other'; byDesig[d] = (byDesig[d] || 0) + 1; });
+  const active = all.filter(s => s.status !== 'inactive').length;
+  document.getElementById('staff-tc-all').textContent = all.length;
+  const icons = { Sales:'fa-tag', Admin:'fa-gear', Technician:'fa-wrench', Delivery:'fa-truck', Manager:'fa-briefcase', Accountant:'fa-calculator', Other:'fa-user' };
+  const stats = [
+    { label:'Total Staff', value: all.length, icon:'fa-users', color:'#8b5cf6' },
+    { label:'Active', value: active, icon:'fa-circle-check', color:'#22c55e' },
+    { label:'Inactive', value: all.length - active, icon:'fa-circle-xmark', color:'#f59e0b' },
+    ...Object.entries(byDesig).map(([d,c])=>({ label:d, value:c, icon:icons[d]||'fa-user', color:'#3b82f6' })),
+  ];
+  document.getElementById('staff-stats-row').innerHTML = stats.map(s =>
+    `<div class="table-card" style="padding:14px;text-align:center">
+      <i class="fa-solid ${esc(s.icon)}" style="font-size:20px;color:${esc(s.color)};margin-bottom:6px;display:block"></i>
+      <div style="font-size:22px;font-weight:800;color:var(--text)">${s.value}</div>
+      <div style="font-size:11px;color:var(--muted)">${esc(s.label)}</div>
+    </div>`
+  ).join('');
+}
+
+function staffRender() {
+  const q = (document.getElementById('staff-search')?.value || '').toLowerCase();
+  let entries = Object.entries(APP_STAFF);
+  if (_staffFilter === 'active')   entries = entries.filter(([,s]) => s.status !== 'inactive');
+  if (_staffFilter === 'inactive') entries = entries.filter(([,s]) => s.status === 'inactive');
+  if (q) entries = entries.filter(([,s]) => (s.name||'').toLowerCase().includes(q) || (s.designation||'').toLowerCase().includes(q) || (s.employeeId||'').toLowerCase().includes(q));
+  entries.sort(([,a],[,b]) => (b.createdAt||0) - (a.createdAt||0));
+  if (!entries.length) {
+    document.getElementById('staff-grid').innerHTML = '<div class="empty-state"><div class="empty-icon">👥</div><p>No staff found.</p></div>';
+    return;
+  }
+  const DESIG_COLOR = { Sales:'#22c55e', Admin:'#3b82f6', Technician:'#f59e0b', Delivery:'#8b5cf6', Manager:'#ec4899', Accountant:'#0ea5e9', Other:'#6b7280' };
+  document.getElementById('staff-grid').innerHTML = entries.map(([id,s]) => {
+    const color = DESIG_COLOR[s.designation] || '#6b7280';
+    const photoHtml = s.photoUrl
+      ? `<img src="${esc(s.photoUrl)}" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid var(--border)">`
+      : `<div style="width:56px;height:56px;border-radius:50%;background:${color}22;display:flex;align-items:center;justify-content:center;border:2px solid ${color}44"><span style="font-size:20px;font-weight:800;color:${color}">${(s.name||'?').charAt(0).toUpperCase()}</span></div>`;
+    const accessBadge = s.accessLevel === 'admin'
+      ? '<span style="font-size:10px;background:#3b82f622;color:#3b82f6;padding:2px 8px;border-radius:20px;font-weight:700">Admin</span>'
+      : '<span style="font-size:10px;background:#22c55e22;color:#22c55e;padding:2px 8px;border-radius:20px;font-weight:700">Staff</span>';
+    const statusDot = s.status === 'inactive'
+      ? '<span style="width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block"></span>'
+      : '<span style="width:8px;height:8px;border-radius:50%;background:#22c55e;display:inline-block"></span>';
+    const docIcons = [
+      s.emiratesIdUrl ? '<i class="fa-solid fa-id-card" title="Emirates ID" style="color:var(--green)"></i>' : '<i class="fa-regular fa-id-card" title="Emirates ID missing" style="color:var(--muted)"></i>',
+      s.passportUrl   ? '<i class="fa-solid fa-passport" title="Passport" style="color:var(--green)"></i>' : '<i class="fa-regular fa-passport" title="Passport missing" style="color:var(--muted)"></i>',
+      s.visaUrl       ? '<i class="fa-solid fa-file-circle-check" title="Visa" style="color:var(--green)"></i>' : '<i class="fa-regular fa-file" title="Visa missing" style="color:var(--muted)"></i>',
+    ].join(' ');
+    return `<div class="staff-card">
+      <div style="display:flex;align-items:center;gap:12px">
+        ${photoHtml}
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(s.name||'—')}</div>
+          <div style="font-size:12px;color:${color};font-weight:600">${esc(s.designation||'—')}</div>
+          <div style="font-size:11px;color:var(--muted)">${esc(s.employeeId||'')}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px">${statusDot}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        ${accessBadge}
+        ${s.mobile ? `<span style="font-size:11px;color:var(--muted)"><i class="fa-solid fa-phone" style="font-size:9px"></i> ${esc(s.mobile)}</span>` : ''}
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;gap:8px;font-size:13px">${docIcons}</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn-ghost btn-sm" onclick="openStaffModal('${id}')"><i class="fa-solid fa-pen"></i></button>
+          <button class="btn-ghost btn-sm" style="color:#ef4444;border-color:#ef444433" onclick="deleteStaff('${id}','${esc(s.name||id)}')"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ── Modal open/close ── */
+function openStaffModal(id = null) {
+  // Reset all fields
+  ['staff-name','staff-emp-id','staff-mobile','staff-email','staff-address','staff-emergency','staff-photo-url','staff-eid-url','staff-passport-url','staff-visa-url'].forEach(fid => {
+    const el = document.getElementById(fid); if (el) el.value = '';
+  });
+  document.getElementById('staff-designation').value = '';
+  document.getElementById('staff-status').value = 'active';
+  document.getElementById('staff-joining-date').value = '';
+  document.getElementById('staff-edit-id').value = id || '';
+  document.getElementById('staff-modal-title').textContent = id ? 'Edit Staff Member' : 'Add Staff Member';
+  // Reset photo
+  document.getElementById('staff-photo-preview').innerHTML = '<i class="fa-solid fa-user" style="font-size:28px;color:var(--muted)"></i>';
+  // Reset doc statuses
+  ['eid','passport','visa'].forEach(doc => {
+    document.getElementById(`staff-${doc}-status`).textContent = 'No file';
+    const view = document.getElementById(`staff-${doc}-view`);
+    view.style.display = 'none'; view.href = '#';
+  });
+  // Reset permissions
+  document.querySelectorAll('.staff-perm').forEach(cb => cb.checked = false);
+  document.getElementById('staff-access-staff').checked = true;
+  staffUpdateAccessCards();
+  document.getElementById('staff-perms-panel').style.display = '';
+  // Populate if editing
+  if (id && APP_STAFF[id]) {
+    const s = APP_STAFF[id];
+    document.getElementById('staff-name').value = s.name || '';
+    document.getElementById('staff-emp-id').value = s.employeeId || '';
+    document.getElementById('staff-mobile').value = s.mobile || '';
+    document.getElementById('staff-email').value = s.email || '';
+    document.getElementById('staff-address').value = s.address || '';
+    document.getElementById('staff-emergency').value = s.emergencyContact || '';
+    document.getElementById('staff-designation').value = s.designation || '';
+    document.getElementById('staff-status').value = s.status || 'active';
+    document.getElementById('staff-joining-date').value = s.joiningDate || '';
+    if (s.photoUrl) {
+      document.getElementById('staff-photo-url').value = s.photoUrl;
+      document.getElementById('staff-photo-preview').innerHTML = `<img src="${esc(s.photoUrl)}" style="width:100%;height:100%;object-fit:cover">`;
+    }
+    // Docs
+    ['eid','passport','visa'].forEach(doc => {
+      const key = doc === 'eid' ? 'emiratesIdUrl' : doc === 'passport' ? 'passportUrl' : 'visaUrl';
+      if (s[key]) {
+        document.getElementById(`staff-${doc}-url`).value = s[key];
+        const label = doc === 'eid' ? 'Emirates ID' : doc === 'passport' ? 'Passport' : 'Visa';
+        document.getElementById(`staff-${doc}-status`).textContent = label + ' uploaded ✓';
+        const view = document.getElementById(`staff-${doc}-view`);
+        view.href = s[key]; view.style.display = '';
+      }
+    });
+    // Access
+    const level = s.accessLevel || 'staff';
+    document.getElementById(`staff-access-${level}`).checked = true;
+    staffUpdateAccessCards();
+    if (level === 'admin') document.getElementById('staff-perms-panel').style.display = 'none';
+    // Permissions
+    const perms = s.permissions || {};
+    const permMap = { 'perm-view-orders':'viewOrders','perm-edit-orders':'editOrders','perm-manage-products':'manageProducts','perm-view-customers':'viewCustomers','perm-view-analytics':'viewAnalytics','perm-manage-prices':'managePrices','perm-manage-inventory':'manageInventory','perm-manage-returns':'manageReturns','perm-view-reservations':'viewReservations','perm-send-notifications':'sendNotifications' };
+    Object.entries(permMap).forEach(([cbId, key]) => {
+      const el = document.getElementById(cbId); if (el) el.checked = !!perms[key];
+    });
+  }
+  staffSwitchTab('personal');
+  document.getElementById('modal-staff').classList.add('open');
+}
+
+function closeStaffModal() { document.getElementById('modal-staff').classList.remove('open'); }
+
+function staffSwitchTab(tab) {
+  ['personal','documents','access'].forEach(t => {
+    document.getElementById(`staff-tab-${t}`).classList.toggle('active', t === tab);
+    document.getElementById(`staff-pane-${t}`).style.display = t === tab ? '' : 'none';
+  });
+}
+
+function staffTogglePermissions() {
+  staffUpdateAccessCards();
+  const isAdmin = document.getElementById('staff-access-admin').checked;
+  document.getElementById('staff-perms-panel').style.display = isAdmin ? 'none' : '';
+}
+
+function staffUpdateAccessCards() {
+  const isAdmin = document.getElementById('staff-access-admin').checked;
+  document.getElementById('staff-card-admin').style.cssText = isAdmin
+    ? 'border:2px solid var(--green);background:rgba(46,160,86,.07);border-radius:10px;padding:14px;text-align:center;transition:all .2s'
+    : 'border:2px solid var(--border);border-radius:10px;padding:14px;text-align:center;transition:all .2s';
+  document.getElementById('staff-card-staff').style.cssText = !isAdmin
+    ? 'border:2px solid var(--green);background:rgba(46,160,86,.07);border-radius:10px;padding:14px;text-align:center;transition:all .2s'
+    : 'border:2px solid var(--border);border-radius:10px;padding:14px;text-align:center;transition:all .2s';
+  // Icon colour
+  const adminIcon = document.querySelector('#staff-card-admin i');
+  const staffIcon = document.querySelector('#staff-card-staff i');
+  if (adminIcon) adminIcon.style.color = isAdmin ? 'var(--green)' : 'var(--muted)';
+  if (staffIcon) staffIcon.style.color = !isAdmin ? 'var(--green)' : 'var(--muted)';
+}
+
+/* ── Photo upload ── */
+async function staffUploadPhoto(file) {
+  if (!file) return;
+  try {
+    showToast('Uploading photo…','info');
+    const url = await uploadToCloudinary(file);
+    document.getElementById('staff-photo-url').value = url;
+    document.getElementById('staff-photo-preview').innerHTML = `<img src="${esc(url)}" style="width:100%;height:100%;object-fit:cover">`;
+    showToast('Photo uploaded!','success');
+  } catch (err) { showToast('Photo upload failed: ' + err.message, 'error'); }
+}
+
+/* ── Document upload ── */
+async function staffUploadDoc(docType, file) {
+  if (!file) return;
+  try {
+    showToast('Uploading document…','info');
+    const url = await uploadToCloudinary(file);
+    document.getElementById(`staff-${docType}-url`).value = url;
+    const labels = { eid:'Emirates ID', passport:'Passport', visa:'Visa' };
+    document.getElementById(`staff-${docType}-status`).textContent = (labels[docType]||docType) + ' uploaded ✓';
+    const view = document.getElementById(`staff-${docType}-view`);
+    view.href = url; view.style.display = '';
+    showToast('Document uploaded!','success');
+  } catch (err) { showToast('Upload failed: ' + err.message, 'error'); }
+}
+
+/* ── Save staff ── */
+async function saveStaff() {
+  const name = document.getElementById('staff-name').value.trim();
+  const empId = document.getElementById('staff-emp-id').value.trim();
+  const designation = document.getElementById('staff-designation').value;
+  if (!name)        { showToast('Staff name is required.','error'); staffSwitchTab('personal'); return; }
+  if (!empId)       { showToast('Employee ID is required.','error'); staffSwitchTab('personal'); return; }
+  if (!designation) { showToast('Designation is required.','error'); staffSwitchTab('personal'); return; }
+  const btn = setBtnLoading('btn-save-staff');
+  try {
+    const accessLevel = document.getElementById('staff-access-admin').checked ? 'admin' : 'staff';
+    const permMap = { 'perm-view-orders':'viewOrders','perm-edit-orders':'editOrders','perm-manage-products':'manageProducts','perm-view-customers':'viewCustomers','perm-view-analytics':'viewAnalytics','perm-manage-prices':'managePrices','perm-manage-inventory':'manageInventory','perm-manage-returns':'manageReturns','perm-view-reservations':'viewReservations','perm-send-notifications':'sendNotifications' };
+    const permissions = {};
+    Object.entries(permMap).forEach(([cbId, key]) => { const el = document.getElementById(cbId); if (el?.checked) permissions[key] = true; });
+    const payload = {
+      name,
+      employeeId:       empId,
+      mobile:           document.getElementById('staff-mobile').value.trim() || null,
+      email:            document.getElementById('staff-email').value.trim() || null,
+      address:          document.getElementById('staff-address').value.trim() || null,
+      emergencyContact: document.getElementById('staff-emergency').value.trim() || null,
+      designation,
+      joiningDate:      document.getElementById('staff-joining-date').value || null,
+      photoUrl:         document.getElementById('staff-photo-url').value || null,
+      emiratesIdUrl:    document.getElementById('staff-eid-url').value || null,
+      passportUrl:      document.getElementById('staff-passport-url').value || null,
+      visaUrl:          document.getElementById('staff-visa-url').value || null,
+      accessLevel,
+      permissions:      Object.keys(permissions).length ? permissions : null,
+      status:           document.getElementById('staff-status').value,
+      updatedAt:        Date.now(),
+    };
+    const editId = document.getElementById('staff-edit-id').value;
+    if (editId) {
+      await db.ref(`staff/${editId}`).update(payload);
+      auditLog('EDIT', `Updated staff: ${name}`, { detail: `${designation} · ${accessLevel}`, category:'Staff' });
+      showToast('Staff updated!','success');
+    } else {
+      payload.createdAt = Date.now();
+      const ref = await db.ref('staff').push(payload);
+      auditLog('ADD', `Added staff: ${name}`, { detail: `${designation} · ${accessLevel}`, staffId: ref.key, category:'Staff' });
+      showToast('Staff member added!','success');
+    }
+    closeStaffModal();
+  } catch (err) {
+    showToast('Save failed: ' + err.message,'error');
+  } finally {
+    resetBtn(document.getElementById('btn-save-staff'), '<i class="fa-solid fa-floppy-disk"></i> Save');
+  }
+}
+
+/* ── Delete staff ── */
+function deleteStaff(id, name) {
+  if (!confirm(`Delete staff member "${name}"? This cannot be undone.`)) return;
+  db.ref(`staff/${id}`).remove()
+    .then(() => { auditLog('DELETE', `Deleted staff: ${name}`, { staffId:id, category:'Staff' }); showToast('Staff deleted.','success'); })
+    .catch(err => showToast('Delete failed: ' + err.message,'error'));
+}
+
+/* ════════════════════════════════════════════════════════════
    BULK CSV IMPORT
 ════════════════════════════════════════════════════════════ */
 let _csvRows = [];
@@ -12134,6 +12454,176 @@ function closeRmaModal() { document.getElementById('rma-modal').style.display='n
     </div>
 
   <!-- ── What's New Changelog Popup ──────────────────────────────────────── -->
+  <!-- ── Staff Modal ── -->
+  <div id="modal-staff" class="modal-backdrop">
+    <div class="modal-sheet" style="max-width:580px;width:100%">
+      <div class="modal-header">
+        <div class="modal-hicon"><i class="fa-solid fa-id-card"></i></div>
+        <div class="modal-title" id="staff-modal-title">Add Staff Member</div>
+        <button class="modal-close" onclick="closeStaffModal()">&times;</button>
+      </div>
+      <!-- Tab bar -->
+      <div style="display:flex;border-bottom:1px solid var(--border);padding:0 20px">
+        <button class="staff-tab active" id="staff-tab-personal"  onclick="staffSwitchTab('personal')">Personal</button>
+        <button class="staff-tab"        id="staff-tab-documents" onclick="staffSwitchTab('documents')">Documents</button>
+        <button class="staff-tab"        id="staff-tab-access"    onclick="staffSwitchTab('access')">Access</button>
+      </div>
+      <div style="padding:20px;overflow-y:auto;max-height:65vh">
+        <input type="hidden" id="staff-edit-id">
+
+        <!-- ── Personal Details ── -->
+        <div id="staff-pane-personal">
+          <!-- Photo -->
+          <div class="mf-group" style="display:flex;align-items:center;gap:16px">
+            <div id="staff-photo-preview" style="width:72px;height:72px;border-radius:50%;background:var(--sidebar-bg);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;border:2px solid var(--border)">
+              <i class="fa-solid fa-user" style="font-size:28px;color:var(--muted)"></i>
+            </div>
+            <div>
+              <label class="mf-label">Photo</label>
+              <input type="file" id="staff-photo-file" accept="image/*" style="display:none" onchange="staffUploadPhoto(this.files[0])">
+              <button class="btn-secondary btn-sm" onclick="document.getElementById('staff-photo-file').click()"><i class="fa-solid fa-camera"></i> Upload Photo</button>
+              <input type="hidden" id="staff-photo-url">
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
+            <div class="mf-group">
+              <label class="mf-label">Staff Name *</label>
+              <input type="text" id="staff-name" class="mf-input" placeholder="Full name">
+            </div>
+            <div class="mf-group">
+              <label class="mf-label">Employee ID *</label>
+              <input type="text" id="staff-emp-id" class="mf-input" placeholder="e.g. EMP-001">
+            </div>
+            <div class="mf-group">
+              <label class="mf-label">Mobile Number</label>
+              <input type="tel" id="staff-mobile" class="mf-input" placeholder="+971 50 000 0000">
+            </div>
+            <div class="mf-group">
+              <label class="mf-label">Email</label>
+              <input type="email" id="staff-email" class="mf-input" placeholder="staff@alfonex.com">
+            </div>
+            <div class="mf-group">
+              <label class="mf-label">Designation *</label>
+              <select id="staff-designation" class="mf-select">
+                <option value="">— Select —</option>
+                <option value="Sales">Sales</option>
+                <option value="Admin">Admin</option>
+                <option value="Technician">Technician</option>
+                <option value="Delivery">Delivery</option>
+                <option value="Manager">Manager</option>
+                <option value="Accountant">Accountant</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="mf-group">
+              <label class="mf-label">Joining Date</label>
+              <input type="date" id="staff-joining-date" class="mf-input">
+            </div>
+          </div>
+          <div class="mf-group">
+            <label class="mf-label">Address</label>
+            <textarea id="staff-address" class="mf-textarea" rows="2" placeholder="Residential address"></textarea>
+          </div>
+          <div class="mf-group">
+            <label class="mf-label">Emergency Contact</label>
+            <input type="text" id="staff-emergency" class="mf-input" placeholder="Name — +971 50 000 0000">
+          </div>
+          <div class="mf-group">
+            <label class="mf-label">Status</label>
+            <select id="staff-status" class="mf-select">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- ── Documents ── -->
+        <div id="staff-pane-documents" style="display:none">
+          <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Upload official documents. Files are stored securely on Cloudinary.</p>
+          <!-- Emirates ID -->
+          <div class="mf-group">
+            <label class="mf-label">Emirates ID</label>
+            <div style="display:flex;align-items:center;gap:10px">
+              <input type="file" id="staff-eid-file" accept="image/*,.pdf" style="display:none" onchange="staffUploadDoc('eid',this.files[0])">
+              <button class="btn-secondary btn-sm" onclick="document.getElementById('staff-eid-file').click()"><i class="fa-solid fa-cloud-arrow-up"></i> Upload</button>
+              <span id="staff-eid-status" style="font-size:12px;color:var(--muted)">No file</span>
+              <a id="staff-eid-view" href="#" target="_blank" style="display:none;font-size:12px;color:var(--primary)"><i class="fa-solid fa-eye"></i> View</a>
+              <input type="hidden" id="staff-eid-url">
+            </div>
+          </div>
+          <!-- Passport -->
+          <div class="mf-group">
+            <label class="mf-label">Passport Copy</label>
+            <div style="display:flex;align-items:center;gap:10px">
+              <input type="file" id="staff-passport-file" accept="image/*,.pdf" style="display:none" onchange="staffUploadDoc('passport',this.files[0])">
+              <button class="btn-secondary btn-sm" onclick="document.getElementById('staff-passport-file').click()"><i class="fa-solid fa-cloud-arrow-up"></i> Upload</button>
+              <span id="staff-passport-status" style="font-size:12px;color:var(--muted)">No file</span>
+              <a id="staff-passport-view" href="#" target="_blank" style="display:none;font-size:12px;color:var(--primary)"><i class="fa-solid fa-eye"></i> View</a>
+              <input type="hidden" id="staff-passport-url">
+            </div>
+          </div>
+          <!-- Visa -->
+          <div class="mf-group">
+            <label class="mf-label">Visa Copy</label>
+            <div style="display:flex;align-items:center;gap:10px">
+              <input type="file" id="staff-visa-file" accept="image/*,.pdf" style="display:none" onchange="staffUploadDoc('visa',this.files[0])">
+              <button class="btn-secondary btn-sm" onclick="document.getElementById('staff-visa-file').click()"><i class="fa-solid fa-cloud-arrow-up"></i> Upload</button>
+              <span id="staff-visa-status" style="font-size:12px;color:var(--muted)">No file</span>
+              <a id="staff-visa-view" href="#" target="_blank" style="display:none;font-size:12px;color:var(--primary)"><i class="fa-solid fa-eye"></i> View</a>
+              <input type="hidden" id="staff-visa-url">
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Access Control ── -->
+        <div id="staff-pane-access" style="display:none">
+          <div class="mf-group">
+            <label class="mf-label">Access Level</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <label style="cursor:pointer">
+                <input type="radio" name="staff-access-level" value="admin" id="staff-access-admin" style="display:none" onchange="staffTogglePermissions()">
+                <div class="staff-access-card" id="staff-card-admin" style="border:2px solid var(--border);border-radius:10px;padding:14px;text-align:center;transition:all .2s">
+                  <i class="fa-solid fa-user-shield" style="font-size:22px;color:var(--muted);margin-bottom:6px;display:block"></i>
+                  <div style="font-size:13px;font-weight:700;color:var(--text)">Admin Access</div>
+                  <div style="font-size:11px;color:var(--muted);margin-top:3px">Full panel access</div>
+                </div>
+              </label>
+              <label style="cursor:pointer">
+                <input type="radio" name="staff-access-level" value="staff" id="staff-access-staff" style="display:none" onchange="staffTogglePermissions()" checked>
+                <div class="staff-access-card" id="staff-card-staff" style="border:2px solid var(--green);background:rgba(46,160,86,.07);border-radius:10px;padding:14px;text-align:center;transition:all .2s">
+                  <i class="fa-solid fa-user" style="font-size:22px;color:var(--green);margin-bottom:6px;display:block"></i>
+                  <div style="font-size:13px;font-weight:700;color:var(--text)">Staff Access</div>
+                  <div style="font-size:11px;color:var(--muted);margin-top:3px">Limited permissions</div>
+                </div>
+              </label>
+            </div>
+          </div>
+          <!-- Permissions (visible when Staff is selected) -->
+          <div id="staff-perms-panel" class="mf-group">
+            <label class="mf-label">Permission Management</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <label class="staff-perm-row"><input type="checkbox" id="perm-view-orders" class="staff-perm"> View Orders</label>
+              <label class="staff-perm-row"><input type="checkbox" id="perm-edit-orders" class="staff-perm"> Edit Orders</label>
+              <label class="staff-perm-row"><input type="checkbox" id="perm-manage-products" class="staff-perm"> Manage Products</label>
+              <label class="staff-perm-row"><input type="checkbox" id="perm-view-customers" class="staff-perm"> View Customers</label>
+              <label class="staff-perm-row"><input type="checkbox" id="perm-view-analytics" class="staff-perm"> View Analytics</label>
+              <label class="staff-perm-row"><input type="checkbox" id="perm-manage-prices" class="staff-perm"> Manage Prices</label>
+              <label class="staff-perm-row"><input type="checkbox" id="perm-manage-inventory" class="staff-perm"> Manage Inventory</label>
+              <label class="staff-perm-row"><input type="checkbox" id="perm-manage-returns" class="staff-perm"> Manage Returns</label>
+              <label class="staff-perm-row"><input type="checkbox" id="perm-view-reservations" class="staff-perm"> View Reservations</label>
+              <label class="staff-perm-row"><input type="checkbox" id="perm-send-notifications" class="staff-perm"> Send Notifications</label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Footer -->
+      <div class="modal-footer">
+        <button class="btn-ghost" onclick="closeStaffModal()">Cancel</button>
+        <button class="btn-primary" id="btn-save-staff" onclick="saveStaff()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ── Bulk CSV Import Modal ── -->
   <div id="modal-csv-import" class="modal-backdrop">
     <div class="modal-sheet" style="max-width:680px;width:100%">
