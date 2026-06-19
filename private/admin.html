@@ -8792,6 +8792,7 @@ function qaRender() {
         <span style="font-size:11px;background:var(--sidebar-bg);color:var(--muted);padding:2px 8px;border-radius:20px;flex-shrink:0">${pTitle}</span>
         ${item.answer ? '<span style="font-size:11px;background:#d1fae5;color:#059669;padding:2px 8px;border-radius:20px">Answered</span>' : '<span style="font-size:11px;background:#fef9c3;color:#ca8a04;padding:2px 8px;border-radius:20px">Pending</span>'}
         <span style="font-size:11px;color:var(--muted);margin-left:auto">${fmtDate(item.askedAt)} · ${esc(item.askedByName||'Customer')}</span>
+        <button onclick="qaDelete('${item.productId}','${item.id}')" title="Delete question" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:2px 6px;border-radius:6px;font-size:13px;line-height:1;transition:background .15s" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='none'"><i class="fa-solid fa-trash"></i></button>
       </div>
       <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:10px">
         <span style="width:22px;height:22px;border-radius:50%;background:#dbeafe;color:#1d4ed8;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">Q</span>
@@ -8826,6 +8827,23 @@ async function qaSubmitAnswer(productId, questionId) {
     document.getElementById('qa-tc-pending').textContent = pending;
   } catch (err) {
     showToast('Failed to save answer: ' + err.message, 'error');
+  }
+}
+
+async function qaDelete(productId, questionId) {
+  if (!confirm('Delete this question and its answer? This cannot be undone.')) return;
+  try {
+    await db.ref(`product_qa/${productId}/${questionId}`).remove();
+    _qaAll = _qaAll.filter(q => !(q.productId === productId && q.id === questionId));
+    const pending = _qaAll.filter(q => !q.answer).length;
+    const badge = document.getElementById('sb-qa-count');
+    if (badge) { badge.textContent = pending; badge.style.display = pending ? '' : 'none'; }
+    const tcEl = document.getElementById('qa-tc-pending');
+    if (tcEl) tcEl.textContent = pending;
+    qaRender();
+    showToast('Question deleted.', 'success');
+  } catch (err) {
+    showToast('Delete failed: ' + err.message, 'error');
   }
 }
 
