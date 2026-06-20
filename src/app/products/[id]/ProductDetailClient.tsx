@@ -253,6 +253,20 @@ export default function ProductDetailClient({ product, similar, reviews, initial
   useEffect(() => {
     saveRecentlyViewed(product.id);
   }, [product.id]);
+
+  // Save attribution (ref/pos/query) so checkout can attach it to the order
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const p = new URLSearchParams(window.location.search);
+    const ref_ = p.get('ref');
+    const q    = p.get('q');
+    const pos  = p.get('pos');
+    if (!ref_) return;
+    const attr: Record<string, string | number> = { ref: ref_, ts: Date.now() };
+    if (q)   attr.query = q;
+    if (pos) attr.pos   = Number(pos);
+    try { localStorage.setItem(`attr_${product.id}`, JSON.stringify(attr)); } catch { /* ignore */ }
+  }, [product.id]);
   // Toggle between the 2D product image and the interactive 3D viewer
   const [view3d, setView3d] = useState(false);
 
