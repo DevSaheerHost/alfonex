@@ -29,6 +29,7 @@ export async function placeOrder(
   cart: CartItem[],
   currency: Currency,
   discountPoints = 0,
+  attribution?: Record<string, { ref: string; query?: string; pos?: number }>,
 ): Promise<{ orderId: string }> {
   const user = await verifySession();
 
@@ -102,6 +103,7 @@ export async function placeOrder(
     createdAt:     now,
     updatedAt:     now,
     createdBy:     user.uid,
+    ...(attribution && Object.keys(attribution).length > 0 && { attribution }),
   });
 
   // Decrement stock + increment purchase count for each line item

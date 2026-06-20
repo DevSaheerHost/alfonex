@@ -123,6 +123,7 @@ export interface Order {
   trackingNo: string;
   createdAt: string;
   updatedAt: string;
+  attribution?: Record<string, { ref: string; query?: string; pos?: number }>;
   packed_at?: string;
   dispatched_at?: string;
   shipped_at?: string;

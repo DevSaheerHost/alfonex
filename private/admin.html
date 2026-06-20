@@ -5797,7 +5797,41 @@ function renderOrderDetailBody(orderId){
     ${o.notes?`<div class="detail-section">
       <div class="detail-section-title"><i class="fa-solid fa-note-sticky"></i> Notes</div>
       <div style="background:var(--bg);border-radius:var(--radius-sm);padding:12px 14px;font-size:13px;color:var(--text-soft);line-height:1.6">${esc(o.notes)}</div>
-    </div>`:''}`;
+    </div>`:''}
+
+    ${o.attribution ? (() => {
+      const REF_LABELS = {
+        search:        { icon:'🔍', label:'Search' },
+        home_featured: { icon:'⭐', label:'Home – Featured' },
+        home_new:      { icon:'🆕', label:'Home – New Arrivals' },
+        home_sale:     { icon:'🏷️', label:'Home – On Sale' },
+        home_all:      { icon:'🏠', label:'Home – All Products' },
+        home_reco:     { icon:'🎯', label:'Home – Picked for You' },
+        similar:       { icon:'🔗', label:'Similar Products' },
+        banner:        { icon:'🎨', label:'Banner' },
+        wishlist:      { icon:'❤️', label:'Wishlist' },
+        compare:       { icon:'⚖️', label:'Compare Page' },
+      };
+      const rows = Object.entries(o.attribution).map(([pid, a]) => {
+        const prod = (APP.products||{})[pid];
+        const pName = prod?.title || (o.items||[]).find(i=>i.productId===pid)?.title || pid.slice(0,12)+'…';
+        const info = REF_LABELS[a.ref] || { icon:'📍', label: a.ref };
+        const parts = [`${info.icon} <strong>${info.label}</strong>`];
+        if (a.query) parts.push(`for "<em>${esc(a.query)}</em>"`);
+        if (a.pos !== undefined) parts.push(`· position ${a.pos + 1}`);
+        return `<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;${Object.keys(o.attribution).length>1?'border-bottom:1px solid var(--border)':''}">
+          <i class="fa-solid fa-route" style="color:var(--green);margin-top:2px;font-size:11px;flex-shrink:0"></i>
+          <div style="min-width:0">
+            <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:2px">${esc(pName)}</div>
+            <div style="font-size:11px;color:var(--muted)">${parts.join(' ')}</div>
+          </div>
+        </div>`;
+      }).join('');
+      return `<div class="detail-section">
+        <div class="detail-section-title"><i class="fa-solid fa-route"></i> How Customer Found This</div>
+        <div style="background:var(--bg);border-radius:var(--radius-sm);padding:4px 12px">${rows}</div>
+      </div>`;
+    })() : ''}`;
 
   /* Advance button */
   const nextIdx=sIdx+1;
@@ -11123,11 +11157,14 @@ function renderSearchAnalytics() {
     feedEl.innerHTML = feedEntries.slice(0,100).map(e => {
       const d = e.timestamp ? new Date(e.timestamp).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '—';
       const user = e.uid ? `<span title="${esc(e.uid)}" style="font-size:9px;background:var(--green-light);color:var(--green);padding:1px 5px;border-radius:10px;font-weight:700">user</span>` : '<span style="font-size:9px;background:var(--surface2);color:var(--muted);padding:1px 5px;border-radius:10px">guest</span>';
+      const REF_ICONS = { search:'🔍', home_featured:'⭐', home_new:'🆕', home_sale:'🏷️', home_all:'🏠', home_reco:'🎯', similar:'🔗', banner:'🎨', wishlist:'❤️', compare:'⚖️' };
+      const refTag = e.ref ? `<span style="font-size:9px;background:var(--surface2);color:var(--muted);padding:1px 5px;border-radius:10px">${REF_ICONS[e.ref]||'📍'} ${esc(e.ref)}${e.pos!=null?' ·pos '+e.pos:''}</span>` : '';
       return `<div class="sa-feed-entry">
         <div style="min-width:0;flex:1">
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;flex-wrap:wrap">
             <span class="sa-feed-query">"${esc(e.query||'')}"</span>
             ${user}
+            ${refTag}
           </div>
           <div class="sa-feed-product">→ ${esc(e.productTitle||e.productId||'—')}</div>
         </div>
@@ -11140,10 +11177,12 @@ function renderSearchAnalytics() {
 async function exportSearchAnalytics() {
   const entries = _saFilteredEntries().sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
   if (!entries.length) { showToast('No data to export.','error'); return; }
-  const rows = [['Timestamp','Query','Product Title','Product ID','User ID']];
+  const rows = [['Timestamp','Query','Source (ref)','Position','Product Title','Product ID','User ID']];
   entries.forEach(e => rows.push([
     e.timestamp ? new Date(e.timestamp).toISOString() : '',
     e.query || '',
+    e.ref || '',
+    e.pos != null ? String(e.pos) : '',
     e.productTitle || '',
     e.productId || '',
     e.uid || 'guest'

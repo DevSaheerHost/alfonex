@@ -149,9 +149,25 @@ export default function CheckoutPage() {
 
     startTransition(async () => {
       try {
-        const { orderId } = await placeOrder(form, items, currency, redeemPoints);
+        // Collect attribution data per product from localStorage
+        const attribution: Record<string, { ref: string; query?: string; pos?: number }> = {};
+        const ATTR_TTL = 24 * 60 * 60 * 1000; // 24 hours
+        for (const item of items) {
+          try {
+            const raw = localStorage.getItem(`attr_${item.productId}`);
+            if (!raw) continue;
+            const a = JSON.parse(raw) as { ref: string; query?: string; pos?: number; ts?: number };
+            if (a.ts && Date.now() - a.ts > ATTR_TTL) { localStorage.removeItem(`attr_${item.productId}`); continue; }
+            attribution[item.productId] = { ref: a.ref, ...(a.query && { query: a.query }), ...(a.pos !== undefined && { pos: a.pos }) };
+          } catch { /* ignore corrupt entries */ }
+        }
+        const { orderId } = await placeOrder(form, items, currency, redeemPoints, Object.keys(attribution).length ? attribution : undefined);
         if (discountCode) {
           redeemDiscountCode(discountCode).catch(() => {});
+        }
+        // Clear attribution entries for purchased items
+        for (const item of items) {
+          try { localStorage.removeItem(`attr_${item.productId}`); } catch { /* ignore */ }
         }
         clearCart();
         router.push(`/orders/${orderId}?placed=1`);
