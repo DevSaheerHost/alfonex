@@ -4269,7 +4269,7 @@ function showSection(name, fromPopstate = false){
     if (name==='bulk-pricelist') { bpInit(); }
     if (name==='audit')         { renderAuditLog(); }
     if (name==='warranty')      { renderWarrantyTable(); }
-    if (name==='customers')     { renderCustomerTable(); }
+    if (name==='customers')     { attachOfflineOrdersListener(); renderCustomerTable(); }
     if (name==='international') { attachWarehouseListener(); attachDealerListener(); convertCurrency(); renderIntlStats(); }
     if (name==='warehouse')     { attachWarehouseListener(); }
     if (name==='dealers')       { attachDealerListener(); }
@@ -6732,6 +6732,39 @@ function buildCustomerList() {
     });
   });
 
+  /* Merge offline orders (walk-in / in-store sales) */
+  Object.entries(APP.offlineOrders || {}).forEach(([oid, o]) => {
+    const phone = (o.customerPhone || '').replace(/\D/g, '');
+    const name  = o.customerName || 'Unknown';
+    const key   = phone || name.toLowerCase().trim() || oid;
+
+    if (!map[key]) {
+      map[key] = {
+        key, manualId: null,
+        name, phone,
+        email: '', country: '', notes: '',
+        userId: '', currency: o.currency || 'AED',
+        orders: 0, completed: 0, pending: 0, cancelled: 0, revenue: 0,
+        lastTs: 0, firstTs: Infinity, orderIds: [], productCounts: {},
+        offlineOnly: true,
+      };
+    }
+    const c = map[key];
+    c.offlineOnly = c.offlineOnly && !c.userId;
+    c.hasOfflineOrders = true;
+    c.orders++;
+    c.orderIds.push('offline:' + oid);
+    if (o.status === 'Delivered') { c.completed++; c.revenue += Number(o.total || 0); }
+    else if (o.status === 'Pending') c.pending++;
+    else c.revenue += Number(o.total || 0);
+    if ((o.createdAt || 0) > c.lastTs) { c.lastTs = o.createdAt || 0; c.currency = o.currency || c.currency; }
+    if ((o.createdAt || Infinity) < c.firstTs) c.firstTs = o.createdAt || Infinity;
+    (o.items || []).forEach(item => {
+      const t = item.title || item.name || 'Item';
+      c.productCounts[t] = (c.productCounts[t] || 0) + (item.qty || 1);
+    });
+  });
+
   Object.values(map).forEach(c => {
     const entries = Object.entries(c.productCounts);
     if (entries.length) c.topProduct = entries.sort((a,b) => b[1]-a[1])[0][0];
@@ -6800,8 +6833,9 @@ function renderCustomerTable(filter) {
     const initials = c.name.split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase() || '?';
     const online   = isClientOnline(c.userId);
     const presPage = online && _clientPresence[c.userId]?.page ? _clientPresence[c.userId].page : null;
-    const isRepeat = c.orders >= 2;
-    const isTop    = idx === 0 && sort === 'spent';
+    const isRepeat  = c.orders >= 2;
+    const isTop     = idx === 0 && sort === 'spent';
+    const isOffline = c.hasOfflineOrders && !c.userId;
 
     /* Progress bar for completed vs total */
     const completePct = c.orders > 0 ? Math.round((c.completed / c.orders) * 100) : 0;
@@ -6837,6 +6871,7 @@ function renderCustomerTable(filter) {
             ${online ? `<span style="background:#dcfce7;color:#16a34a;font-size:9px;font-weight:800;padding:2px 7px;border-radius:20px;animation:presencePulse 2s infinite">🟢 ONLINE</span>` : ''}
             ${isRepeat ? `<span style="background:var(--green-light);color:var(--green);font-size:9px;font-weight:800;padding:2px 7px;border-radius:20px">🔁 REPEAT</span>` : ''}
             ${isTop ? `<span style="background:#fef3c7;color:#d97706;font-size:9px;font-weight:800;padding:2px 7px;border-radius:20px">⭐ TOP</span>` : ''}
+            ${isOffline ? `<span style="background:#ede9fe;color:#7c3aed;font-size:9px;font-weight:800;padding:2px 7px;border-radius:20px">🏪 WALK-IN</span>` : ''}
           </div>
           <div style="font-size:11px;color:var(--muted);margin-bottom:6px">
             ${c.phone ? `<i class="fa-solid fa-phone" style="width:12px"></i> ${esc(c.phone)}` : ''}
@@ -12315,6 +12350,7 @@ function attachOfflineOrdersListener() {
     APP.offlineOrders = snap.val() || {};
     renderOfflineOrdersTable();
     _ooUpdateBadge();
+    if (document.getElementById('section-customers')?.classList.contains('active')) renderCustomerTable();
   });
 }
 
