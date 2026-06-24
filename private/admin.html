@@ -7907,17 +7907,21 @@ function bpAddRow() {
   const div = document.createElement('div');
   div.className = 'bp-row';
   div.id = `bp-row-${idx}`;
-  div.style.cssText = 'display:grid;grid-template-columns:1fr 64px 100px 90px 80px 28px 28px;gap:6px;align-items:center;margin-bottom:8px';
+  div.style.cssText = 'display:grid;grid-template-columns:1fr 64px 100px 90px 80px 28px 28px;gap:6px;align-items:start;margin-bottom:10px';
   div.innerHTML = `
-    <select class="mf-input bp-product" style="font-size:12px;padding:6px 8px" onchange="bpProductChange(${idx})">
-      ${opts}
-    </select>
-    <input type="number" class="mf-input bp-qty" min="1" value="1" style="text-align:center;font-size:12px;padding:6px 4px" oninput="bpRecalc()">
-    <input type="number" class="mf-input bp-price" min="0" step="0.01" value="0" style="text-align:right;font-size:12px;padding:6px 8px" oninput="bpRecalc()">
-    <input type="number" class="mf-input bp-extra" min="0" step="0.01" value="0" placeholder="0" style="text-align:right;font-size:12px;padding:6px 8px" oninput="bpRecalc()">
-    <span class="bp-linetotal" style="font-size:12px;font-weight:800;text-align:right;color:var(--green);white-space:nowrap">—</span>
-    <button onclick="bpShareSingleRow(${idx})" style="background:none;border:none;color:#25D366;cursor:pointer;padding:2px;font-size:15px" title="Share this product on WhatsApp"><i class="fa-brands fa-whatsapp"></i></button>
-    <button onclick="bpRemoveRow(${idx})" style="background:none;border:none;color:var(--muted);cursor:pointer;padding:2px;font-size:14px" title="Remove"><i class="fa-solid fa-xmark"></i></button>`;
+    <div>
+      <select class="mf-input bp-product" style="font-size:12px;padding:6px 8px;margin-bottom:4px" onchange="bpProductChange(${idx})">
+        ${opts}
+      </select>
+      <input class="mf-input bp-variant" style="font-size:11px;padding:4px 8px;color:var(--muted)" placeholder="Variant: e.g. 256GB · Black Titanium" oninput="bpRecalc()">
+      <div class="bp-grade-badge" style="display:none;margin-top:3px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:inline-block"></div>
+    </div>
+    <input type="number" class="mf-input bp-qty" min="1" value="1" style="text-align:center;font-size:12px;padding:6px 4px;margin-top:2px" oninput="bpRecalc()">
+    <input type="number" class="mf-input bp-price" min="0" step="0.01" value="0" style="text-align:right;font-size:12px;padding:6px 8px;margin-top:2px" oninput="bpRecalc()">
+    <input type="number" class="mf-input bp-extra" min="0" step="0.01" value="0" placeholder="0" style="text-align:right;font-size:12px;padding:6px 8px;margin-top:2px" oninput="bpRecalc()">
+    <span class="bp-linetotal" style="font-size:12px;font-weight:800;text-align:right;color:var(--green);white-space:nowrap;padding-top:8px;display:block">—</span>
+    <button onclick="bpShareSingleRow(${idx})" style="background:none;border:none;color:#25D366;cursor:pointer;padding:2px;font-size:15px;margin-top:4px" title="Share this product on WhatsApp"><i class="fa-brands fa-whatsapp"></i></button>
+    <button onclick="bpRemoveRow(${idx})" style="background:none;border:none;color:var(--muted);cursor:pointer;padding:2px;font-size:14px;margin-top:4px" title="Remove"><i class="fa-solid fa-xmark"></i></button>`;
   rows.appendChild(div);
 }
 
@@ -7937,6 +7941,33 @@ function bpProductChange(idx) {
               : cur === 'INR' ? (p.priceINR || p.price || 0)
               : (p.priceAED   || p.price    || 0);
   row.querySelector('.bp-price').value = Number(price).toFixed(2);
+
+  // Auto-build variant suggestion from product variant groups
+  const variantEl = row.querySelector('.bp-variant');
+  if (variantEl && !variantEl.value) {
+    const parts = [];
+    (p.variants || []).forEach(g => {
+      const labels = (g.values || []).map(v => v.label).filter(Boolean);
+      if (labels.length) parts.push(labels.join(' / '));
+    });
+    if (parts.length) variantEl.placeholder = `e.g. ${parts.join(' · ')}`;
+  }
+
+  // Show grade badge
+  const GRADE_MAP = { 'a1+': { label: 'Excellent', cls: 'background:#dcfce7;color:#16a34a' },
+                      'a2+': { label: 'Very Good', cls: 'background:#dbeafe;color:#1d4ed8' },
+                      'a3+': { label: 'Good',      cls: 'background:#fef9c3;color:#92400e' } };
+  const badge = row.querySelector('.bp-grade-badge');
+  if (badge) {
+    const g = GRADE_MAP[p.grade];
+    if (g) {
+      badge.textContent = '★ ' + g.label;
+      badge.style.cssText = `font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:inline-block;margin-top:3px;${g.cls}`;
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
   bpRecalc();
 }
 
@@ -7971,17 +8002,20 @@ function bpRecalc() {
 }
 
 function _bpGetRows() {
+  const GRADE_LABELS = { 'a1+': 'Excellent', 'a2+': 'Very Good', 'a3+': 'Good' };
   return Array.from(document.querySelectorAll('.bp-row')).map(row => {
-    const pid   = row.querySelector('.bp-product')?.value || '';
-    const p     = pid ? (APP.products || {})[pid] : null;
-    const cur   = document.getElementById('bp-currency')?.value || 'AED';
-    const sym   = { USD: '$', AED: 'AED ', INR: '₹' }[cur] || '';
-    const qty   = parseFloat(row.querySelector('.bp-qty')?.value   || 1) || 1;
-    const price = parseFloat(row.querySelector('.bp-price')?.value || 0) || 0;
-    const extra = parseFloat(row.querySelector('.bp-extra')?.value || 0) || 0;
+    const pid     = row.querySelector('.bp-product')?.value || '';
+    const p       = pid ? (APP.products || {})[pid] : null;
+    const cur     = document.getElementById('bp-currency')?.value || 'AED';
+    const sym     = { USD: '$', AED: 'AED ', INR: '₹' }[cur] || '';
+    const qty     = parseFloat(row.querySelector('.bp-qty')?.value   || 1) || 1;
+    const price   = parseFloat(row.querySelector('.bp-price')?.value || 0) || 0;
+    const extra   = parseFloat(row.querySelector('.bp-extra')?.value || 0) || 0;
+    const variant = row.querySelector('.bp-variant')?.value.trim() || '';
+    const grade   = p?.grade ? (GRADE_LABELS[p.grade] || '') : '';
     const effective = price + extra;
     const line  = qty * effective;
-    return { pid, title: p?.title || 'Custom Item', qty, price, extra, effective, line, sym };
+    return { pid, title: p?.title || 'Custom Item', variant, grade, qty, price, extra, effective, line, sym };
   }).filter(r => r.title && r.qty > 0);
 }
 
@@ -8097,7 +8131,7 @@ function bpGeneratePDF() {
   y += 2;
 
   // Table header
-  const cols = [10, 80, 15, 26, 26, 26, 26];  // widths
+  const cols = [8, 68, 12, 24, 23, 24, 23];  // widths — must sum to W - M*2 = 182
   const headers = ['#', 'Product', 'Qty', 'Unit Price', 'Bulk Extra', 'Eff. Price', 'Total'];
   const aligns  = ['center','left','center','right','right','right','right'];
   doc.setFillColor(240, 253, 244);
@@ -8120,15 +8154,17 @@ function bpGeneratePDF() {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   rows.forEach((r, i) => {
+    const rowH = r.variant || r.grade ? 10 : 7;
     if (y > 265) { doc.addPage(); y = 20; }
     if (i % 2 === 0) {
       doc.setFillColor(249, 250, 251);
-      doc.rect(M, y - 4, W - M * 2, 7, 'F');
+      doc.rect(M, y - 4, W - M * 2, rowH, 'F');
     }
     doc.setTextColor(30, 30, 30);
+    const productLabel = r.title.length > 38 ? r.title.slice(0, 36) + '…' : r.title;
     const vals = [
       String(i + 1),
-      r.title.length > 38 ? r.title.slice(0, 36) + '…' : r.title,
+      productLabel,
       String(r.qty),
       fmt(r.price),
       r.extra > 0 ? '+' + fmt(r.extra) : '—',
@@ -8144,16 +8180,27 @@ function bpGeneratePDF() {
       doc.text(v, cx, y, { align: aligns[vi] === 'center' ? 'center' : aligns[vi] === 'right' ? 'right' : 'left' });
       x += cols[vi];
     });
+    // Variant/grade sub-line under product name
+    const details = [r.variant, r.grade].filter(Boolean).join(' · ');
+    if (details) {
+      doc.setFontSize(7);
+      doc.setTextColor(120, 120, 120);
+      doc.setFont('helvetica', 'italic');
+      doc.text(details.length > 50 ? details.slice(0, 48) + '…' : details, M + cols[0] + 2, y + 4);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+    }
     doc.setDrawColor(229, 231, 235);
     doc.setLineWidth(0.2);
-    doc.line(M, y + 3, W - M, y + 3);
-    y += 7;
+    doc.line(M, y + rowH - 4, W - M, y + rowH - 4);
+    y += rowH;
   });
 
   // Grand total
   y += 4;
+  const totalPcs = rows.reduce((s, r) => s + r.qty, 0);
   doc.setFillColor(46, 160, 86);
-  doc.rect(M, y - 4, W - M * 2, 10, 'F');
+  doc.rect(M, y - 4, W - M * 2, 14, 'F');   // tall enough for 2 lines
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
@@ -8161,8 +8208,8 @@ function bpGeneratePDF() {
   doc.text(fmt(grand), W - M, y + 2, { align: 'right' });
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
-  doc.text(`${rows.reduce((s,r)=>s+r.qty,0)} pcs total`, M + 2, y + 7);
-  y += 16;
+  doc.text(`${totalPcs} pcs · ${rows.length} item${rows.length !== 1 ? 's' : ''}`, M + 2, y + 8);
+  y += 22;
 
   // Notes
   if (notes) {
@@ -8206,9 +8253,10 @@ function bpCopyWhatsApp() {
 
   // Product lines
   const lines = rows.map(r => {
-    const unitStr = fmtAmt(r.effective);   // effective = unit + bulk extra
+    const unitStr = fmtAmt(r.effective);
     const totStr  = fmtAmt(r.line);
-    return `• ${r.title} – ${unitStr}\n  ➡️ ${r.qty} PCS – ${totStr}`;
+    const details = [r.variant, r.grade].filter(Boolean).join(' · ');
+    return `• *${r.title}*${details ? `\n  _${details}_` : ''}\n  ➡️ ${r.qty} PCS × ${unitStr} = *${totStr}*`;
   }).join('\n\n');
 
   // Summary
@@ -8262,20 +8310,25 @@ function bpShareSingleRow(idx) {
   if (!row) return;
   const pid  = row.querySelector('.bp-product')?.value || '';
   const p    = pid ? (APP.products || {})[pid] : null;
-  const title = p?.title || 'Product';
-  const cur  = document.getElementById('bp-currency')?.value || 'AED';
-  const qty  = parseFloat(row.querySelector('.bp-qty')?.value   || 1) || 1;
-  const price = parseFloat(row.querySelector('.bp-price')?.value || 0) || 0;
-  const extra = parseFloat(row.querySelector('.bp-extra')?.value || 0) || 0;
+  const GRADE_LABELS = { 'a1+': 'Excellent', 'a2+': 'Very Good', 'a3+': 'Good' };
+  const title   = p?.title || 'Product';
+  const variant = row.querySelector('.bp-variant')?.value.trim() || '';
+  const grade   = p?.grade ? (GRADE_LABELS[p.grade] || '') : '';
+  const details = [variant, grade].filter(Boolean).join(' · ');
+  const cur     = document.getElementById('bp-currency')?.value || 'AED';
+  const qty     = parseFloat(row.querySelector('.bp-qty')?.value   || 1) || 1;
+  const price   = parseFloat(row.querySelector('.bp-price')?.value || 0) || 0;
+  const extra   = parseFloat(row.querySelector('.bp-extra')?.value || 0) || 0;
   const effective = price + extra;
   const line  = qty * effective;
   const fmtNum = n => Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 });
   const fmtAmt = n => cur === 'INR' ? `₹${fmtNum(n)}` : `${fmtNum(n)} ${cur}`;
   const msg = [
     `📱 *${title}*`,
+    ...(details ? [`_${details}_`] : []),
     '',
     `📦 Qty: ${qty} PCS`,
-    `💰 Unit Price: ${fmtAmt(effective)}${extra > 0 ? ` (incl. bulk discount)` : ''}`,
+    `💰 Unit Price: ${fmtAmt(effective)}${extra > 0 ? ` (incl. bulk extra)` : ''}`,
     `🧾 Total: *${fmtAmt(line)}*`,
     '',
     'Contact us for availability and latest pricing.',
@@ -8299,9 +8352,10 @@ function bpShareDealerQuote() {
   const fmtNum = n => Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 });
   const fmtAmt = n => cur === 'INR' ? `₹${fmtNum(n)}` : `${fmtNum(n)} ${cur}`;
 
-  const lines = rows.map((r, i) =>
-    `${i+1}. ${r.title}\n   ${r.qty} pcs × ${fmtAmt(r.effective)} = *${fmtAmt(r.line)}*`
-  ).join('\n');
+  const lines = rows.map((r, i) => {
+    const details = [r.variant, r.grade].filter(Boolean).join(' · ');
+    return `${i+1}. *${r.title}*${details ? `\n   _${details}_` : ''}\n   ${r.qty} pcs × ${fmtAmt(r.effective)} = *${fmtAmt(r.line)}*`;
+  }).join('\n');
 
   const msg = [
     `📋 *${title}*${client ? `\nPrepared for: ${client}` : ''}`,
@@ -8324,11 +8378,12 @@ function bpShareDealerQuote() {
 /* ── Pricelist: export / import JSON ─────────────────────────────────── */
 function bpExportJSON() {
   const rows = Array.from(document.querySelectorAll('.bp-row')).map(row => ({
-    pid:   row.querySelector('.bp-product')?.value || '',
-    title: row.querySelector('.bp-product option:checked')?.text || '',
-    qty:   parseFloat(row.querySelector('.bp-qty')?.value   || 1) || 1,
-    price: parseFloat(row.querySelector('.bp-price')?.value || 0) || 0,
-    extra: parseFloat(row.querySelector('.bp-extra')?.value || 0) || 0,
+    pid:     row.querySelector('.bp-product')?.value || '',
+    title:   row.querySelector('.bp-product option:checked')?.text || '',
+    variant: row.querySelector('.bp-variant')?.value.trim() || '',
+    qty:     parseFloat(row.querySelector('.bp-qty')?.value   || 1) || 1,
+    price:   parseFloat(row.querySelector('.bp-price')?.value || 0) || 0,
+    extra:   parseFloat(row.querySelector('.bp-extra')?.value || 0) || 0,
   }));
   const data = {
     title:     document.getElementById('bp-title')?.value.trim()  || '',
@@ -8371,6 +8426,7 @@ function bpImportJSON(input) {
         if (!sel.value && r.title) {
           Array.from(sel.options).forEach(o => { if (o.text === r.title) o.selected = true; });
         }
+        if (r.variant) newRow.querySelector('.bp-variant').value = r.variant;
         newRow.querySelector('.bp-qty').value   = r.qty;
         newRow.querySelector('.bp-price').value = r.price;
         newRow.querySelector('.bp-extra').value = r.extra;
