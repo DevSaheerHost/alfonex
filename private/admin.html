@@ -8094,7 +8094,7 @@ function bpGeneratePDF() {
   const valid  = document.getElementById('bp-valid')?.value || '';
   const today  = new Date().toISOString().slice(0, 10);
   const grand  = rows.reduce((s, r) => s + r.line, 0);
-  const W = 210; const M = 14;
+  const W = 210; const M = 14; const MR = 18;
 
   // Header bar
   doc.setFillColor(46, 160, 86);
@@ -8108,10 +8108,10 @@ function bpGeneratePDF() {
   doc.text('Premium Apple Devices', M, 19.5);
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
-  doc.text(listTitle.toUpperCase().slice(0, 42), W - M, 13, { align: 'right' });
+  doc.text(listTitle.toUpperCase().slice(0, 42), W - MR, 13, { align: 'right' });
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
-  doc.text('Date: ' + today, W - M, 19.5, { align: 'right' });
+  doc.text('Date: ' + today, W - MR, 19.5, { align: 'right' });
 
   let y = 30;
   // Sub-header info
@@ -8131,11 +8131,11 @@ function bpGeneratePDF() {
   y += 2;
 
   // Table header
-  const cols = [8, 68, 12, 24, 23, 24, 23];  // widths — must sum to W - M*2 = 182
+  const cols = [8, 64, 12, 23, 22, 24, 25];  // widths — must sum to W - M - MR = 178
   const headers = ['#', 'Product', 'Qty', 'Unit Price', 'Bulk Extra', 'Eff. Price', 'Total'];
   const aligns  = ['center','left','center','right','right','right','right'];
   doc.setFillColor(240, 253, 244);
-  doc.rect(M, y - 4, W - M * 2, 8, 'F');
+  doc.rect(M, y - 4, W - M - MR, 8, 'F');
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
   doc.setTextColor(46, 160, 86);
@@ -8148,7 +8148,7 @@ function bpGeneratePDF() {
   y += 6;
   doc.setDrawColor(46, 160, 86);
   doc.setLineWidth(0.4);
-  doc.line(M, y - 2, W - M, y - 2);
+  doc.line(M, y - 2, W - MR, y - 2);
 
   // Table rows
   doc.setFont('helvetica', 'normal');
@@ -8158,7 +8158,7 @@ function bpGeneratePDF() {
     if (y > 265) { doc.addPage(); y = 20; }
     if (i % 2 === 0) {
       doc.setFillColor(249, 250, 251);
-      doc.rect(M, y - 4, W - M * 2, rowH, 'F');
+      doc.rect(M, y - 4, W - M - MR, rowH, 'F');
     }
     doc.setTextColor(30, 30, 30);
     const productLabel = r.title.length > 38 ? r.title.slice(0, 36) + '…' : r.title;
@@ -8192,7 +8192,7 @@ function bpGeneratePDF() {
     }
     doc.setDrawColor(229, 231, 235);
     doc.setLineWidth(0.2);
-    doc.line(M, y + rowH - 4, W - M, y + rowH - 4);
+    doc.line(M, y + rowH - 4, W - MR, y + rowH - 4);
     y += rowH;
   });
 
@@ -8200,12 +8200,12 @@ function bpGeneratePDF() {
   y += 4;
   const totalPcs = rows.reduce((s, r) => s + r.qty, 0);
   doc.setFillColor(46, 160, 86);
-  doc.rect(M, y - 4, W - M * 2, 14, 'F');   // tall enough for 2 lines
+  doc.rect(M, y - 4, W - M - MR, 14, 'F');   // tall enough for 2 lines
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
   doc.text('GRAND TOTAL', M + 2, y + 2);
-  doc.text(fmt(grand), W - M, y + 2, { align: 'right' });
+  doc.text(fmt(grand), W - MR, y + 2, { align: 'right' });
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.text(`${totalPcs} pcs · ${rows.length} item${rows.length !== 1 ? 's' : ''}`, M + 2, y + 8);
@@ -8218,7 +8218,7 @@ function bpGeneratePDF() {
     doc.setFont('helvetica', 'bold');
     doc.text('Terms & Notes', M, y); y += 5;
     doc.setFont('helvetica', 'normal');
-    const lines = doc.splitTextToSize(notes, W - M * 2);
+    const lines = doc.splitTextToSize(notes, W - M - MR);
     doc.text(lines, M, y);
     y += lines.length * 4.5 + 4;
   }
