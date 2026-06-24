@@ -1865,6 +1865,22 @@ div:hover>.photo-overlay{opacity:1}
           <!-- Left: client + product rows -->
           <div style="padding:20px;border-right:1px solid var(--border)">
             <div class="mf-group">
+              <label class="mf-label">Dealer <span style="font-weight:400;color:var(--muted)">(optional — auto-fills client &amp; phone)</span></label>
+              <div style="display:flex;gap:8px;align-items:center">
+                <select class="mf-input" id="bp-dealer-sel" onchange="bpOnDealerSelect()" style="flex:1">
+                  <option value="">— select dealer —</option>
+                </select>
+                <div id="bp-dealer-wa" style="display:none">
+                  <a id="bp-dealer-wa-link" href="#" target="_blank"
+                    class="btn-ghost btn-sm"
+                    style="color:#25D366;border-color:#25D366;text-decoration:none;display:inline-flex;align-items:center;gap:4px;white-space:nowrap">
+                    <i class="fa-brands fa-whatsapp"></i> Chat
+                  </a>
+                </div>
+              </div>
+              <div id="bp-dealer-info" style="display:none;margin-top:6px;font-size:11px;color:var(--muted);background:var(--bg);border-radius:8px;padding:7px 10px;line-height:1.7"></div>
+            </div>
+            <div class="mf-group">
               <label class="mf-label">List Title <span style="font-weight:400;color:var(--muted)">(shown on PDF &amp; WhatsApp text)</span></label>
               <input class="mf-input" id="bp-title" placeholder="e.g. iPhone Wholesale Price List (256GB)">
             </div>
@@ -4266,7 +4282,7 @@ function showSection(name, fromPopstate = false){
     if (name==='invoices')        { populateInvoiceOrders(); }
     if (name==='offline-orders') { attachOfflineOrdersListener(); }
     if (name==='custom-invoice') { buildCustomInvClients(); }
-    if (name==='bulk-pricelist') { bpInit(); }
+    if (name==='bulk-pricelist') { attachDealerListener(); bpInit(); }
     if (name==='audit')         { renderAuditLog(); }
     if (name==='warranty')      { renderWarrantyTable(); }
     if (name==='customers')     { attachOfflineOrdersListener(); renderCustomerTable(); }
@@ -6560,6 +6576,7 @@ function attachDealerListener() {
     _dealers = snap.val() || {};
     renderDealerTable();
     renderIntlStats();
+    bpPopulateDealers();   // keep bulk pricelist dealer dropdown in sync
   });
 }
 
@@ -7892,6 +7909,58 @@ function bpInit() {
     validEl.value = d.toISOString().slice(0, 10);
   }
   if (!document.querySelector('#bp-rows .bp-row')) bpAddRow();
+  attachDealerListener();   // ensures _dealers is loaded
+  bpPopulateDealers();
+}
+
+function bpPopulateDealers() {
+  const sel = document.getElementById('bp-dealer-sel');
+  if (!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">— select dealer —</option>' +
+    Object.entries(_dealers)
+      .filter(([, d]) => d.active !== false)
+      .sort(([, a], [, b]) => (a.name || '').localeCompare(b.name || ''))
+      .map(([id, d]) => `<option value="${id}">${esc(d.name || id)}${d.company ? ' — ' + esc(d.company) : ''}</option>`)
+      .join('');
+  if (prev) sel.value = prev;
+}
+
+function bpOnDealerSelect() {
+  const sel      = document.getElementById('bp-dealer-sel');
+  const id       = sel?.value;
+  const d        = id ? (_dealers[id] || null) : null;
+  const infoEl   = document.getElementById('bp-dealer-info');
+  const waEl     = document.getElementById('bp-dealer-wa');
+  const waLink   = document.getElementById('bp-dealer-wa-link');
+  const clientEl = document.getElementById('bp-client');
+
+  if (!d) {
+    infoEl.style.display = 'none';
+    waEl.style.display   = 'none';
+    return;
+  }
+
+  // Auto-fill client name with dealer name / company
+  if (clientEl) clientEl.value = d.company || d.name || '';
+
+  // Info chip
+  const parts = [];
+  if (d.location) parts.push(`📍 ${esc(d.location)}`);
+  if (d.phone)    parts.push(`📞 ${esc(d.phone)}`);
+  if (d.email)    parts.push(`✉️ ${esc(d.email)}`);
+  if (d.type)     parts.push(`🏷️ ${esc(d.type)}`);
+  infoEl.innerHTML    = parts.join('&nbsp;&nbsp;·&nbsp;&nbsp;');
+  infoEl.style.display = parts.length ? '' : 'none';
+
+  // WhatsApp button
+  const waNum = (d.phone || '').replace(/\D/g, '');
+  if (waNum) {
+    waLink.href        = `https://wa.me/${waNum}`;
+    waEl.style.display = '';
+  } else {
+    waEl.style.display = 'none';
+  }
 }
 
 function bpAddRow() {
