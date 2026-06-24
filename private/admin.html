@@ -8131,7 +8131,7 @@ function bpGeneratePDF() {
   y += 2;
 
   // Table header
-  const cols = [10, 80, 15, 26, 26, 26, 26];  // widths
+  const cols = [8, 68, 12, 24, 23, 24, 23];  // widths — must sum to W - M*2 = 182
   const headers = ['#', 'Product', 'Qty', 'Unit Price', 'Bulk Extra', 'Eff. Price', 'Total'];
   const aligns  = ['center','left','center','right','right','right','right'];
   doc.setFillColor(240, 253, 244);
@@ -8198,8 +8198,9 @@ function bpGeneratePDF() {
 
   // Grand total
   y += 4;
+  const totalPcs = rows.reduce((s, r) => s + r.qty, 0);
   doc.setFillColor(46, 160, 86);
-  doc.rect(M, y - 4, W - M * 2, 10, 'F');
+  doc.rect(M, y - 4, W - M * 2, 14, 'F');   // tall enough for 2 lines
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
@@ -8207,8 +8208,8 @@ function bpGeneratePDF() {
   doc.text(fmt(grand), W - M, y + 2, { align: 'right' });
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
-  doc.text(`${rows.reduce((s,r)=>s+r.qty,0)} pcs total`, M + 2, y + 7);
-  y += 16;
+  doc.text(`${totalPcs} pcs · ${rows.length} item${rows.length !== 1 ? 's' : ''}`, M + 2, y + 8);
+  y += 22;
 
   // Notes
   if (notes) {
